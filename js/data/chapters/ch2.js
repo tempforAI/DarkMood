@@ -128,8 +128,9 @@ DM.registerChapter({
       title: '搜查开始',
       mode: 'investigate',
       start: 'w3',
-      places: ['w3', 'west_corridor', 'cellar', 'kitchen', 'e3', 'east_corridor', 'hall', 'lounge', 'music', 'library'],
+      places: ['w3', 'west_corridor', 'cellar_n', 'kitchen', 'e3', 'east_corridor', 'hall', 'lounge', 'music', 'library'],
       custom: {
+        cellar_n: { bg: 'cellar', variant: 'swapped', name: '地下酒窖', area: 'mansion' },
         w3: { bg: 'west_room', name: '西翼3号室（案发现场）', area: 'mansion' },
         e3: { bg: 'east_room', name: '东翼3号室（恭介原来的房间）', area: 'mansion' }
       },
@@ -150,7 +151,7 @@ DM.registerChapter({
           { anchor: 'window', label: '走廊的窗', run: 'ch2_i_wcwin' },
           { anchor: 'door5', label: '西5号室', run: 'ch2_i_wdoor5' }
         ],
-        cellar: [
+        cellar_n: [
           { anchor: 'west_plate', label: '左边门上的铜牌', run: 'ch2_i_plates' },
           { anchor: 'east_plate', label: '右边门上的铜牌', run: 'ch2_i_plates' },
           { anchor: 'crate', label: '空酒箱', run: 'ch2_i_crate' },
@@ -1532,7 +1533,7 @@ usami[sad]: 求您了，七濑先生。让我……再想一想。
 // ====================================================================
 
 # ch2_i_plates
-@bg cellar
+@bg cellar swapped
 @if has:ch2_plates -> ch2_i_plates2
 : 两道楼梯门上方，铜牌在煤油灯的余光里泛着暗暗的光。
 : 现在，左边那扇门上挂着「东楼梯」，右边那扇门上挂着「西楼梯」。
@@ -1555,7 +1556,7 @@ usami[sad]: 求您了，七濑先生。让我……再想一想。
 @return
 
 # ch2_i_crate
-@bg cellar
+@bg cellar swapped
 : 左边那道楼梯门的正下方，孤零零地放着一只空酒箱。
 : 白天它不在这里。那时所有的空箱子都整整齐齐地摞在酒架旁边，最上面一只落着灰。
 : 箱面的灰上，印着两个新鲜的鞋底蹭痕。不大，前掌窄窄的。
@@ -1569,20 +1570,20 @@ usami[sad]: 求您了，七濑先生。让我……再想一想。
 @return
 
 # ch2_i_rack
-@bg cellar
+@bg cellar swapped
 : 酒架上，红酒、白兰地、威士忌排得满满当当。最里面那一格的标签发黄，是几十年前的年份。
 : 有一格空了——仓田今晚拿走的那瓶「最贵的」。
 @return
 
 # ch2_i_cfloor
-@bg cellar
+@bg cellar swapped
 : 酒窖的石板地上积着灰，脚印一层叠一层。仓田每天都要上上下下好几趟，根本分不出谁是谁。
 : 不过，地上没有拖拽的痕迹。如果有人拖着一具尸体走过，灰上总该留下点什么。
 > ……扛着走的话，倒是不会留下痕迹。
 @return
 
 # ch2_i_clantern
-@bg cellar
+@bg cellar swapped
 : 拱顶上那盏煤油灯，火苗缩成小小的一点。灯光照不到楼梯门的上方。
 > 晚上十点，这么暗的光线下，谁会抬头仔细看那两块牌子的边缘？
 > 只会看上面的字。

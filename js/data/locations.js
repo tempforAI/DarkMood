@@ -133,8 +133,9 @@
   //   beach:tracks     —— 沙滩上有一行脚印与手杖孔（第三章）
   //   courtyard:past   —— 九年前的中庭，温室完好
   //   hut:past         —— 九年前有人居住的园丁小屋
+  //   cellar:swapped   —— 两块铜牌被互换：「东楼梯」挂在左（西）门上，「西楼梯」挂在右（东）门上（第二章夜间）
   DM.BG_VARIANTS = {
-    east_room: ['burnt'], balcony: ['past'], beach: ['tracks'], courtyard: ['past'], hut: ['past']
+    east_room: ['burnt'], balcony: ['past'], beach: ['tracks'], courtyard: ['past'], hut: ['past'], cellar: ['swapped']
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = DM;
