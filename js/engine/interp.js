@@ -124,6 +124,7 @@
     var a = op.args || [], s = sc();
     switch (op.cmd) {
       case 'bg':
+        UI.showDialog(false);
         R.setTrial(false); s.trial = false;
         R.setBg(a[0], a[1]); R.clearStage();
         s.bg = a[0]; s.variant = a[1] || null; s.stage = [];
@@ -142,7 +143,7 @@
       case 'flashback': R.setFlashback(a[0] === 'on'); s.flashback = a[0] === 'on'; return;
       case 'shake': UI.shake(); return;
       case 'flash': UI.flash(a[0]); return;
-      case 'fade': return UI.fade(a[0] === 'out');
+      case 'fade': if (a[0] === 'out') UI.showDialog(false); return UI.fade(a[0] === 'out');
       case 'wait': return UI.skipping() ? null : Core.wait(Math.min(5000, +a[0] || 0));
       case 'title': UI.stopSkip(); return UI.titleCard(op.text);
       case 'caption': UI.caption(op.text); s.caption = op.text; return;

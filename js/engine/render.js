@@ -80,6 +80,17 @@
     return vignette;
   }
 
+  var judgeGlow = null;
+  function getJudgeGlow() {
+    if (judgeGlow) return judgeGlow;
+    judgeGlow = document.createElement('canvas'); judgeGlow.width = W; judgeGlow.height = H;
+    var x = judgeGlow.getContext('2d');
+    var gr = x.createRadialGradient(240, 120, 10, 240, 120, 170);
+    gr.addColorStop(0, 'rgba(170,0,30,0.55)'); gr.addColorStop(0.6, 'rgba(110,0,20,0.25)'); gr.addColorStop(1, 'rgba(60,0,10,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, W, H);
+    return judgeGlow;
+  }
+
   var fogTex = null;
   function getFog() {
     if (fogTex) return fogTex;
@@ -316,9 +327,7 @@
     var im = portrait(sp.id, sp.expr, false);
     var pw = im.width * 2, ph = im.height * 2;
     var x = Math.round(240 - pw / 2 + (1 - t) * 24), y = H - ph + 6;
-    if (sp.id === 'judge') {
-      g.fillStyle = 'rgba(120,0,20,0.35)'; g.fillRect(150, 30, 180, 200);
-    }
+    if (sp.id === 'judge') g.drawImage(getJudgeGlow(), 0, 0);
     g.globalAlpha = t;
     g.drawImage(im, x, y, pw, ph);
     g.globalAlpha = 1;
