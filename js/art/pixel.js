@@ -46,10 +46,18 @@
   X.Buf = Buf;
   var B = Buf.prototype;
 
+  /* 裁剪：clip(x,y,w,h) 与当前裁剪区求交并压栈；clip() 弹出上一层 */
   B.clip = function (x, y, w, h) {
-    if (x === undefined) { this.cx0 = 0; this.cy0 = 0; this.cx1 = this.w; this.cy1 = this.h; return this; }
-    this.cx0 = Math.max(0, x | 0); this.cy0 = Math.max(0, y | 0);
-    this.cx1 = Math.min(this.w, (x + w) | 0); this.cy1 = Math.min(this.h, (y + h) | 0);
+    this._cs = this._cs || [];
+    if (x === undefined) {
+      var p = this._cs.pop();
+      if (p) { this.cx0 = p[0]; this.cy0 = p[1]; this.cx1 = p[2]; this.cy1 = p[3]; }
+      else { this.cx0 = 0; this.cy0 = 0; this.cx1 = this.w; this.cy1 = this.h; }
+      return this;
+    }
+    this._cs.push([this.cx0, this.cy0, this.cx1, this.cy1]);
+    this.cx0 = Math.max(this.cx0, Math.floor(x)); this.cy0 = Math.max(this.cy0, Math.floor(y));
+    this.cx1 = Math.min(this.cx1, Math.floor(x + w)); this.cy1 = Math.min(this.cy1, Math.floor(y + h));
     return this;
   };
   B.get = function (x, y) {
