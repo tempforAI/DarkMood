@@ -196,7 +196,7 @@ DM.registerChapter({
         need: ['ch1_autopsy', 'ch1_knife', 'ch1_cage', 'ch1_bolt', 'ch1_window', 'ch1_lamp', 'ch1_hook',
                'ch1_hatch', 'ch1_line', 'ch1_trapdoor', 'ch1_bells', 'ch1_scream', 'ch1_kyosuke',
                'ch1_usami', 'ch1_libwin', 'ch1_threadbox', 'ch1_paint', 'ch1_diary', 'ch1_mio_burn',
-               'flag:ch1_i_ground_done'],
+               'flag:ch1_i_ground_done', 'flag:ch1_i_easel_seen'],
         run: 'ch1_inv_end',
         prompt: '该查的都查过了。天亮之后，就是审判。结束搜查吗？'
       }
@@ -538,7 +538,7 @@ shiori[sad]: ……观众又只有侦探君一个。这座岛上的人都太不�
 : 柊抬起手，一张红心皇后从牌堆里浮了起来，在半空中转了个圈，落进了律的上衣口袋。
 ritsu: 幻线。
 shiori[smile]: 哎呀，又被拆穿了～不过，这次我可要好好介绍一下。
-: 她打开牌桌角落里的黑色道具箱，取出一只透明的小线轴。
+: 她打开牌桌角落里的黑色道具箱。中间一格整整齐齐地排着三只透明的小线轴，她取出其中一只。
 shiori[smile]: 极细的透明尼龙线，比头发还细，舞台灯一照就看不见。比钓鱼线还结实哦～
 shiori[smile]: 一卷五十米。拉一只鸟笼、开一扇窗，都没问题。
 shiori[normal]: 秘诀在打结。幻线打的活结，套上去稳稳的，拉到一定角度，「咻」地就自己滑开了。
@@ -588,7 +588,7 @@ shio[smile]: 第二碗……第三碗？助手不记这种小事～
 kurata[smile]: 第四碗！小姑娘，再吃下去牙要坏掉啦！
 shio[smile]: 不会的哦～
 : 汐把勺子往嘴里一含，然后张开嘴，「啊——」地给大家看她的牙齿。
-shio[smile]: 我从小到大，一颗蛀牙都没有哦～牙医都说没见过这么好的牙！
+shio[smile]: 仓田先生，我从小到大一颗蛀牙都没有哦～牙医都说没见过这么好的牙！
 kurata[surprise]: 哇，真的，白白净净的！
 shio[smile]: 所以甜食多少都没关系～
 ritsu: 这个逻辑不对吧。
