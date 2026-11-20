@@ -524,3 +524,611 @@ shio[smile]: 我先去中庭了！
 : 三楼有一扇窗朝着中庭，四楼是巨大的钟面。指针指着四点过一点。
 > 塔顶的瞭望台……从这里看不清。
 @return
+
+# prologue_t_hina
+@if prologue_met_hina -> prologue_t_hina2
+hina[normal]: ……
+: 雏坐在楼梯最下面一级，抱着人偶，仰头望着大门上方的高窗。窗外正好能看见鸦之塔的钟面。
+ritsu: 在看什么？
+hina[normal]: 在等钟。
+@se bell
+@wait 300
+: 远处传来钟声。沉重、缓慢，一声，又一声。
+hina[normal]: 一。
+hina[normal]: 二。
+hina[normal]: 三。
+hina[normal]: 四。
+: 钟声停了。余音在大厅的天花板下绕了很久。
+hina[normal]: 四点。
+ritsu: 你每次都数？
+hina[normal]: 是的。鸦之塔的钟，每个整点都会敲。敲几点，就响几下。
+hina[normal]: 我每次都数。
+ritsu: 为什么？
+hina[think]: ……姐姐教我的。
+hina[normal]: 她说，数着钟声，就不会害怕。
+: 她把人偶搂得更紧了一点。
+hina[normal]: 千代也会数。不过千代总是数错。
+ritsu: 那你呢？
+hina[normal]: 我不会数错。
+@set prologue_met_hina
+@note hina 有数钟声的习惯——「鸦之塔的钟每个整点都会敲，我每次都数。」是千鹤教她的。
+@return
+
+# prologue_t_hina2
+hina[normal]: 下一次是五点。五下。
+hina[normal]: 七濑先生要是有空，可以一起数。
+@return
+
+# prologue_t_kurokawa
+@if prologue_met_kurokawa -> prologue_t_kurokawa2
+kurokawa[normal]: 七濑少爷。
+ritsu: 少爷就免了吧。
+kurokawa[smile]: 九年前，鄙人就是这么称呼您的。改不过来了。
+: 老人又笑了，银色的牙冠一闪。他的手指被烟熏得发黄，指缝里夹着半截「和平」。
+ritsu: 黑川先生，九年前那一晚，您也在宅子里吧。
+kurokawa[normal]: 是。
+ritsu: 您还记得什么吗？
+kurokawa[normal]: ……
+kurokawa[normal]: 人老了，很多事都记不清了。
+kurokawa[normal]: 鄙人只记得，那天夜里风很大。
+> 风很大。
+> 我想不起来的东西，他说得这么轻松。
+kurokawa[normal]: 请您好好休息。这座岛……夜里很吵。乌鸦会叫一整夜。
+@set prologue_met_kurokawa
+@return
+
+# prologue_t_kurokawa2
+kurokawa[normal]: 五点的船。鄙人收拾好就走。
+kurokawa[smile]: 七天后，船夫会来接各位的。
+@return
+
+# prologue_t_genzou
+@if prologue_met_genzou -> prologue_t_genzou2
+genzou[angry]: 七濑！你来得正好。
+genzou[angry]: 你是侦探，你说说，那封信是谁写的？
+ritsu: 现在还什么都不知道。
+genzou[angry]: 废物！你老子当年可比你利索！
+genzou[normal]: ……哼。我告诉你，这座岛明年就要变成酒店。高尔夫球场、游艇码头，什么都会有。
+genzou[normal]: 鸦天狗？童谣？那些发霉的东西，我会一样一样铲平。
+genzou[dark]: 谁想用死人来吓唬我，就让他试试看。
+@set prologue_met_genzou
+@return
+
+# prologue_t_genzou2
+genzou[angry]: 还杵在这儿干什么？去查啊！
+@return
+
+# prologue_t_shizuka
+@if prologue_met_shizuka -> prologue_t_shizuka2
+: 御堂在餐桌边慢慢踱步，看着每一张名牌，像在看一份病历。
+shizuka[normal]: 七濑君。你看这座次。
+shizuka[normal]: 会长坐在长桌中间，不是主位。主位空着。
+ritsu: 留给「主人」的？
+shizuka[normal]: 或者留给一个死人。
+shizuka[normal]: 会长看了一定会发脾气。他这个人，坐不惯别人安排的位子。
+@set prologue_met_shizuka
+@return
+
+# prologue_t_shizuka2
+shizuka[normal]: 我不喜欢这个房间。太多眼睛了。
+: 她看的是壁炉上那幅画满乌鸦的油画。
+@return
+
+# prologue_t_shiori
+@if prologue_met_shiori -> prologue_t_shiori2
+: 牌桌边，一个穿燕尾服的女人正对着空气洗牌。她的衣服上缀满了亮片，一动就闪闪发光。
+shiori[smile]: 女士们先生们～欢迎光临！
+shiori[smile]: 哎呀，观众只有一位？没关系，一位也是观众！
+ritsu: ……你是？
+shiori[smile]: 柊诗织！艺名「希尔维亚」，魔术师！
+shiori[smile]: 你就是侦探君吧？来来来，帮我抽一张牌。
+: 律抽出一张。黑桃七。
+shiori[smile]: 记住了吗？好，放回去——
+: 柊把牌洗了几遍，往桌上一拍，然后张开双手，掌心朝上，慢慢抬起。
+@se select
+: 一张牌从牌堆顶上浮了起来。
+: 它悬在半空，跟着她的手指轻轻旋转。翻过来——黑桃七。
+ritsu: ……
+shiori[smile]: 怎么样怎么样？吓到了吧？
+ritsu: 线。
+shiori[surprise]: 诶？
+ritsu: 你的两只手之间，有一根很细的线。刚才牌转过来的时候，反了一下光。
+shiori[sad]: 哎呀呀……侦探君，你这样会被魔术师讨厌的哦。
+shiori[smile]: 不过，答对了！奖励你看看真货～
+: 柊从桌角一只描着金边的黑色道具箱里拿出一卷线轴，抽出一截，在指间绷直。不仔细看，几乎什么都看不见。
+shiori[smile]: 这叫「幻线」。极细的透明尼龙线，舞台灯一照就消失。
+shiori[smile]: 别看它细，比钓鱼线还结实哦～吊起一只鸟笼都没问题。
+ritsu: 那个箱子里全是道具？
+shiori[smile]: 绳子、扣环、假花、鸽子……鸽子这次没带。魔术师的全部家当！
+shiori[normal]: 九年前我也来过这座岛哦。那时候我十七岁，是师父的助手。
+shiori[normal]: 师父叫月岛幻斋，在老家主的寿宴上表演了「飞人」。
+shiori[sad]: ……三年前，他在水箱逃脱的表演里出了意外。
+shiori[smile]: 好啦，不说这个！侦探君，下次可不许再拆穿我了～
+@set prologue_met_shiori
+@note shiori 魔术师「希尔维亚」。衣服缀亮片，爱说「女士们先生们～」，称律「侦探君」。会用透明的「幻线」让扑克牌浮空，道具箱放在交谊厅牌桌角落。
+@return
+
+# prologue_t_shiori2
+shiori[smile]: 侦探君，要不要学一个魔术？学会了可以哄女孩子哦～
+shiori[smile]: 你家那位白手套的助手小姐，看起来很好哄的样子。
+@return
+
+# prologue_t_kyosuke
+@if prologue_met_kyosuke -> prologue_t_kyosuke2
+kyosuke[smile]: 哟，侦探小弟。这里的酒柜不错哦，老头子藏的好货全在这儿。
+kyosuke[normal]: 你说，那个写信的人……到底想干什么？
+ritsu: 你害怕？
+kyosuke[shock]: 谁、谁害怕了！
+kyosuke[sad]: ……就是觉得这宅子阴森森的。九年前的事，我那时候才十五岁，什么都不知道。
+kyosuke[smile]: 喝酒喝酒。喝醉了就什么都不怕了。
+@set prologue_met_kyosuke
+@return
+
+# prologue_t_kyosuke2
+kyosuke[smile]: 七天啊……七天够我把这个酒柜喝空了。
+@return
+
+# prologue_t_kuga
+@if prologue_met_kuga -> prologue_t_kuga2
+kuga[smile]: 啊，七濑君。请恕敝人坐着说话，这个腰……
+kuga[normal]: 椎间盘的老毛病了。医生说，十公斤以上的东西一概不能提。连自己的行李都得麻烦黑川先生。
+kuga[normal]: 说起来，敝人收到的信上，提到了千鹤小姐的「遗嘱」。
+ritsu: 遗嘱？
+kuga[smile]: 哈哈，具体内容属于保密义务的范围，恕敝人无可奉告。
+kuga[think]: 只是……一个十七岁的少女，会立什么遗嘱呢。
+@set prologue_met_kuga
+@return
+
+# prologue_t_kuga2
+kuga[smile]: 无论发生什么，请记住：一切都要讲证据。这是法治的根本。
+@return
+
+# prologue_t_kurata
+@if prologue_met_kurata -> prologue_t_kurata2
+kurata[smile]: 哟，小哥！来参观厨房？
+: 仓田已经系上了围裙，正把帆布包里的刀一把把取出来，吸到墙上的磁铁刀架上。
+kurata[smile]: 你看你看，我的宝贝们！从剁骨刀到削皮的小刀，一共八把，一把都不能少！
+kurata[smile]: 刀是厨子的命根子。少了一把，我就跟少了根手指似的。
+ritsu: 九年前，您也在这个厨房？
+kurata[normal]: 是啊。老家主的寿宴，一百多号人的菜，全是我一个人张罗的。
+kurata[normal]: 那天晚上……
+: 他手里的刀停了一下。
+kurata[sad]: ……那天晚上真是忙坏了。忙得什么都顾不上。
+kurata[smile]: 哎，不说这个！今晚我做鲷鱼饭，再给大家烤个布丁。
+kurata[smile]: 还有，明早的饭团我今晚就捏好，放食品柜里。谁饿了半夜来拿，别客气——不过别全拿光啊！
+@set prologue_met_kurata
+@note kurata 九年前在月蚀馆当主厨。带来一套八把的菜刀，「一把都不能少」。说今晚会把明早的饭团捏好放进食品柜。
+@return
+
+# prologue_t_kurata2
+kurata[smile]: 小哥，偷吃可不行哦！布丁要等晚饭后才有！
+kurata[smile]: ……不过你那个白手套的助手已经来问过三次了，哈哈！
+@return
+
+# prologue_t_usami
+@if prologue_met_usami -> prologue_t_usami2
+: 宇佐见站在东翼走廊中间，一手拿着卷尺，一手拿着制图笔，正在记录什么。
+usami[normal]: 啊，七濑先生。您来得正好，我正想找人说说。
+usami[smile]: 您注意到了吗？这条走廊，窗在左手边，客房门在右手边。
+ritsu: 嗯。窗外是海。
+usami[smile]: 西翼也一样——不过是反过来的。
+usami[normal]: 宅子荒废的那些年，一场火灾把西翼烧掉了。去年重建的时候，会长要求「和东翼一模一样」。
+usami[smile]: 所以我做的是一个完美的镜像。以大厅为轴，左右对称，分毫不差。
+usami[normal]: 东翼走廊的窗在左手，西翼走廊的窗在右手。东翼客房的电灯开关在门的右侧，西翼就在左侧。
+usami[normal]: 房间号也相同：东1到东6，西1到西6。连地下酒窖的楼梯都是对称的——两道楼梯，一道通东翼，一道通西翼。
+ritsu: 走进去会分不清自己在哪边吧。
+usami[smile]: 正是！这就是镜像的美妙之处。闭着眼睛走进去，睁开眼——你根本不知道自己在镜子的哪一边。
+usami[think]: 当然，如果注意窗户的位置，就能分辨。大多数人不会注意的。
+@set prologue_met_usami
+@note usami 骄傲地讲解西翼：去年按东翼「镜像」重建，左右完全对称，房间号相同。东翼走廊窗在左、西翼在右；东翼开关在门右侧、西翼在左侧。
+@return
+
+# prologue_t_usami2
+usami[normal]: 还有那座塔。我父亲以前负责过它的修缮。
+usami[think]: ……不过那是很久以前的事了。
+@return
+
+# prologue_t_fuwa
+@if prologue_met_fuwa -> prologue_t_fuwa2
+: 不破在走廊尽头，一扇窗一扇窗地推，确认插销是否牢靠。
+fuwa[normal]: 职业病。
+fuwa[normal]: 保安得知道哪扇窗能开，哪扇门能锁。
+ritsu: 发现了什么？
+fuwa[normal]: 窗都是好的。门锁是旧的，一根铁丝就能捅开。
+fuwa[dark]: ……小鬼。你真觉得九年前的案子结了？
+ritsu: 什么意思？
+fuwa[normal]: 没什么意思。
+: 他把牙签吐进口袋里的手帕，又叼上一根新的，转身走了。
+@set prologue_met_fuwa
+@return
+
+# prologue_t_fuwa2
+fuwa[normal]: 晚上锁好门。
+@return
+
+# prologue_t_mio
+@if prologue_met_mio -> prologue_t_mio2
+: 澪在中庭的屋檐下支起了画架，正在画布上打底。灰色、紫色，一层一层地铺开，像在画天空的阴影。
+mio[normal]: ……律君。
+mio[smile]: 你看，从这里看塔，角度最好。钟面、三楼的窗户、塔顶的瞭望台，全都在画框里。
+ritsu: 你要画塔？
+mio[normal]: 嗯。不过不是现在。
+mio[normal]: 我想画夜里的塔。月光照在钟面上，窗户里亮着一点灯……
+mio[sad]: 千鹤以前说过，夜里的鸦之塔最好看。像一根点着的蜡烛。
+mio[normal]: 这几天都是阴天。要是有一个晚上能放晴就好了。
+ritsu: 你和千鹤小姐……
+mio[smile]: 我们是在这个中庭认识的。我八岁，她十二岁。她拿温室里的花送给我。
+mio[sad]: ……后来温室就没有了。
+@set prologue_met_mio
+@note mio 想画「夜里的鸦之塔」，在中庭屋檐下架起画架。千鹤说过「夜里的塔最好看，像一根点着的蜡烛」。
+@return
+
+# prologue_t_mio2
+mio[normal]: 乌鸦又在叫了。
+mio[normal]: 律君，你听，它们叫的时候，像不像在数数？
+@return
+
+# prologue_t_kiryu
+@if prologue_met_kiryu -> prologue_t_kiryu2
+: 桐生靠在喷泉边抽烟，对着塔的方向举起相机，咔嚓按了一下。
+kiryu[smile]: 名侦探，给你讲个鬼故事？
+ritsu: 你在书里写过的那些？
+kiryu[smile]: 哟，看过《宵鸦岛怪谈考》？卖得可不怎么样。
+kiryu[normal]: 这座岛上的人，从前相信「鸦天狗」。长着乌鸦脑袋的天狗，专门审判罪人。
+kiryu[normal]: 每年八月有个「飞鸦祭」。你抬头看——
+: 他用烟头指向天空。那条细细的黑线从山丘上斜拉下来，一直连到塔顶。
+kiryu[normal]: 那是缆索。山上的神社是起点，塔顶的铁环是终点。
+kiryu[normal]: 祭典那天，岛民把稻草扎的乌鸦挂在滑车上，从神社放下去，「嗖」地一下飞到塔顶。意思是鸦天狗降临，要开始审判了。
+kiryu[normal]: 渔村废了以后，祭典也没了。鹭宫家今年把缆索换成了新钢缆，大概想重办祭典，招揽游客。
+kiryu[dark]: 还有一首童谣。「七鸦之歌」。七只乌鸦，一只接一只地死掉。
+ritsu: 怎么唱？
+kiryu[normal]: 词我采访到了。调子没有。
+kiryu[normal]: 我问遍了岛上剩下的老人，没一个记得旋律。会唱的人，大概都死光了。
+> ……调子没有人记得。
+@set prologue_met_kiryu
+@note kiryu 讲了鸦天狗与飞鸦祭的传说：缆索从神社拉到塔顶铁环，今年换了新钢缆。还提到童谣「七鸦之歌」——「词采访到了，调子没人记得。」
+@return
+
+# prologue_t_kiryu2
+kiryu[smile]: 七只乌鸦，我们有十四个人。你说，够不够分？
+@return
+
+# prologue_t_shio
+@if prologue_met_shio -> prologue_t_shio2
+: 汐站在中庭中央，仰头望着鸦之塔，望得出神。
+ritsu: 汐？
+shio[surprise]: ……啊，律君。
+shio[normal]: 你说，从塔顶往下看，能看到什么呢？
+ritsu: 海吧。还有这个中庭。
+shio[think]: 嗯……还有温室。
+: 她的视线从塔顶缓缓落下，落在那片锈蚀的铁骨架上，停住了。
+shio[smile]: ——好啦！我已经和画家小姐、记者先生打过招呼了。律君呢？
+shio[smile]: 偷懒的侦探可是会被扣工资的～
+@set prologue_met_shio
+@return
+
+# prologue_t_shio2
+shio[smile]: 嗯～哼哼～
+: 汐又在哼着什么。律还没听清，她就停下了。
+shio[smile]: 律君，快去打招呼啦。
+@return
+
+# prologue_t_kotone
+@if prologue_met_kotone -> prologue_t_kotone2
+kotone[angry]: ……又是你。
+: 琴音坐在喷泉边，把琴盒抱在膝上，像抱着一只受惊的猫。
+kotone[normal]: 这里湿气太重了。琴会走音的。
+ritsu: 你是来演出的？
+kotone[normal]: 信上说，酒店开业要请我演奏。报酬是平时的三倍。
+kotone[think]: ……我妈妈以前在这里当过女佣。九年前。
+kotone[normal]: 她去年冬天死了。所以我想来看看，她工作过的地方是什么样子。
+kotone[angry]: 就这样。没什么好说的。别同情我。
+@set prologue_met_kotone
+@return
+
+# prologue_t_kotone2
+kotone[normal]: 侦探。你身边那个戴手套的，吵死了。管管她。
+@return
+
+# prologue_tour_end
+@bg dock
+@bgm sad
+@caption 17:00 码头
+@se wave
+: 五点。天色暗得比平时早。云层压得很低，海面是铅灰色的。
+: 渡船的引擎已经发动了。黑川提着一只小小的旅行箱，站在船尾。
+kurokawa[normal]: 各位，鄙人就此告辞。
+kurokawa[normal]: 食品柜和酒窖里的东西，足够各位用上七天。房间的备用钥匙在大厅的钥匙箱里。
+genzou[angry]: 黑川！你给我说清楚，主人到底是谁！
+kurokawa[smile]: ……七天后，各位自然会知道。
+: 老人深深地鞠了一躬。再抬起头时，他咧嘴笑了，臼齿上的银冠在暮色里亮了一下。
+boatman: 开船喽——
+@se wave
+: 船缓缓离开码头。黑川站在船尾，朝岸上挥手。
+: 他嘴里叼着一支烟。船越走越远，人影越来越小，只剩下那一点橙红色的火光，在灰色的海面上一明一灭。
+shio[normal]: ……走了呢。
+ritsu: 嗯。
+shio[think]: 七天。
+: 汐把手插进开衫的口袋，望着远去的船，很久没有说话。
+: 那一点火光终于消失在海平线上。
+: 不知哪里传来一声乌鸦的啼叫。接着是第二声、第三声。整座岛的乌鸦都叫了起来。
+@fade out
+@wait 600
+@bg dining
+@fade in
+@bgm calm
+@caption 19:00 月蚀馆·餐厅
+: 晚餐七点开始。长桌上点起了一排蜡烛，仓田的鲷鱼饭冒着热气。
+: 会长最后一个走进餐厅。他扫了一眼桌上的名牌，脸色立刻沉了下来。
+genzou[angry]: 这是谁排的座位？
+kurata[normal]: 呃……黑川先生走之前摆好的。
+genzou[angry]: 让我坐在中间？主位空着留给谁？给那个「主人」？
+: 他一把抓起桌上的名牌，揉成一团，扔进了壁炉。
+genzou[angry]: 这是我的宅子。座位我来排！
+genzou[normal]: 我坐主位。雏，坐我左边。
+hina[normal]: 是，叔父大人。
+genzou[angry]: 恭介！你一身酒气，滚到末席去！
+kyosuke[sad]: 我……我只喝了一点……
+genzou[angry]: 滚！
+: 恭介缩着脖子，端着自己的盘子挪到了长桌最远的一端。
+genzou[normal]: 其他人随便坐。
+: 众人面面相觑，各自找了位子。律和汐坐在长桌中段，对面是澪和琴音。
+shizuka[normal]: ……果然。
+> 御堂医生下午就说过。会长坐不惯别人安排的位子。
+@show shio[smile] C
+shio[smile]: 律君律君，布丁！仓田先生的布丁！
+ritsu: 那是饭后甜点。
+shio[smile]: 甜点就是要先吃才好吃嘛～
+kurata[smile]: 哈哈哈！小姑娘有眼光！来，先给你一个！
+: 汐戴着白手套捧起布丁，吃得眉开眼笑。
+@hide
+: 晚餐的气氛并不坏。仓田一刻不停地讲笑话，柊变了两个小魔术，连琴音都被逗得撇了撇嘴。
+: 只有会长一直沉着脸，一杯接一杯地喝着白兰地。雏坐在他身边，安静地把鱼刺一根一根挑出来。
+: 窗外，雨还没有下。云层里偶尔透出一点暗淡的月光。
+@wait 400
+@caption 21:00 餐厅
+@se bell
+: 远处传来塔钟的声音。
+hina[normal]: ……一。二。三。
+: 雏放下筷子，小声地数着。
+hina[normal]: 四。五。六。七。八。
+hina[normal]: 九。
+: 第九声的余音还没散尽——
+@se clock
+: 餐厅角落里响起「咔哒」一声。
+: 紧接着是机械转动的声音。那台老式放映机自己转了起来，胶片盘吱吱作响，一束白光打在墙上。
+kurata[surprise]: 诶？谁开的？
+kyosuke[shock]: 不、不是我！
+@se thunder
+: 幕布「哗」地一声自己落了下来。
+@bgm horror
+@filter dark
+: 白光中出现了一个人影。
+: 黑色的兜帽，黑色的长袍。脸上戴着一张乌鸦面具，尖长的喙，眼孔里透着红光。
+judge: 晚上好，各位。
+: 声音经过了变声器处理，忽高忽低，像金属在刮玻璃。
+judge: 欢迎来到宵鸦岛。我是判官。
+judge: 首先，请允许我为各位献上一首歌。
+@bgm stop
+@wait 400
+: 影片里响起了旋律。
+: 一段很简单的旋律，像摇篮曲。缓慢地升上去，又缓慢地落下来。
+@poem 一只乌鸦锁进笼，月光照不到它的胸。\n两只乌鸦争一面镜，镜中谁是真的影。\n三只乌鸦飞上塔，脚下没有回家的沙。\n四只乌鸦烧去脸，灰烬里面埋着谁的名。
+@poem 五只乌鸦自啄心，罪人原来是自己。\n六只乌鸦围成圈，审判之火点燃天。\n七只乌鸦只剩一只，它在雾里唱着歌——\n　　等那个说谎的孩子。
+@se heartbeat
+> ……这个旋律。
+> 最后一个音拖得很长，像在等谁回答。
+> 是汐在船上哼的那首歌。
+: 律转过头。
+: 汐坐在他身边，一动不动地盯着幕布。烛光照着她的侧脸，看不出任何表情。
+kiryu[shock]: ……七鸦之歌。
+kiryu[shock]: 调子……居然还有人会唱调子……
+@bgm judge
+judge: 七只乌鸦，将依次坠落。
+judge: 在那之前，让我宣读各位的罪状。
+judge: 坐在主位上的鹭宫玄藏。你在那个夜晚，亲手熄灭了白鹭的生命。
+genzou[angry]: 什——
+judge: 被父亲赶到末席的鹭宫恭介。你碾碎了一个女孩的人生，又让别人替你坐牢。
+kyosuke[shock]: ……！
+judge: 御堂静香。你篡改了死亡的时刻。
+judge: 不破刚。你用拳头写下了供词。
+judge: 桐生冬马。你用文字把一个无辜的人钉上了十字架。
+judge: 久我莲。你出卖了你的委托人——不止一次。
+judge: 柊诗织。你搬运了伪造的足迹。
+judge: 宇佐见京。你知道那道栏杆为什么被换掉，却保持沉默。
+judge: 仓田豪。那杯茶里放了什么，你心里清楚。
+judge: 千早澪。你那晚看见了，却选择了遗忘。
+judge: 真白琴音。你的琴弦，是用谎言买来的。
+judge: 鹭宫雏。你什么都不知道——这就是你的罪。
+judge: 雨宫汐。你在追逐一个说谎者。
+judge: 最后——七濑律。
+@se heartbeat
+judge: 说谎的孩子。你的推理杀死了一个人。
+@shake
+: 餐厅里没有人出声。只有放映机的胶片盘在吱吱地转。
+judge: 接下来，是这座岛上的规则。
+@poem 一、七天后，渡船才会回来。\n二、每当有乌鸦坠落，全员须在指定时刻到审判厅集合，指认凶手。\n三、多数票指认正确：凶手关入鸦笼，交给七天后到来的警察。
+@poem 四、指认错误：真凶将独自乘第七天的船离开。其余所有人，永远留在这座岛上。\n五、第七天，判官将公开「九年前的真相」。
+judge: 鸦天狗在看着你们。
+judge: 那么——祝各位，有一个漫长的夏天。
+@se crash
+: 胶片「啪」地一声跑到了尽头，白光闪了几下，熄灭了。
+@filter none
+@bgm tension
+genzou[angry]: 开灯！开灯！
+@se ok
+: 仓田摸到墙边打开了吊灯。昏黄的光重新照亮了餐厅。每一张脸都是白的。
+kotone[shock]: 什么……什么罪状……
+kuga[sad]: 这、这是诽谤。毫无根据的诽谤……
+shiori[shock]: ……伪造的足迹？我、我可不知道什么……
+kurata[sad]: ……
+: 仓田低着头，双手在围裙上来回地擦，像要擦掉什么看不见的东西。
+mio[sad]: ……看见了……却选择了遗忘……
+hina[normal]: 七濑先生。
+hina[normal]: 「说谎的孩子」，是什么意思？
+ritsu: ……
+> 我回答不了。
+> 心脏跳得很快。不是因为恐惧——是因为别的什么。像是有人用手指，在一道早已愈合的伤口上，轻轻按了一下。
+: 律站起身，走向角落里的放映机。
+> 先看看这台机器。它为什么会在九点整自己转起来。
+: 放映机的电源线没有插在墙上，而是接进了一只白色的小盒子——一只机械定时器。刻度盘上，指针停在「21:00」。
+> 下午看到的白色盒子，原来是这个。
+> 只要事先装好胶片，拨好时间，到了九点，电源接通，放映机就会自己转起来。
+@get prologue_timer
+: 胶片盘上的片子已经全部转完了。律把片头抽出来对着灯看——黑色的兜帽，乌鸦的面具，一格一格，一模一样。
+@get prologue_film
+genzou[angry]: 七濑！你在那儿磨蹭什么！
+genzou[angry]: 这是外人的恶作剧！岛上还藏着别人！
+genzou[angry]: 黑川那个老东西，还有那个什么「主人」——他们想吓唬我，想把我从自己的岛上赶走！
+kiryu[smile]: 外人？会长，这岛上除了我们十四个，就只剩乌鸦了。
+genzou[angry]: 那就去找！把宅子翻过来也要找出来！
+fuwa[normal]: ……先坐下。
+fuwa[normal]: 小鬼。你看出什么了。
+ritsu: 有几件事，可以先确认一下。
+> 会长认定这是「外人」闯进来搞的恶作剧。
+> 这个说法，有什么地方和我刚才看到的东西对不上？
+@show shio[smile] C
+shio[smile]: 律君，要开始了吗？「侦探的时间」～
+shio[normal]: 我来帮你整理一下规则吧，这可是助手的工作。
+: 【审判须知·练习】众人的发言中，会有被高亮的「弱点」。
+: 从侦探手账里选出一件证据，射向与它矛盾的那个弱点，就能击破对方的说法。
+: 选错了也不要紧，只会损失一点「信念」。信念会慢慢恢复，提示也会出现。
+shio[smile]: 简单来说，就是「用证据说话」～律君最擅长的事！
+@hide
+@bgm debate
+@game prologue_g1
+@bgm tension
+@shout ritsu 不对！
+ritsu: 放映机不是被人开的。
+ritsu: 它的电源接在一只定时器上，指针拨在九点。只要事先装好胶片、调好时间，到了九点就会自己启动。
+ritsu: 不需要任何人躲在餐厅里。所以「刚才有人溜进来开了机器」这个说法不成立。
+genzou[angry]: ……那、那又怎么样！
+genzou[angry]: 那就说明是早就布置好的！一个跟我们毫不相干的疯子，随便编些罪名，录好了片子来吓唬人！
+> 跟我们「毫不相干」……真的是这样吗？
+> 影片里有一句话，从我听到的那一刻起就一直卡在心里。
+@game prologue_g2
+@shout ritsu 请看这个！
+ritsu: 影片里，判官叫会长「坐在主位上的鹭宫玄藏」，叫恭介先生「被父亲赶到末席的鹭宫恭介」。
+ritsu: 可是黑川先生摆好的名牌上，主位是空着的。会长坐在长桌中间，恭介先生就在旁边。
+ritsu: 是会长自己，在今晚七点走进餐厅以后，才撕掉名牌、重新排的座位。
+kyosuke[shock]: ……对、对啊！我是被老爸当场赶过来的！
+genzou[shock]: ……
+ritsu: 影片是事先录好的。录的时候，判官就已经知道——会长看到那样的座次一定会发火，一定会自己坐上主位，一定会把恭介先生赶到末席。
+shizuka[normal]: 我下午就说过。会长坐不惯别人安排的位子。
+shizuka[normal]: 了解会长的人，都猜得到。
+ritsu: 判官不是随便找个由头吓唬人的疯子。
+ritsu: 判官调查过我们每一个人。性格、过去、九年前那个夜晚……了解得非常仔细。
+kiryu[dark]: 了解我们每一个人的家伙……还真是个让人睡不着觉的结论。
+genzou[angry]: ……哼！
+genzou[angry]: 一派胡言！什么罪状，什么九年前！我不吃这一套！
+: 会长把酒杯往桌上重重一放，转身走出了餐厅。雏抱着人偶，默默地跟了上去。
+@bgm mystery
+fuwa[normal]: ……无线电室。
+ritsu: 什么？
+fuwa[normal]: 宅子里有一台电台。黑川下午提过。能和本岛联系的，只有那个。
+fuwa[normal]: 走。
+@bg service_nook
+@caption 21:40 佣人通道·无线电室
+: 无线电室在本馆一楼拐角的佣人通道尽头，是一间堆满杂物的小屋。
+: 不破推开门，手电筒的光照了进去。
+@se glass
+: 脚下咔嚓一声。是碎玻璃。
+: 架子上那台老式电台被砸得粉碎。外壳凹进去一大块，真空管碎了一地，天线被齐根剪断。
+fuwa[dark]: ……
+ritsu: 修得好吗？
+fuwa[normal]: 修不好。
+: 不破蹲下来，用手指抹了一下碎片。指尖上沾了一层薄薄的灰。
+fuwa[normal]: 有灰。不是今晚砸的。
+fuwa[normal]: 至少一两天了。
+ritsu: 一两天前……那时候，岛上只有黑川先生。
+fuwa[normal]: 嗯。
+fuwa[dark]: 也可能还有别人。
+@get prologue_radio
+> 渡船已经走了。电台被砸了。岛上没有电话线。
+> 七天。我们被关在了这座岛上。
+@bg dock
+@weather rain
+@bgm island
+@caption 22:00 码头
+@se thunder
+: 雨下起来了。
+: 律和不破站在码头上。海面一片漆黑，什么也看不见。浪一下一下地拍着石阶。
+fuwa[normal]: 船不会回来了。七天之内。
+fuwa[normal]: 明天天一亮，我把全岛搜一遍。
+ritsu: 不破先生。
+fuwa[normal]: 嗯。
+ritsu: 影片里说，你「用拳头写下了供词」。
+fuwa[normal]: ……
+: 不破没有回答。雨水顺着他的眉骨往下流，流过那道旧疤。
+fuwa[normal]: 回去吧，小鬼。
+fuwa[normal]: 锁好门。
+@hide
+@bg east_room
+@filter night
+@caption 22:30 东翼·东6号室
+: 房间收拾得很干净。床单雪白，枕头蓬松，窗外是黑沉沉的海。
+: 律坐在床边，脱下外套。口袋里的两封信沉甸甸的。
+: 他掀开被子时，枕头下露出了一角黑色。
+@se heartbeat
+: 一只黑色的信封。没有署名，没有邮戳。
+: 里面只有一张卡片。卡片上只写着四个字。
+@letter 说谎的孩子
+@get prologue_letter
+: 走廊里传来一声尖叫，接着是开门声、脚步声、有人在骂。
+: 每一个房间的枕头下面，都放着一封同样的黑色信封。
+> 每个人的信上，写的大概都是影片里的罪状。
+> 只有我的信，只写了这四个字。
+> ……说谎的孩子。
+> 我说了什么谎？
+: 律把卡片翻过来。背面是空白的。
+: 他又把它翻回来，看了很久。
+@se knock
+: 有人敲门。
+shio: 律君……还没睡吧？
+@bgm sad
+: 汐抱着枕头站在门口，头发披散着，换上了浅色的睡衣。手上依然戴着那双白手套。
+shio[sad]: 我的枕头下面也有一封。
+shio[smile]: 一个人待着有点……嗯，就是有点。可以借我坐一会儿吗？
+ritsu: ……进来吧。
+: 汐没有坐椅子，而是爬上了窗台，抱着膝盖坐在那里。窗外是雨，是海，是看不见的黑暗。
+shio[normal]: 「你在追逐一个说谎者」。
+shio[smile]: 我的罪状。说的是律君吧？
+ritsu: 大概。
+shio[smile]: 那律君的呢？
+: 律把卡片递给她。汐看了一眼，没有说话，又把它还了回来。
+ritsu: 汐。
+shio[normal]: 嗯？
+ritsu: 影片里的那首歌。你在船上哼过。
+shio[surprise]: ……诶？
+shio[think]: 我哼的是那首吗？……我自己都没注意。
+shio[smile]: 也许是在哪里听过吧。摇篮曲嘛，调子都长得差不多～
+> 桐生说，岛上已经没有人记得那首歌的调子了。
+> 那她是在哪里听到的？
+shio[smile]: 律君，你现在的表情好可怕。像在审问犯人。
+ritsu: ……抱歉。
+shio[smile]: 没关系～侦探先生就是要怀疑所有人嘛。包括助手。
+: 她把下巴搁在膝盖上，望着窗外。雨点打在玻璃上，一道一道地往下流。
+: 远处，鸦之塔的轮廓在云层下若隐若现。
+shio[normal]: ……律君。
+shio[normal]: 九年前的推理……你相信它吗？
+@bgm stop
+@wait 600
+ritsu: ……当然。
+: 汐转过头来看着他。
+: 她笑了笑。那是律从没见过的一种笑——很轻，很远，像隔着一层玻璃。
+shio[smile]: 嗯。
+shio[smile]: 那就好。
+: 她又转回去，望着窗外的雨。
+: 然后，她轻轻地哼起了那首歌。
+@bgm sad
+: 一段很简单的旋律，像摇篮曲。缓慢地升上去，又缓慢地落下来。
+: 最后一个音拖得很长，像在等谁回答。
+> 我没有回答。
+> 我闭上眼睛，听着雨声和歌声，想起了那个总在夏天出现的梦。
+> 羽毛。一只手。还有一个声音——
+@fade out
+@poem 一只乌鸦锁进笼，月光照不到它的胸。
+@wait 400
+@chapterend
+`
+});
