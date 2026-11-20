@@ -1778,10 +1778,13 @@
     var hx = Math.round(CX + 3), hy = g.chin - 3;
     var slv = p.o.c;
     if (p.vis.outfit === 'summer_dress' || p.vis.outfit === 'tshirt_shorts') slv = { base: p.sk.base, sh: p.sk.sh, hi: p.sk.hi, sh2: p.sk.sh2 };
-    // 前臂
-    a.poly([hx + 2, hy + 8, hx + 10, hy + 6, hx + 20, H, hx + 6, H], slv.base);
-    a.line(hx + 10, hy + 7, hx + 20, H - 1, slv.sh);
+    // 前臂（儿童更细）
+    var ch = g.child;
+    var aw = ch ? 6 : 8, ab = ch ? 11 : 14;
+    a.poly([hx + 2, hy + 8, hx + 2 + aw, hy + 6, hx + 6 + ab, H, hx + 6, H], slv.base);
+    a.line(hx + 2 + aw, hy + 7, hx + 6 + ab, H - 1, slv.sh);
     a.line(hx + 3, hy + 9, hx + 7, H - 1, slv.hi || slv.base);
+    if (slv.base === p.sk.base && !ch) a.line(hx + 4, hy + 12, hx + 9, H - 1, p.sk.sh);
     // 手
     var rows = [
       '..BBBB...',
