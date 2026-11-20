@@ -137,6 +137,12 @@
       return { base: base, sh: P.mix(C(hex), C('#0a0a12'), 0.15), sh2: P.mix(C(hex), C('#000000'), 0.5),
         hi: P.mix(base, C('#6c6c98'), 0.55), hi2: P.mix(base, C('#a4a4cc'), 0.7), line: C('#050408') };
     }
+    if (l > 0.72) {
+      // 浅色发（白金/银）：阴影加深并偏紫，避免一片白
+      var b2 = C(hex);
+      return { base: b2, hi: P.mix(b2, C('#ffffff'), 0.5), hi2: C('#ffffff'), sh: P.mix(b2, C('#8a7a98'), 0.42),
+        sh2: P.mix(b2, C('#5a4a6a'), 0.58), line: P.mix(b2, C('#2a2032'), 0.8) };
+    }
     return P.ramp(hex);
   }
 
@@ -173,19 +179,21 @@
       }
     }
   }
-  // 头顶光环高光（只覆盖 base 色像素）
-  function ringHL(b, hr, cy, half, depth, gaps) {
-    for (var x = Math.round(CX - half); x <= Math.round(CX + half); x++) {
+  // 头顶光环高光（只覆盖 base 色像素）：断续弧线，左侧（受光侧）更粗更长
+  function ringHL(b, hr, cy, half, depth) {
+    var x0 = Math.round(CX - half), x1 = Math.round(CX + half);
+    for (var x = x0; x <= x1; x++) {
       var d = (x + 0.5 - CX) / half;
-      var y = Math.round(cy + d * d * depth);
-      if (gaps && gaps.indexOf(x % gaps.length === 0 ? -1 : 0) < 0) { /* no-op */ }
-      var ph = (x * 7 + 3) % 9;
-      if (ph === 0) continue;
-      for (var k = 0; k < 2; k++) {
-        var i = (y + k) * W + x;
+      var y = Math.round(cy + d * d * depth * 1.6 - (1 - d * d) * 0.6);
+      // 断口：中间与右侧各断一下
+      var u = (x - x0) / (x1 - x0);
+      if ((u > 0.36 && u < 0.42) || (u > 0.7 && u < 0.76) || u > 0.94) continue;
+      var thick = u < 0.36 ? 2 : 1;
+      for (var k = 0; k < thick; k++) {
         if (y + k < 0 || y + k >= H) continue;
+        var i = (y + k) * W + x;
         var c = b.d[i];
-        if (c === hr.base) b.d[i] = (k === 0 && Math.abs(d) < 0.55 && ph % 3 === 1) ? hr.hi2 : hr.hi;
+        if (c === hr.base) b.d[i] = (k === 0 && u > 0.1 && u < 0.3) ? hr.hi2 : hr.hi;
         else if (c === hr.sh) b.d[i] = hr.base;
       }
     }
@@ -196,6 +204,18 @@
     b.clip(0, 0, W, clipY);
     b.ellipse(CX, cy, rx, ry, hr.base);
     b.clip();
+  }
+
+  /* 刘海发梢之间过窄（≤2px）的缝隙用发影色填上，避免碎线 */
+  function closeGaps(f, g, hr) {
+    var d = f.d;
+    for (var y = g.top + 4; y < g.eyeY + 2; y++) for (var x = 2; x < W - 2; x++) {
+      var i = y * W + x;
+      if (d[i] || !d[i - W]) continue;
+      var l = d[i - 1] || d[i - 2], r = d[i + 1] || d[i + 2];
+      if (l && r && (d[i - 1] || d[i + 1])) d[i] = hr.sh;
+      else if (d[i - 1] && d[i + 1]) d[i] = hr.sh;
+    }
   }
 
   /* ================= 发型 ================= */
@@ -234,10 +254,10 @@
     for (var x = Lx - 6; x < Rx + 7; x += 4) strand(bk, x + 2, T + 30, x + 1, 80, x - 1 + (x > CX ? 2 : 0), 112, 3, 1, hb);
     cap(f, g, hr, g.hw + 4, 19.5, T + 15.5, E);
     // 侧发：从太阳穴垂到胸前
-    strand(f, Lx + 2, T + 9, Lx - 4, E + 14, Lx - 3, 100, 9, 3, hr, { edgeLeft: 1, tipAt: 0.9 });
-    strand(f, Lx + 5, T + 12, Lx, E + 16, Lx + 1, 92, 5, 1, hr, { tipAt: 0.9 });
-    strand(f, Rx - 2, T + 9, Rx + 4, E + 14, Rx + 3, 100, 9, 3, hr, { tipAt: 0.9 });
-    strand(f, Rx - 5, T + 12, Rx, E + 16, Rx - 1, 92, 5, 1, hr, { tipAt: 0.9 });
+    strand(f, Lx + 2, T + 9, Lx - 4, E + 14, Lx - 3, 98, 8, 1, hr, { edgeLeft: 1, tipAt: 0.9, taper: 1.6 });
+    strand(f, Lx + 5, T + 12, Lx, E + 16, Lx + 1, 86, 5, 0, hr, { tipAt: 0.9 });
+    strand(f, Rx - 2, T + 9, Rx + 4, E + 14, Rx + 3, 98, 8, 1, hr, { tipAt: 0.9, taper: 1.6 });
+    strand(f, Rx - 5, T + 12, Rx, E + 16, Rx - 1, 86, 5, 0, hr, { tipAt: 0.9 });
     // 刘海：略向左分，眉间一缕
     var B = [[Lx + 3, Lx + 2, E + 2, 8], [Lx + 9, Lx + 7, E - 3, 8], [CX - 4, CX - 6, E - 4, 8], [CX + 1, CX - 1, E + 1, 5],
       [CX + 6, CX + 5, E - 4, 8], [Rx - 8, Rx - 6, E - 3, 8], [Rx - 3, Rx, E + 2, 7]];
@@ -254,8 +274,8 @@
     bk.poly([Lx - 5, T + 14, Rx + 5, T + 14, Rx + 11, 112, Lx - 11, 112], hr.sh);
     for (var x = Lx - 8; x < Rx + 9; x += 4) strand(bk, x + 2, T + 30, x, 84, x + (x > CX ? 2 : -1), 112, 3, 1, hb);
     cap(f, g, hr, g.hw + 4, 19.5, T + 15.5, E);
-    strand(f, Lx + 2, T + 9, Lx - 5, E + 16, Lx - 4, 108, 9, 4, hr, { edgeLeft: 1, tipAt: 0.92 });
-    strand(f, Rx - 2, T + 9, Rx + 5, E + 16, Rx + 4, 108, 9, 4, hr, { tipAt: 0.92 });
+    strand(f, Lx + 2, T + 9, Lx - 5, E + 16, Lx - 3, 100, 8, 1, hr, { edgeLeft: 1, tipAt: 0.9, taper: 1.6 });
+    strand(f, Rx - 2, T + 9, Rx + 5, E + 16, Rx + 3, 100, 8, 1, hr, { tipAt: 0.9, taper: 1.6 });
     strand(f, Lx + 5, T + 12, Lx + 1, E + 10, Lx + 2, E + 18, 5, 0, hr);
     strand(f, Rx - 5, T + 12, Rx - 1, E + 10, Rx - 2, E + 18, 5, 0, hr);
     // 中分柔和刘海
@@ -709,7 +729,7 @@
         var y = by + Math.round(oy);
         var tt = th;
         if (th === 1 && u > 1 && u < w - 1) tt = (u > w * 0.5 ? 2 : 1);
-        if (th === 1 && cfg.head === 'f') tt = (u > w * 0.55 && u < w - 1) ? 2 : 1;
+        if (th === 1 && (cfg.head === 'f' || cfg.head === 'child')) tt = 1;
         if (u === 0) tt = 1;
         for (var k = 0; k < tt; k++) b.px(x, y + k, col);
       }
@@ -1171,14 +1191,28 @@
   OUTFIT.black_robe = function (b, g, o) {
     torsoFill(b, g, o.c.base, 2);
     var red = P.ramp(o.inner);
-    vShape(b, g, 6, 18, red.base);
-    b.line(CX - 6, g.shY - 4, CX - 0.5, g.shY + 18, '#5a0a20');
+    // 前襟开口露出暗红内衬
+    vShape(b, g, 7, 40, red.sh);
+    vShape(b, g, 5, 34, '#120408');
+    b.line(CX - 7, g.shY - 4, CX - 0.5, g.shY + 40, red.base); b.line(CX + 7, g.shY - 4, CX + 0.5, g.shY + 40, red.sh);
     shadeCloth(b, g, o.c, { noNeckShadow: 1 });
+    // 披肩（短斗篷）
+    for (var y = g.shY + 2; y < g.shY + 26; y++) {
+      var hw = torsoHW(g, y) + 3 - Math.max(0, y - g.shY - 18) * 0.5;
+      var t = (y - g.shY) / 26;
+      for (var x = Math.round(CX - hw); x < Math.round(CX + hw); x++) {
+        if (Math.abs(x + 0.5 - CX) < 8 - t * 2) continue;
+        var edge = y === g.shY + 25 || Math.abs(x + 0.5 - CX) > hw - 1.5;
+        b.px(x, y, edge ? o.c.sh2 : (x < CX - 6 && y < g.shY + 8 ? o.c.hi : o.c.base));
+      }
+    }
+    for (var k = -3; k <= 3; k++) if (k) b.line(CX + k * 7, g.shY + 8, CX + k * 9.5, g.shY + 25, o.c.sh2);
     // 长袍褶皱
-    for (var k = -3; k <= 3; k++) if (k) b.line(CX + k * 6, g.shY + 16, CX + k * 8, H, o.c.sh2);
-    // 红绳与扣
-    b.line(CX - 9, g.shY + 3, CX - 2, g.shY + 12, '#8a1020'); b.line(CX + 9, g.shY + 3, CX + 2, g.shY + 12, '#8a1020');
-    b.rect(CX - 2, g.shY + 11, 4, 3, '#c9a25a'); b.px(CX - 2, g.shY + 11, '#f0d890');
+    for (var k2 = -2; k2 <= 2; k2++) if (k2) b.line(CX + k2 * 12, g.shY + 28, CX + k2 * 14, H, o.c.sh2);
+    // 乌鸦扣
+    b.circle(CX, g.shY + 6, 4, '#7a5a28'); b.circle(CX, g.shY + 6, 3, '#c9a25a'); b.px(CX - 1.5, g.shY + 4, '#f0d890');
+    b.px(CX - 0.5, g.shY + 6, '#2a1a08'); b.px(CX + 0.5, g.shY + 6, '#2a1a08'); b.px(CX + 1.5, g.shY + 5, '#2a1a08');
+    b.line(CX - 4, g.shY + 6, CX - 10, g.shY + 4, '#8a1020'); b.line(CX + 4, g.shY + 6, CX + 10, g.shY + 4, '#8a1020');
   };
 
   OUTFIT.white_dress = function (b, g, o, sk) {
@@ -1354,6 +1388,7 @@
     // 发型
     var hs = HAIR[vis.hair] ? vis.hair : 'short_neat';
     HAIR[hs](back, front, g, hr, cfg, sk);
+    closeGaps(front, g, hr);
     // 身体
     var of = OUTFIT[vis.outfit] || OUTFIT.suit_tie;
     of(body, g, o, sk, cfg, vis);
@@ -1569,25 +1604,32 @@
     // 兜帽外形（后）
     back.ellipse(CX, g.top + 16, g.hw + 9, 24, hood.sh);
     back.poly([CX - g.hw - 9, g.top + 18, CX + g.hw + 9, g.top + 18, CX + g.hw + 14, g.shY + 10, CX - g.hw - 14, g.shY + 10], hood.sh);
-    // 面具
-    var mk = { base: C('#1c1a22'), hi: C('#3a3848'), hi2: C('#5a5870'), sh: C('#0e0c12'), gold: C('#9a7a40'), gold2: C('#c9a25a') };
+    // 面具：亮黑漆面，额头鳞状羽纹，长而弯的乌鸦喙
+    var mk = { base: C('#1a1820'), hi: C('#34324a'), hi2: C('#58587a'), sh: C('#0a090e'), gold: C('#9a7a40'), gold2: C('#d8b060') };
     head.ellipse(CX, g.top + 20, g.hw - 1, 19, mk.base);
-    // 额部羽毛纹
-    for (var i = 0; i < 6; i++) {
-      head.line(CX - 10 + i * 4, g.top + 4, CX - 12 + i * 4.8, g.top + 12, mk.hi);
+    head.ellipse(CX - 4, g.top + 12, 7, 6, mk.hi);
+    head.ellipse(CX - 3, g.top + 13, 6, 5, mk.base);
+    // 羽鳞
+    for (var ry = 0; ry < 3; ry++) for (var rx = -3; rx <= 3; rx++) {
+      var fx = CX + rx * 4 + (ry % 2) * 2, fy = g.top + 5 + ry * 4;
+      if (Math.abs(fx - CX) > g.hw - 4 - ry) continue;
+      head.px(fx - 1, fy, mk.hi); head.px(fx, fy + 1, mk.hi); head.px(fx + 1, fy, mk.hi);
+      if (rx < 0) head.px(fx, fy + 1, mk.hi2);
     }
-    // 鸟喙
-    var by = g.eyeY + 3;
-    head.poly([CX - 6, by, CX + 6, by, CX + 2, g.chin + 10, CX, g.chin + 14, CX - 2, g.chin + 10], mk.base);
-    head.line(CX - 0.5, by + 2, CX - 0.5, g.chin + 12, mk.hi);
-    head.line(CX - 5, by, CX - 1, g.chin + 9, mk.hi2);
-    head.line(CX + 5, by, CX + 1, g.chin + 9, mk.sh);
-    head.px(CX - 3, by + 6, mk.sh); head.px(CX + 2, by + 6, mk.sh);
-    head.hl(CX - 4, by + 12, 8, mk.sh);
-    // 金边
-    head.line(CX - 12, g.eyeY - 4, CX - 3, g.eyeY - 1, mk.gold);
-    head.line(CX + 12, g.eyeY - 4, CX + 3, g.eyeY - 1, mk.gold);
-    head.px(CX - 0.5, g.eyeY - 1, mk.gold2);
+    // 金边眉线
+    head.line(CX - 13, g.eyeY - 4, CX - 3, g.eyeY - 1, mk.gold); head.line(CX - 12, g.eyeY - 5, CX - 4, g.eyeY - 2, mk.gold2);
+    head.line(CX + 13, g.eyeY - 4, CX + 3, g.eyeY - 1, mk.gold); head.line(CX + 12, g.eyeY - 5, CX + 4, g.eyeY - 2, mk.gold);
+    // 鸟喙：宽基部 → 尖端微钩
+    var by = g.eyeY - 1, tipY = g.chin + 16;
+    head.poly([CX - 7, by, CX + 7, by, CX + 4, by + 10, CX + 2, tipY - 4, CX + 0.5, tipY, CX - 1, tipY - 2, CX - 4, by + 10], mk.base);
+    head.poly([CX - 7, by, CX - 0.5, by - 2, CX - 0.5, tipY - 1, CX - 1, tipY - 2, CX - 4, by + 10], C('#24222e'));
+    head.line(CX - 0.5, by, CX - 0.5, tipY - 2, mk.hi2);
+    head.line(CX - 5, by + 2, CX - 2, tipY - 6, mk.hi);
+    head.line(CX + 5, by + 2, CX + 2, tipY - 5, mk.sh);
+    head.px(CX - 1, by + 1, C('#8a8ab0')); head.px(CX - 1, by + 2, C('#8a8ab0'));
+    head.px(CX - 3, by + 9, mk.sh); head.px(CX + 2, by + 9, mk.sh);
+    head.hl(CX - 3, by + 14, 6, mk.sh);
+    head.px(CX + 1, tipY - 1, mk.sh); head.px(CX, tipY, mk.base);
     // 兜帽前沿（前层）
     var T = g.top - 6;
     front.clip(0, 0, W, g.chin + 12);
@@ -1653,6 +1695,8 @@
     }
     // 眉
     var bcol = cfg.browCol ? C(cfg.browCol) : P.mix(p.hr.sh, '#100810', 0.3);
+    var hrgb = P.hexRGB(vis.hairColor || '#303030');
+    if (P.rgb2hsl(hrgb[0], hrgb[1], hrgb[2])[2] > 0.45) bcol = P.mix(p.hr.sh2, '#4a3040', 0.35);
     if (cfg.head === 'old' || vis.hair === 'side_part_grey' || vis.hair === 'grey_slick') bcol = P.mix(p.hr.base, '#303038', 0.3);
     var browLayer = cfg.browsOver ? top : head;
     if (cfg.browsOver) bcol = P.mix(p.hr.line, '#000000', 0.2);
@@ -1754,6 +1798,15 @@
   }
 
   /* ================= 合成 ================= */
+  var softCache = new Map();
+  function softLine(line, under) {
+    var key = line * 4096 + (under & 0xfff);
+    var m = softCache.get(line);
+    if (!m) { m = new Map(); softCache.set(line, m); }
+    var r = m.get(under);
+    if (r === undefined) { r = P.mix(line, under, 0.3); m.set(under, r); }
+    return r;
+  }
   function compose(p, expr) {
     var out = L();
     var Ls = p.layers;
@@ -1764,7 +1817,13 @@
     var order = [Ls.back, Ls.body, head, Ls.front, top, extra];
     for (var i = 0; i < order.length; i++) {
       var lay = order[i];
-      out.blit(lay.outlineLayer(P.outlineOf), 0, 0);
+      // 选择性描边：外轮廓用深色，压在下层像素上的内部线条用较柔和的色
+      var ol = lay.outlineLayer(P.outlineOf), od = ol.d, dd = out.d;
+      for (var k = 0; k < od.length; k++) {
+        var c = od[k];
+        if (!c) continue;
+        dd[k] = dd[k] ? softLine(c, dd[k]) : c;
+      }
       out.blit(lay, 0, 0);
       if (lay === top) out.blit(fx, 0, 0);
     }

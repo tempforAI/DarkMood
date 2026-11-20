@@ -906,18 +906,17 @@
     b.line(cx, nailY + 1, x + 4, y, '#4a3a24'); b.line(cx, nailY + 1, x + w - 5, y, '#4a3a24');
     b.rect(Math.round(cx) - 1, nailY, 3, 2, '#2a2a2a'); b.px(Math.round(cx) - 1, nailY, '#7a7a82');
     b.rect(x, y, w, h, G.gd0);
-    b.rect(x + 1, y + 1, w - 2, h - 2, G.gd2);
-    b.hl(x + 1, y + 1, w - 2, G.gd4); b.vl(x + 1, y + 1, h - 2, G.gd4);
+    b.rect(x + 1, y + 1, w - 2, h - 2, G.gd3);
+    b.hl(x + 1, y + 1, w - 2, G.gd5); b.vl(x + 1, y + 1, h - 2, G.gd4);
     b.hl(x + 2, y + h - 2, w - 3, G.gd1); b.vl(x + w - 2, y + 2, h - 3, G.gd1);
-    b.frame(x + 3, y + 3, w - 6, h - 6, G.gd1);
-    b.px(x + 3, y + 3, G.gd4);
+    b.wash(x + 2, y + Math.round(h / 2), w - 4, Math.round(h / 2) - 2, G.gd1, 1, 0.5);
     // 两侧铆钉
     b.px(x + 6, Math.round(y + h / 2) - 1, G.gd5); b.px(x + 6, Math.round(y + h / 2), G.gd0);
     b.px(x + w - 7, Math.round(y + h / 2) - 1, G.gd5); b.px(x + w - 7, Math.round(y + h / 2), G.gd0);
     var gl = ch + 'L', gw = 9, gh = ch === '东' ? 10 : 9;
     var gx = Math.round(cx - gw / 2), gy = Math.round(y + (h - gh) / 2);
-    X.han(b, gx + 1, gy + 1, gl, G.gd4);
-    X.han(b, gx, gy, gl, '#2a1c08');
+    X.han(b, gx + 1, gy + 1, gl, G.gd5);
+    X.han(b, gx, gy, gl, '#1e1204');
   }
   // 墙上挂牌留下的干净印子（灰尘轮廓）
   function plateGhost(b, x, y, w, h) {
@@ -1042,7 +1041,7 @@
 
   /* ---------- 客房（东翼；西翼为镜像；burnt 为烧毁版） ---------- */
   function guestRoom(b, burnt) {
-    var fy = room(b, { floorY: 192, wall: burnt ? ['#1e1a1c', '#262022'] : ['#2a2234', '#342a40'], wainCols: burnt ? rmp('#22160e') : rmp('#40281a'), seed: 71 });
+    var fy = room(b, { floorY: 192, wall: burnt ? ['#463c3a', '#4e4442'] : ['#2a2234', '#342a40'], wainCols: burnt ? rmp('#22160e') : rmp('#40281a'), seed: 71 });
     door(b, 20, 82, 48, fy - 82, { cols: rmp(burnt ? '#2a1a12' : '#4a2a1c'), panels: 2 });
     // 电灯开关（门右侧）
     b.rect(79, 119, 8, 12, '#d8d0c0'); b.frame(79, 119, 8, 12, '#8a8070'); b.rect(82, 122, 2, 5, '#3a3030'); b.px(82, 122, '#6a6060');
@@ -1093,7 +1092,7 @@
       floorShadow(b, 296, 214, 176, 4);
     } else {
       // 烧塌的床：焦黑床架、塌陷的床垫、露出的弹簧
-      var ash = [C('#0c0a0a'), C('#1c1816'), C('#2e2824'), C('#4a423c'), C('#6a625a')];
+      var ash = [C('#0c0a0a'), C('#221e1c'), C('#3a3430'), C('#5a524c'), C('#7e766e')];
       b.poly([296, 150, 306, 140, 308, 214, 296, 214], ash[1]); b.vl(297, 150, 64, ash[3]);
       b.poly([300, 144, 304, 136, 308, 146], ash[1]);
       b.poly([306, 200, 336, 186, 372, 196, 410, 184, 446, 196, 468, 206, 468, 216, 306, 216], ash[1]);
@@ -1109,7 +1108,7 @@
     }
     if (burnt) {
       // 墙面熏黑：从床升起的火舌状煤烟
-      var dd = b.d, f = X.mixQ, blk = C('#060404');
+      var dd = b.d, f = X.mixQ, blk = C('#060404'), scorch = C('#3a2014');
       for (var yy = 0; yy < 216; yy++) for (var xx = 220; xx < 480; xx++) {
         var cx2 = 384 + Math.sin(yy * 0.045) * 22 + Math.sin(yy * 0.13 + 1) * 8;
         var wid = 46 + (216 - yy) * 0.55;
@@ -1119,9 +1118,10 @@
         var q = Math.floor(sAmt);
         if (q <= 0) continue;
         var ii = yy * 480 + xx;
-        dd[ii] = f(dd[ii], blk, q > 3 ? 3 : q);
+        if (q === 1) dd[ii] = f(dd[ii], scorch, 2);
+        else dd[ii] = f(dd[ii], blk, q > 3 ? 3 : q);
       }
-      b.wash(0, 0, 480, 270, '#2a2422', 1);
+      b.wash(0, 0, 480, 270, '#1a1616', 1);
       for (var c2 = 0; c2 < 26; c2++) { var cx3 = 300 + hsh(c2, 5, 4) * 170, cy3 = 142 + hsh(c2, 6, 4) * 46; b.line(cx3, cy3, cx3 + 4 - hsh(c2, 7, 4) * 8, cy3 + 5, '#0a0606'); if (c2 % 4 === 0) b.px(cx3 + 1, cy3 + 2, '#6a2a14'); }
       // 窗：玻璃碎裂，窗帘烧剩残片
       b.rect(274, 44, 56, 48, '#0e0c10');
