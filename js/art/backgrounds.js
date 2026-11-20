@@ -1703,27 +1703,37 @@
 
 
   /* ======================= 室外通用 ======================= */
-  // 多边形岩石：带裂纹与左上受光
+  // 多边形岩石：分层岩块（沉积岩风格），上缘受光、缝隙压暗
   function rock(b, pts, cols, seed, light) {
-    var m = new X.Buf(b.w, b.h);
-    m.poly(pts, 1);
-    var minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
-    for (var i = 0; i < pts.length; i += 2) { minx = Math.min(minx, pts[i]); maxx = Math.max(maxx, pts[i]); miny = Math.min(miny, pts[i + 1]); maxy = Math.max(maxy, pts[i + 1]); }
+    var minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9, i;
+    for (i = 0; i < pts.length; i += 2) { minx = Math.min(minx, pts[i]); maxx = Math.max(maxx, pts[i]); miny = Math.min(miny, pts[i + 1]); maxy = Math.max(maxy, pts[i + 1]); }
     minx = Math.max(0, Math.floor(minx)); miny = Math.max(0, Math.floor(miny)); maxx = Math.min(b.w - 1, Math.ceil(maxx)); maxy = Math.min(b.h - 1, Math.ceil(maxy));
-    var md = m.d, W = b.w;
-    b.pat(minx, miny, maxx - minx + 1, maxy - miny + 1, function (x, y) {
-      var i = y * W + x;
-      if (!md[i]) return 0;
-      // 边缘
-      var up = y > 0 ? md[i - W] : 0, lf = x > 0 ? md[i - 1] : 0, rt = x < W - 1 ? md[i + 1] : 0;
-      var n = Math.sin(x * 0.11 + Math.sin(y * 0.07) * 3) + Math.sin(y * 0.19 + x * 0.05) * 0.7 + (hsh(x >> 2, y >> 2, seed) - 0.5) * 1.2;
-      var idx = n > 0.9 ? 3 : n > -0.3 ? 2 : 1;
-      if (light !== false && (!up || !lf)) idx = 4;
+    var mw = maxx - minx + 1, mh = maxy - miny + 1;
+    if (mw <= 0 || mh <= 0) return;
+    var m = new X.Buf(mw, mh), sp = [];
+    for (i = 0; i < pts.length; i += 2) sp.push(pts[i] - minx, pts[i + 1] - miny);
+    m.poly(sp, 1);
+    var md = m.d, nc = cols.length;
+    b.pat(minx, miny, mw, mh, function (x, y) {
+      var lx = x - minx, ly = y - miny, k = ly * mw + lx;
+      if (!md[k]) return 0;
+      var up = ly > 0 ? md[k - mw] : 0, lf = lx > 0 ? md[k - 1] : 0, rt = lx < mw - 1 ? md[k + 1] : 0;
+      var wob = Math.sin(x * 0.045 + seed) * 5 + Math.sin(x * 0.13 + seed * 2) * 2;
+      var yy = y + wob, bh = 9;
+      var v = Math.floor(yy / bh), fyy = yy - v * bh;
+      var segW = 12 + Math.floor(hsh(v, 1, seed) * 16);
+      var xs = x + v * 17 + Math.floor(hsh(v, 2, seed) * 30);
+      var u = Math.floor(xs / segW), fx = xs - u * segW;
+      var r = hsh(u, v, seed);
+      var idx = r < 0.25 ? 1 : r < 0.75 ? 2 : 3;
+      if (fyy < 1.2) idx = Math.min(nc - 1, idx + 1);
+      else if (fyy > bh - 1.5) idx = 0;
+      else if (fx < 1) idx = 0;
+      else if (fx < 2.5 && bay(x, y) < 8) idx = Math.max(1, idx - 1);
+      else if (fyy < 3 && bay(x, y) < 6) idx = Math.min(nc - 1, idx + 1);
+      if (light !== false && (!up || (!lf && bay(x, y) < 10))) idx = Math.min(nc - 1, idx + 1);
       if (!rt) idx = 0;
-      var crack = Math.abs(Math.sin(x * 0.045 + y * 0.12 + Math.sin(x * 0.02) * 4));
-      if (crack < 0.035) idx = 0;
-      if (hsh(x, y, seed) < 0.03) idx = Math.max(0, idx - 1);
-      return cols[Math.min(cols.length - 1, idx)];
+      return cols[idx];
     });
   }
   // 远处森林剪影
@@ -2142,11 +2152,11 @@
         var x = 64 + t * 236, y = 172 + t * 38;
         var side = i % 2 ? 1 : -1;
         var fx = Math.round(x), fyy = Math.round(y + side * 2);
-        var sc = 0.8 + t * 0.5;
-        b.ellipse(fx, fyy, 2.6 * sc, 1.3 * sc, C('#3a3428')); b.ellipse(fx + 0.5, fyy + 0.3, 1.6 * sc, 0.8 * sc, C('#2e2a20'));
-        b.ellipse(fx - 3 * sc, fyy + 0.4, 1.2 * sc, 1 * sc, C('#3a3428'));
-        b.px(fx + 1, fyy - 1, C('#8a8268'));
-        if (i % 2 === 0) { var cx = Math.round(x + 4 + t * 2), cy = Math.round(y - 3); b.px(cx, cy, C('#1e1a14')); b.px(cx + 1, cy, C('#2e2a20')); b.px(cx, cy - 1, C('#7a725a')); }
+        var sc = 1 + t * 0.6;
+        b.ellipse(fx, fyy, 3.2 * sc, 1.6 * sc, C('#2e2a20')); b.ellipse(fx + 0.5, fyy + 0.3, 2 * sc, 1 * sc, C('#24201a'));
+        b.ellipse(fx - 4 * sc, fyy + 0.4, 1.5 * sc, 1.2 * sc, C('#2e2a20'));
+        b.hl(fx - 3, fyy - Math.round(1.6 * sc), 5, C('#9a9278'));
+        if (i % 2 === 0) { var cx = Math.round(x + 7 + t * 3), cy = Math.round(y - 4); b.rect(cx, cy, 2, 2, C('#1a160f')); b.hl(cx, cy - 1, 2, C('#9a9278')); }
       }
     }
     b.light(200, 60, 240, 80, '#8a8aa8', 1);
@@ -2155,43 +2165,47 @@
 
   /* ---------- 海蚀洞 ---------- */
   S.seacave = function (b) {
-    var rc = [C('#0e0e14'), C('#16161e'), C('#1e1e28'), C('#282834'), C('#343442')];
-    b.fill(rc[1]);
-    rock(b, [0, 0, 480, 0, 480, 270, 0, 270], rc, 41, false);
-    // 洞口（外面是海与天）
-    var ex = 240, ey = 60;
-    b.ellipse(ex, ey + 6, 64, 46, rc[0]);
-    b.clip(176, 14, 128, 92);
-    var m = new X.Buf(480, 270);
-    m.poly([184, 98, 190, 60, 204, 34, 226, 22, 252, 20, 276, 30, 292, 52, 298, 80, 296, 98], 1);
-    sky(b, 176, 14, 128, 60, 13);
-    sea(b, 74, 106, 14);
-    b.clip();
-    b.pat(176, 14, 128, 92, function (x, y) { return m.d[y * 480 + x] ? 0 : (b.get(x, y) === rc[0] ? 0 : 0); });
-    // 用岩石重绘洞口外缘
-    rock(b, [176, 14, 304, 14, 304, 106, 296, 98, 298, 80, 292, 52, 276, 30, 252, 20, 226, 22, 204, 34, 190, 60, 184, 98, 176, 106], rc, 42);
-    b.light(240, 70, 110, 120, '#7a8aa8', 2);
+    var rc = [C('#0a0a10'), C('#14141c'), C('#1c1c26'), C('#262632'), C('#323240')];
+    // 洞口外的海与天
+    sky(b, 170, 14, 140, 60, 13);
+    sea(b, 74, 110, 14);
+    // 洞壁（围绕洞口）
+    rock(b, [0, 0, 480, 0, 480, 270, 0, 270, 0, 110, 184, 104, 190, 62, 204, 36, 226, 22, 252, 20, 276, 30, 292, 52, 298, 80, 300, 104, 480, 112, 480, 0, 0, 0], rc, 41);
+    // 洞口边缘高光与外光
+    b.light(242, 64, 120, 110, '#6a7a98', 2);
+    // 钟乳石
+    var rng = X.rng('stal');
+    for (var i = 0; i < 26; i++) {
+      var x = rng() * 480, len = 8 + rng() * 28, w = 3 + rng() * 6;
+      if (x > 176 && x < 304) len *= 0.4;
+      b.poly([x - w, 0, x + w, 0, x + 0.5, len], rc[2]);
+      b.line(x - w * 0.4, 1, x, len - 2, rc[4]);
+      b.px(x, len, '#6a7a98');
+    }
     // 右侧岩缝通道
-    b.poly([408, 60, 430, 56, 446, 80, 452, 140, 460, 200, 420, 200, 414, 140], rc[0]);
-    b.poly([418, 70, 432, 66, 440, 100, 444, 190, 428, 190, 422, 120], C('#050508'));
-    b.line(430, 60, 452, 196, rc[3]);
+    b.poly([404, 58, 428, 54, 448, 84, 456, 150, 466, 200, 412, 200, 410, 140], rc[0]);
+    b.poly([416, 70, 430, 64, 440, 100, 446, 194, 424, 194, 418, 120], C('#030305'));
+    b.line(429, 56, 452, 198, rc[4]); b.line(428, 58, 450, 198, rc[3]);
+    b.light(436, 130, 30, 70, '#2a2a40', 1);
     // 岩架 + 毛毯
-    rock(b, [12, 150, 40, 144, 100, 146, 146, 150, 150, 168, 140, 186, 20, 186, 10, 170], [rc[1], rc[2], rc[3], rc[4], C('#40404e')], 43);
+    rock(b, [12, 150, 40, 144, 100, 146, 146, 150, 150, 168, 140, 186, 20, 186, 10, 170], [rc[1], rc[2], rc[3], rc[4], C('#42425a')], 43);
     var bl = rmp('#6a4a3a');
-    b.poly([38, 146, 98, 144, 102, 152, 40, 156], bl[3]); b.poly([40, 152, 100, 150, 102, 156, 42, 156], bl[2]);
-    for (var k = 42; k < 98; k += 8) b.vl(k, 146, 9, bl[1]);
-    b.hl(40, 146, 58, bl[4]);
-    b.rect(110, 140, 8, 6, '#c8c0b0'); b.rect(124, 142, 6, 4, '#e8e0d0');
+    b.poly([36, 147, 100, 143, 104, 151, 98, 156, 40, 156], bl[3]); b.poly([40, 151, 102, 148, 104, 154, 42, 156], bl[2]);
+    for (var k = 42; k < 100; k += 7) b.vl(k, 146, 9, bl[1]);
+    b.hl(38, 146, 60, bl[4]); b.rect(84, 140, 14, 6, bl[4]); b.hl(84, 140, 14, bl[5]);
+    b.rect(110, 141, 8, 5, '#c8c0b0'); b.px(111, 141, '#ffffff'); b.rect(124, 143, 6, 3, '#e8e0d0'); b.px(132, 145, '#d8a060');
     // 潮池
     b.ellipse(240, 204, 92, 24, rc[0]);
-    b.ellipse(240, 204, 88, 21, G.sea1); b.ellipse(236, 200, 70, 14, G.sea2); b.hl(200, 196, 30, G.sea4); b.hl(250, 206, 24, G.sea3);
+    b.ellipse(240, 204, 88, 21, G.sea1); b.ellipse(236, 200, 70, 14, G.sea2);
+    b.hl(196, 196, 30, G.sea4); b.hl(252, 206, 24, G.sea3); b.hl(214, 211, 14, G.sea3);
     b.light(240, 200, 90, 24, '#5a7a9a', 1);
-    // 地面
-    rock(b, [0, 186, 160, 186, 150, 214, 0, 230], rc, 44);
+    // 地面岩石
+    rock(b, [0, 186, 160, 186, 150, 214, 0, 232], rc, 44);
     rock(b, [330, 200, 480, 196, 480, 270, 320, 270], rc, 45);
-    rock(b, [0, 230, 160, 216, 340, 232, 320, 270, 0, 270], rc, 46);
+    rock(b, [0, 232, 150, 216, 340, 234, 320, 270, 0, 270], rc, 46);
     // 湿润反光
-    b.speckle(0, 0, 480, 270, C('#4a5a70'), 0.004, X.rng('wet'));
+    var r2 = X.rng('wet');
+    for (var j = 0; j < 90; j++) { var wx = r2() * 480, wy = r2() * 270; if (b.get(wx | 0, wy | 0) === rc[3] || b.get(wx | 0, wy | 0) === rc[4]) b.hl(wx, wy, 2, '#5a6a88'); }
     finish(b, 3);
   };
 
@@ -2237,6 +2251,134 @@
     var crows = [[80, 60, 5, 0], [110, 44, 4, 1], [140, 70, 3, 0], [180, 36, 6, 1], [200, 58, 3, 0], [400, 50, 5, 1], [430, 76, 4, 0], [250, 30, 3, 1], [372, 110, 3, 0], [60, 96, 3, 1], [452, 30, 3, 0]];
     for (var c = 0; c < crows.length; c++) flyingCrow(b, crows[c][0], crows[c][1], crows[c][2], '#000000', crows[c][3]);
     crow(b, 360, 98, 14, '#000000', 'spread');
+    finish(b, 1);
+  };
+
+
+  /* ---------- 宵鸦岛地图 ---------- */
+  S.__map = function (b) {
+    var A = DM.AREAS || {};
+    function node(k, dx, dy) { var a = A[k] && A[k].map; return a ? [a[0] + (dx || 0), a[1] + (dy || 0)] : [240, 135]; }
+    // 海
+    var seaC = [C('#0a1020'), C('#0e1528'), C('#121a30'), C('#1a2440'), C('#26345a')];
+    b.vgrad(0, 0, 480, 270, [seaC[2], seaC[1], seaC[1], seaC[0]]);
+    b.pat(0, 0, 480, 270, function (x, y) {
+      if ((y % 10) === 0 && Math.sin(x * 0.4 + y) > 0.6) return seaC[3];
+      if ((y % 10) === 5 && Math.sin(x * 0.4 + y * 2 + 2) > 0.75) return seaC[2];
+      return 0;
+    });
+    // 岛轮廓（极坐标噪声）
+    var cx = 252, cy = 128, pts = [];
+    for (var i = 0; i < 96; i++) {
+      var a = i / 96 * Math.PI * 2;
+      var r = 1 + Math.sin(a * 3 + 1) * 0.07 + Math.sin(a * 7 + 2) * 0.04 + Math.sin(a * 13) * 0.025;
+      var rx = 212 * r, ry = 118 * r;
+      if (a > 5.2 && a < 5.9) ry *= 0.93;      // 北侧悬崖略内收
+      if (a > 2.3 && a < 2.7) { rx *= 1.02; ry *= 1.05; }
+      pts.push(cx + Math.cos(a) * rx, cy + Math.sin(a) * ry);
+    }
+    // 浅滩
+    var shoal = [];
+    for (var j = 0; j < pts.length; j += 2) shoal.push(cx + (pts[j] - cx) * 1.05, cy + (pts[j + 1] - cy) * 1.07);
+    b.poly(shoal, seaC[3]);
+    b.dither(0, 0, 480, 270, null, seaC[2], 0);
+    var land = new X.Buf(480, 270);
+    land.poly(pts, 1);
+    var L = land.d;
+    var gr = [C('#141e18'), C('#1a281f'), C('#223226'), C('#2a3c2c'), C('#344834'), C('#4a5a40')];
+    b.pat(0, 0, 480, 270, function (x, y) {
+      var k = y * 480 + x;
+      if (!L[k]) return 0;
+      var e = 0;
+      if (!L[k - 1] || !L[k + 1] || !L[k - 480] || !L[k + 480]) return C('#c9b88a');
+      if (!L[k - 2] || !L[k + 2] || !L[k - 960] || !L[k + 960]) e = 1;
+      var n = Math.sin(x * 0.08) + Math.sin(y * 0.11 + x * 0.03) + (hsh(x >> 1, y >> 1, 3) - 0.5);
+      var idx = n > 1 ? 3 : n > 0 ? 2 : 1;
+      if (e) return C('#6a5e48');
+      return gr[idx];
+    });
+    // 森林符号
+    var rng = X.rng('mapforest');
+    for (var t = 0; t < 420; t++) {
+      var x = 40 + rng() * 420, y = 10 + rng() * 240;
+      if (!land.get(x | 0, y | 0) || !land.get((x | 0) + 4, (y | 0) + 4) || !land.get((x | 0) - 4, (y | 0) - 4)) continue;
+      var near = false;
+      for (var kk in A) { var p = A[kk].map; if (Math.abs(p[0] - x) < 24 && Math.abs(p[1] - y) < 18) near = true; }
+      if (near) continue;
+      b.poly([x - 2.5, y + 2, x + 2.5, y + 2, x + 0.5, y - 4], gr[0]);
+      b.px(x, y - 2, gr[4]); b.px(x - 1, y, gr[3]);
+    }
+    // 山丘（神社）等高线
+    var sh = node('shrine');
+    for (var c = 0; c < 4; c++) b.ring(sh[0] + 6, sh[1] + 10, 34 - c * 7, 20 - c * 4, c % 2 ? C('#5a5a40') : C('#4a4a34'));
+    // 北侧悬崖阴影线
+    for (var q = 0; q < pts.length; q += 2) {
+      var px = pts[q], py = pts[q + 1];
+      if (py < cy - 70 && px > 260) { b.line(px, py, px + 1, py + 5, C('#3a3a40')); b.line(px + 2, py, px + 3, py + 4, C('#2a2a30')); }
+    }
+    // 道路
+    var road = C('#8a7a58'), road2 = C('#5a4e38');
+    function path(a1, a2, bend) {
+      var x0 = a1[0], y0 = a1[1], x1 = a2[0], y1 = a2[1];
+      var mx = (x0 + x1) / 2 + bend, my = (y0 + y1) / 2 - bend * 0.5;
+      for (var s = 0; s <= 40; s++) {
+        var u = s / 40, iu = 1 - u;
+        var xx = iu * iu * x0 + 2 * iu * u * mx + u * u * x1, yy = iu * iu * y0 + 2 * iu * u * my + u * u * y1;
+        if (s % 3 !== 2) { b.rect(Math.round(xx), Math.round(yy), 2, 1, road); b.px(Math.round(xx), Math.round(yy) + 1, road2); }
+      }
+    }
+    path(node('pier'), node('mansion'), 10); path(node('mansion'), node('courtyard'), 0); path(node('courtyard'), node('tower'), 4);
+    path(node('mansion'), node('judgment'), -8); path(node('judgment'), node('shrine'), 6); path(node('tower'), node('beach'), -10);
+    path(node('mansion'), node('hut'), -12); path(node('hut'), node('seacave'), 8);
+    // 飞鸦祭缆索：神社 → 塔顶
+    var s0 = node('shrine', 10, -4), t0 = node('tower', 0, -6);
+    for (var cs = 0; cs <= 60; cs++) { var u2 = cs / 60; if (cs % 2 === 0) b.px(Math.round(s0[0] + (t0[0] - s0[0]) * u2), Math.round(s0[1] + (t0[1] - s0[1]) * u2 + Math.sin(u2 * Math.PI) * 6), C('#c8b080')); }
+    // 地标
+    var ink = C('#0a0a10'), stone = C('#8a8494'), stone2 = C('#5a5464'), roof = C('#3a2a3a'), gold = C('#c9a25a');
+    // 码头
+    var pr = node('pier');
+    b.rect(pr[0] - 12, pr[1] + 4, 6, 18, C('#7a5a38')); b.rect(pr[0] - 22, pr[1] + 18, 26, 4, C('#7a5a38'));
+    b.rect(pr[0] + 4, pr[1] - 4, 12, 9, roof); b.rect(pr[0] + 5, pr[1] - 3, 10, 7, C('#5a4030'));
+    // 月蚀馆（主楼 + 东西翼）
+    var mn = node('mansion');
+    b.rect(mn[0] - 34, mn[1] - 8, 68, 16, stone2); b.rect(mn[0] - 34, mn[1] - 26, 14, 34, stone2); b.rect(mn[0] + 20, mn[1] - 26, 14, 34, stone2);
+    b.rect(mn[0] - 33, mn[1] - 7, 66, 6, stone); b.rect(mn[0] - 33, mn[1] - 25, 12, 6, stone); b.rect(mn[0] + 21, mn[1] - 25, 12, 6, stone);
+    b.frame(mn[0] - 34, mn[1] - 8, 68, 16, ink); b.frame(mn[0] - 34, mn[1] - 26, 14, 34, ink); b.frame(mn[0] + 20, mn[1] - 26, 14, 34, ink);
+    for (var w = 0; w < 8; w++) b.px(mn[0] - 28 + w * 8, mn[1] + 2, C(G.cl1));
+    // 中庭（喷泉与温室）
+    var cyd = node('courtyard');
+    b.rect(cyd[0] - 14, cyd[1] - 8, 28, 16, C('#3a4038')); b.frame(cyd[0] - 14, cyd[1] - 8, 28, 16, ink);
+    b.circle(cyd[0] - 4, cyd[1] + 1, 3, C('#5a7a8a')); b.rect(cyd[0] + 4, cyd[1] - 5, 8, 6, C('#7a9aaa'));
+    // 鸦之塔
+    var tw = node('tower');
+    b.circle(tw[0], tw[1], 7, ink); b.circle(tw[0], tw[1], 6, stone2); b.circle(tw[0], tw[1], 4, stone); b.circle(tw[0], tw[1], 1.5, gold);
+    // 审判厅（圆厅）
+    var jd = node('judgment');
+    b.circle(jd[0], jd[1], 10, ink); b.circle(jd[0], jd[1], 9, stone2); b.ring(jd[0], jd[1], 6, 6, stone); b.circle(jd[0], jd[1], 2, C('#9a2030'));
+    // 神社（鸟居 + 拜殿）
+    b.rect(sh[0] - 6, sh[1] - 5, 12, 9, roof); b.frame(sh[0] - 6, sh[1] - 5, 12, 9, ink); b.hl(sh[0] - 6, sh[1] - 2, 12, C('#5a3a2a'));
+    b.rect(sh[0] - 3, sh[1] + 8, 1, 6, C('#b03020')); b.rect(sh[0] + 3, sh[1] + 8, 1, 6, C('#b03020')); b.hl(sh[0] - 5, sh[1] + 8, 11, C('#b03020')); b.hl(sh[0] - 4, sh[1] + 10, 9, C('#b03020'));
+    // 北侧海滩（沙）
+    var bc = node('beach');
+    b.ellipse(bc[0], bc[1] - 6, 26, 7, C('#a8987a')); b.ellipse(bc[0], bc[1] - 5, 22, 4, C('#c8b890'));
+    b.hl(bc[0] - 24, bc[1] - 12, 48, C('#c8d8e8'));
+    // 海蚀洞
+    var sc2 = node('seacave');
+    b.ellipse(sc2[0], sc2[1], 9, 6, C('#2a2a30')); b.ellipse(sc2[0] + 1, sc2[1], 6, 4, ink); b.px(sc2[0] - 6, sc2[1] - 4, C('#6a6a72'));
+    // 旧园丁小屋
+    var ht = node('hut');
+    b.rect(ht[0] - 6, ht[1] - 4, 12, 8, C('#5a4030')); b.poly([ht[0] - 8, ht[1] - 4, ht[0] + 8, ht[1] - 4, ht[0], ht[1] - 10], roof); b.frame(ht[0] - 6, ht[1] - 4, 12, 8, ink);
+    // 罗盘
+    var rx0 = 448, ry0 = 236;
+    b.ring(rx0, ry0, 14, 14, gold); b.ring(rx0, ry0, 11, 11, C('#6a5028'));
+    b.poly([rx0 - 3, ry0, rx0 + 3, ry0, rx0 + 0.5, ry0 - 13], gold); b.poly([rx0 - 3, ry0, rx0 + 3, ry0, rx0 + 0.5, ry0 + 13], C('#6a5028'));
+    b.poly([rx0, ry0 - 3, rx0, ry0 + 3, rx0 + 13, ry0 + 0.5], C('#6a5028')); b.poly([rx0, ry0 - 3, rx0, ry0 + 3, rx0 - 13, ry0 + 0.5], C('#6a5028'));
+    b.px(rx0, ry0, C('#fff0c0'));
+    // 外框
+    b.frame(2, 2, 476, 266, C('#6a5028')); b.frame(4, 4, 472, 262, C('#2a2014'));
+    for (var cr = 0; cr < 4; cr++) { var ccx = cr % 2 ? 470 : 9, ccy = cr > 1 ? 261 : 9; b.rect(ccx - 3, ccy - 3, 6, 6, gold); b.px(ccx - 1, ccy - 1, C('#fff0c0')); }
+    // 远处的乌鸦
+    flyingCrow(b, 40, 40, 3, C('#05050a')); flyingCrow(b, 58, 30, 2, C('#05050a'), 1); flyingCrow(b, 430, 180, 3, C('#05050a'), 1);
     finish(b, 1);
   };
 
