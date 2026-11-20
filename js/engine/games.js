@@ -19,6 +19,8 @@
     var b = el('div', 'g-banner', L);
     el('div', 'tt', b, title);
     el('div', 'sp', b);
+    var nb = el('button', 'btn small', b, '手账');
+    nb.addEventListener('click', function (e) { e.stopPropagation(); DM.Audio.se('select'); DM.Menus.openNotebook(); });
     el('span', 'hp-l', b, '信念');
     var hp = el('div', 'hp', b);
     function draw() {
@@ -158,7 +160,7 @@
         clearTimeout(timer);
         if (paused || hover) return;
         var len = lines[idx].text.length;
-        timer = setTimeout(function () { show((idx + 1) % n); }, 2600 + len * 110);
+        timer = setTimeout(function () { if (UI.modalOpen()) { schedule(); return; } show((idx + 1) % n); }, 2600 + len * 110);
       }
       var over = false;
       function fire(i, w) {
