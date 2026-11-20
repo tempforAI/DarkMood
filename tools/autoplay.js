@@ -157,8 +157,17 @@ function step() {
       if (!f._tour[p]) { f.place = p; DM.Explore.open(); return res('explore', p); }
     }
     var fin2 = Array.from(ex.querySelectorAll('.topbar .btn')).find(function (b) { return b.classList.contains('gold'); });
-    if (fin2) { delete f._tour; click(fin2); return res('explore_done'); }
-    return res('explore_stuck', JSON.stringify((def.done || {}).need));
+    if (fin2) { delete f._tour; delete f._rounds; click(fin2); return res('explore_done'); }
+    var missing = ((def.done || {}).need || []).filter(function (n) { return n.indexOf('flag:') === 0 ? !St.flag(n.slice(5)) : !St.hasEv(n); });
+    // 像玩家一样再仔细看一遍：清空已调查标记，最多重来 3 轮
+    f._rounds = (f._rounds || 0) + 1;
+    if (f._rounds <= 3) {
+      Object.keys(St.s.visited).forEach(function (k) { if (k.indexOf(f.id + ':') === 0) delete St.s.visited[k]; });
+      Object.keys(St.s.talked).forEach(function (k) { if (k.indexOf(f.id + ':') === 0) delete St.s.talked[k]; });
+      delete f._tour; DM.Explore.open();
+      return res('explore_revisit', f._rounds);
+    }
+    return res('explore_stuck', '缺少: ' + JSON.stringify(missing));
   }
   if (UI.isWaiting()) { UI.advance(); return res('say'); }
   return res('idle');

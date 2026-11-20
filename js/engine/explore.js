@@ -88,6 +88,22 @@
     });
     var hint = el('div', 'hint', L, spots.length || people.length ? '点击 ◆ 调查，点击人物交谈' : '这里似乎没有需要调查的东西');
     if (nd.ok && def.done && def.done.prompt) hint.textContent = def.done.prompt;
+    else if (!nd.ok && allVisited(f, def)) hint.textContent = '所有地方都看过了，线索却还没齐……有些地方也许值得再仔细看一遍，或者再找人聊聊。';
+  }
+
+  // 本次探索的所有调查点与人物是否都已接触过
+  function allVisited(f, def) {
+    var ok = true;
+    def.places.forEach(function (pl) {
+      var info = placeInfo(def, pl), anchors = (DM.LOCS[info.bg] || {}).anchors || {};
+      ((def.spots && def.spots[pl]) || []).forEach(function (sp) {
+        var x, y;
+        if (sp.anchor && anchors[sp.anchor]) { var a = anchors[sp.anchor]; x = a[0] + a[2] / 2; y = a[1] + a[3] / 2; } else { x = sp.x || 240; y = sp.y || 135; }
+        if (!St.s.visited[f.id + ':' + pl + ':' + (sp.anchor || (x + ',' + y))]) ok = false;
+      });
+      ((def.people && def.people[pl]) || []).forEach(function (p) { if (!St.s.talked[f.id + ':' + p.char]) ok = false; });
+    });
+    return ok;
   }
 
   function runLabel(f, label) {
