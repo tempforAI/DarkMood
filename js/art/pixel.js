@@ -284,14 +284,20 @@
   B.vignette = function (col, strength, band) {
     col = C(col || '#05040a'); band = band || 70; strength = strength || 2;
     var W = this.w, H = this.h, d = this.d, f = X.mixQ;
-    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
-      var e = Math.min(x, W - 1 - x, y * 1.5, (H - 1 - y) * 1.3);
-      if (e >= band) continue;
-      var a = (1 - e / band) * (strength + 0.5) + (BAYER[((y & 3) << 2) | (x & 3)] + 0.5) / 16 - 0.6;
-      var q = Math.floor(a);
-      if (q <= 0) continue;
-      var i = y * W + x;
-      if (d[i]) d[i] = f(d[i], col, Math.min(3, q));
+    var yTop = Math.ceil(band / 1.5), yBot = H - Math.ceil(band / 1.3);
+    for (var y = 0; y < H; y++) {
+      var full = y < yTop || y >= yBot;
+      var ey = Math.min(y * 1.5, (H - 1 - y) * 1.3);
+      for (var x = 0; x < W; x++) {
+        if (!full && x === band) { x = W - band - 1; continue; }
+        var e = Math.min(x, W - 1 - x, ey);
+        if (e >= band) continue;
+        var a = (1 - e / band) * (strength + 0.5) + (BAYER[((y & 3) << 2) | (x & 3)] + 0.5) / 16 - 0.6;
+        var q = Math.floor(a);
+        if (q <= 0) continue;
+        var i = y * W + x;
+        if (d[i]) d[i] = f(d[i], col, Math.min(3, q));
+      }
     }
     return this;
   };

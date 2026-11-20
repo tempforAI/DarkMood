@@ -21,32 +21,35 @@
 
   /* ======================= 通用构件 ======================= */
 
-  // 透视地板：木板（沿 x 分条、向消失点汇聚）
+  // 透视地板：木板（沿 x 分条、向消失点汇聚）；逐行预计算透视比例与横缝
   function floorBoards(b, y0, cols, bw, seed, vpy) {
     vpy = vpy || VPY;
     bw = bw || 22;
-    var H = b.h;
-    b.pat(0, y0, b.w, H - y0, function (x, y) {
-      var u = VPX + (x + 0.5 - VPX) * (y0 - vpy) / (y + 0.5 - vpy);
-      var k = Math.floor(u / bw), f = u / bw - k;
-      var depth = (y - y0) / (H - y0);
-      var r = hsh(k, 7, seed);
-      var idx = 2 + (r < 0.33 ? 0 : r < 0.66 ? 1 : 0);
-      // 木纹
-      var gv = Math.sin(u * 0.9 + k * 3.1 + Math.sin(y * 0.15 + k) * 2) * 0.5 + 0.5;
-      if (gv > 0.86 && bay(x, y) < 10) idx -= 1;
-      // 拼缝
-      var seamW = 0.05 + depth * 0.02;
-      if (f < seamW) return cols[0];
-      // 横向接缝（交错）
-      var row = Math.floor(Math.log((y + 1 - vpy) / (y0 - vpy)) * 9 + hsh(k, 3, seed) * 3);
-      var rowPrev = Math.floor(Math.log((y - vpy) / (y0 - vpy)) * 9 + hsh(k, 3, seed) * 3);
-      if (row !== rowPrev && y > y0 + 1) return cols[1];
-      if (f > 0.92 - depth * 0.05) idx -= 1;
-      if (depth < 0.12 && bay(x, y) < 6) idx -= 1;
-      return cols[Math.max(1, Math.min(cols.length - 1, idx))];
-    });
-    b.hl(0, y0, b.w, cols[0]);
+    var H = b.h, W = b.w, d = b.d, nc = cols.length;
+    var prevRow = 0;
+    for (var y = y0; y < H; y++) {
+      var sc = (y0 - vpy) / (y + 0.5 - vpy), depth = (y - y0) / (H - y0);
+      var lg = Math.log((y + 1 - vpy) / (y0 - vpy)) * 9, lgp = Math.log((y - vpy) / (y0 - vpy)) * 9;
+      var seamW = 0.05 + depth * 0.02, hiF = 0.92 - depth * 0.05;
+      var o = y * W;
+      for (var x = 0; x < W; x++) {
+        var u = VPX + (x + 0.5 - VPX) * sc;
+        var ub = u / bw, k = Math.floor(ub), f = ub - k;
+        if (f < seamW) { d[o + x] = cols[0]; continue; }
+        var hk = hsh(k, 3, seed) * 3;
+        if (Math.floor(lg + hk) !== Math.floor(lgp + hk) && y > y0 + 1) { d[o + x] = cols[1]; continue; }
+        var r = hsh(k, 7, seed);
+        var idx = r < 0.33 ? 2 : r < 0.66 ? 3 : 2;
+        var bb = BAY[((y & 3) << 2) | (x & 3)];
+        // 木纹：按木板与纵向位置的整数图案
+        var g2 = ((Math.floor(u * 1.7) + k * 13 + (y >> 1)) % 29);
+        if (g2 === 0 && bb < 10) idx -= 1;
+        if (f > hiF) idx -= 1;
+        if (depth < 0.12 && bb < 6) idx -= 1;
+        d[o + x] = cols[idx < 1 ? 1 : idx >= nc ? nc - 1 : idx];
+      }
+    }
+    b.hl(0, y0, W, cols[0]);
   }
   // 透视石板地
   function floorStone(b, y0, cols, tw, seed) {
@@ -159,18 +162,19 @@
       return cols[idx];
     });
   }
-  // 竖向木板墙
+  // 竖向木板墙（整数木纹图案）
   function plankWall(b, x0, y0, w, h, cols, pw, seed) {
     pw = pw || 14;
+    var nc = cols.length;
     b.pat(x0, y0, w, h, function (x, y) {
       var k = Math.floor((x - x0) / pw), f = (x - x0) - k * pw;
       if (f === 0) return cols[0];
       var r = hsh(k, 5, seed), idx = r < 0.35 ? 1 : r < 0.8 ? 2 : 3;
-      var gr = Math.sin((y + k * 37) * 0.08 + Math.sin(x * 0.7 + k) * 1.5);
-      if (gr > 0.92) idx = Math.max(1, idx - 1);
-      if (f === 1) idx = Math.min(cols.length - 1, idx + 1);
+      var g = (y + k * 37 + ((f * 5) >> 2) * 3 + ((y >> 3) & 1) * f) % 31;
+      if (g === 0 || g === 1 && (f & 1)) idx = Math.max(1, idx - 1);
+      if (f === 1) idx = Math.min(nc - 1, idx + 1);
       if (f === pw - 1) idx = Math.max(1, idx - 1);
-      if (hsh(x, y, seed + 9) < 0.015) idx = 0;
+      if (((x * 7 + y * 13 + seed) % 97) === 0) idx = 0;
       return cols[idx];
     });
   }
@@ -1703,8 +1707,8 @@
 
 
   /* ======================= 室外通用 ======================= */
-  // 多边形岩石：分层岩块（沉积岩风格），上缘受光、缝隙压暗
-  function rock(b, pts, cols, seed, light) {
+  // 多边形岩石：抖动网格 Voronoi 岩块，上左面受光、裂缝压暗
+  function rock(b, pts, cols, seed, light, cw, chh) {
     var minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9, i;
     for (i = 0; i < pts.length; i += 2) { minx = Math.min(minx, pts[i]); maxx = Math.max(maxx, pts[i]); miny = Math.min(miny, pts[i + 1]); maxy = Math.max(maxy, pts[i + 1]); }
     minx = Math.max(0, Math.floor(minx)); miny = Math.max(0, Math.floor(miny)); maxx = Math.min(b.w - 1, Math.ceil(maxx)); maxy = Math.min(b.h - 1, Math.ceil(maxy));
@@ -1713,26 +1717,41 @@
     var m = new X.Buf(mw, mh), sp = [];
     for (i = 0; i < pts.length; i += 2) sp.push(pts[i] - minx, pts[i + 1] - miny);
     m.poly(sp, 1);
-    var md = m.d, nc = cols.length;
+    var md = m.d, nc = cols.length, CW = cw || 22, CH = chh || 15;
+    // 预计算网格点（含一圈外扩）
+    var gx0 = Math.floor(minx / CW) - 1, gy0 = Math.floor(miny / CH) - 1;
+    var gw = Math.floor(maxx / CW) + 2 - gx0, gh = Math.floor(maxy / CH) + 2 - gy0;
+    var cxs = new Float32Array(gw * gh), cys = new Float32Array(gw * gh), sh = new Uint8Array(gw * gh);
+    for (var yy = 0; yy < gh; yy++) for (var xx = 0; xx < gw; xx++) {
+      var gi = yy * gw + xx, ax = gx0 + xx, ay = gy0 + yy;
+      cxs[gi] = (ax + 0.15 + hsh(ax, ay, seed) * 0.7) * CW; cys[gi] = (ay + 0.15 + hsh(ax, ay, seed + 1) * 0.7) * CH;
+      var r = hsh(ax * 7919 + ay * 104729, 3, seed); sh[gi] = r < 0.3 ? 1 : r < 0.8 ? 2 : 3;
+    }
+    var iCW = 1 / CW, iCH = 1 / CH;
     b.pat(minx, miny, mw, mh, function (x, y) {
       var lx = x - minx, ly = y - miny, k = ly * mw + lx;
       if (!md[k]) return 0;
-      var up = ly > 0 ? md[k - mw] : 0, lf = lx > 0 ? md[k - 1] : 0, rt = lx < mw - 1 ? md[k + 1] : 0;
-      var wob = Math.sin(x * 0.045 + seed) * 5 + Math.sin(x * 0.13 + seed * 2) * 2;
-      var yy = y + wob, bh = 9;
-      var v = Math.floor(yy / bh), fyy = yy - v * bh;
-      var segW = 12 + Math.floor(hsh(v, 1, seed) * 16);
-      var xs = x + v * 17 + Math.floor(hsh(v, 2, seed) * 30);
-      var u = Math.floor(xs / segW), fx = xs - u * segW;
-      var r = hsh(u, v, seed);
-      var idx = r < 0.25 ? 1 : r < 0.75 ? 2 : 3;
-      if (fyy < 1.2) idx = Math.min(nc - 1, idx + 1);
-      else if (fyy > bh - 1.5) idx = 0;
-      else if (fx < 1) idx = 0;
-      else if (fx < 2.5 && bay(x, y) < 8) idx = Math.max(1, idx - 1);
-      else if (fyy < 3 && bay(x, y) < 6) idx = Math.min(nc - 1, idx + 1);
-      if (light !== false && (!up || (!lf && bay(x, y) < 10))) idx = Math.min(nc - 1, idx + 1);
-      if (!rt) idx = 0;
+      var rt = lx < mw - 1 ? md[k + 1] : 0;
+      if (!rt) return cols[0];
+      var gx = Math.floor(x * iCW) - gx0, gy = Math.floor(y * iCH) - gy0;
+      var d1 = 9, d2 = 9, best = 0, fx = 0, fy = 0, px0 = x + 0.5, py0 = y + 0.5;
+      for (var j = -1; j <= 1; j++) {
+        var row = (gy + j) * gw;
+        for (var q = -1; q <= 1; q++) {
+          var gi2 = row + gx + q;
+          var dx = (px0 - cxs[gi2]) * iCW, dy = (py0 - cys[gi2]) * iCH, d = dx * dx + dy * dy;
+          if (d < d1) { d2 = d1; d1 = d; best = gi2; fx = dx; fy = dy; } else if (d < d2) d2 = d;
+        }
+      }
+      var edge = Math.sqrt(d2) - Math.sqrt(d1);
+      if (edge < 0.07) return cols[0];
+      var idx = sh[best];
+      var face = fx * 0.8 + fy;
+      if (face < -0.32) idx = Math.min(nc - 1, idx + 1);
+      else if (face > 0.38) idx = Math.max(1, idx - 1);
+      var bb = BAY[((y & 3) << 2) | (x & 3)];
+      if (edge < 0.15) { if (face > 0) idx = Math.max(1, idx - 1); else if (face < -0.1 && bb < 8) idx = Math.min(nc - 1, idx + 1); }
+      if (light !== false) { var up = ly > 0 ? md[k - mw] : 0, lf = lx > 0 ? md[k - 1] : 0; if (!up || !lf) idx = Math.min(nc - 1, idx + 1); }
       return cols[idx];
     });
   }
@@ -1838,7 +1857,7 @@
     b.circle(338, 18, 5, '#3a3a4a');
     // 悬崖
     rock(b, [0, 120, 30, 108, 80, 104, 120, 110, 150, 118, 160, 176, 0, 176], [G.st0, G.st1, G.st2, G.st3, G.st4], 21);
-    rock(b, [300, 96, 360, 70, 420, 64, 480, 60, 480, 200, 330, 200, 310, 150], [G.st0, G.st1, G.st2, G.st3, G.st4], 22);
+    rock(b, [300, 96, 360, 70, 420, 64, 480, 60, 480, 200, 330, 200, 310, 150], [G.st0, G.st1, G.st2, G.st3, G.st4], 22, true, 16, 30);
     // 通往宅邸的小路与铁栅门
     b.poly([214, 180, 266, 180, 256, 120, 224, 120], C('#3a3640'));
     b.rect(196, 96, 14, 86, G.st3); b.hl(196, 96, 14, G.st5); b.rect(194, 92, 18, 5, G.st4); b.ellipse(203, 89, 6, 4, G.st4);
@@ -2102,8 +2121,8 @@
     sky(b, 0, 0, 480, 120, 11);
     // 悬崖（后方与右侧）
     var rc = [C('#1a1a22'), C('#24242e'), C('#2e2e3a'), C('#3a3a48'), C('#4a4a5a')];
-    rock(b, [0, 96, 40, 90, 100, 100, 160, 96, 220, 104, 296, 92, 296, 170, 0, 170], rc, 31);
-    rock(b, [296, 30, 340, 20, 380, 36, 440, 34, 480, 40, 480, 168, 296, 168], rc, 32);
+    rock(b, [0, 96, 40, 90, 100, 100, 160, 96, 220, 104, 296, 92, 296, 170, 0, 170], rc, 31, true, 16, 34);
+    rock(b, [296, 30, 340, 20, 380, 36, 440, 34, 480, 40, 480, 168, 296, 168], rc, 32, true, 14, 40);
     // 塔顶（越过悬崖露出）
     var tc = [C('#1e1a24'), C('#2a2532'), C('#363040'), C('#443e50'), C('#544e62')];
     b.clip(0, 0, 480, 38);
@@ -2166,11 +2185,18 @@
   /* ---------- 海蚀洞 ---------- */
   S.seacave = function (b) {
     var rc = [C('#0a0a10'), C('#14141c'), C('#1c1c26'), C('#262632'), C('#323240')];
-    // 洞口外的海与天
-    sky(b, 170, 14, 140, 60, 13);
-    sea(b, 74, 110, 14);
-    // 洞壁（围绕洞口）
-    rock(b, [0, 0, 480, 0, 480, 270, 0, 270, 0, 110, 184, 104, 190, 62, 204, 36, 226, 22, 252, 20, 276, 30, 292, 52, 298, 80, 300, 104, 480, 112, 480, 0, 0, 0], rc, 41);
+    // 洞壁
+    rock(b, [0, 0, 480, 0, 480, 270, 0, 270], rc, 41, false, 46, 30);
+    // 洞口：外面的天与海，只画在洞口形状内
+    var mouth = [184, 100, 188, 66, 202, 38, 224, 24, 250, 21, 274, 30, 290, 50, 297, 78, 298, 100];
+    var out = new X.Buf(480, 270);
+    sky(out, 176, 14, 128, 62, 13);
+    sea(out, 76, 104, 14);
+    var mk = new X.Buf(480, 270); mk.poly(mouth, 1);
+    b.pat(176, 14, 128, 92, function (x, y) { var k = y * 480 + x; return mk.d[k] ? out.d[k] : 0; });
+    // 洞口边缘（亮边）
+    for (var e = 0; e < mouth.length - 2; e += 2) b.line(mouth[e], mouth[e + 1], mouth[e + 2], mouth[e + 3], rc[4]);
+    b.hl(184, 100, 115, C('#5a6a80'));
     // 洞口边缘高光与外光
     b.light(242, 64, 120, 110, '#6a7a98', 2);
     // 钟乳石
@@ -2267,21 +2293,24 @@
       if ((y % 10) === 5 && Math.sin(x * 0.4 + y * 2 + 2) > 0.75) return seaC[2];
       return 0;
     });
-    // 岛轮廓（极坐标噪声）
+    // 岛轮廓：按地理关键点（北岸悬崖、塔下海滩、东侧海蚀洞、西南码头）再加细碎抖动
+    var key = [60, 150, 52, 112, 62, 72, 82, 42, 110, 20, 150, 12, 198, 18, 246, 30, 286, 48, 318, 50, 340, 38, 362, 24, 400, 18, 424, 26,
+      442, 50, 454, 82, 448, 104, 444, 120, 454, 142, 442, 172, 412, 200, 372, 218, 330, 228, 280, 234, 230, 238, 178, 240, 132, 240, 106, 232,
+      82, 218, 66, 192];
     var cx = 252, cy = 128, pts = [];
-    for (var i = 0; i < 96; i++) {
-      var a = i / 96 * Math.PI * 2;
-      var r = 1 + Math.sin(a * 3 + 1) * 0.07 + Math.sin(a * 7 + 2) * 0.04 + Math.sin(a * 13) * 0.025;
-      var rx = 212 * r, ry = 118 * r;
-      if (a > 5.2 && a < 5.9) ry *= 0.93;      // 北侧悬崖略内收
-      if (a > 2.3 && a < 2.7) { rx *= 1.02; ry *= 1.05; }
-      pts.push(cx + Math.cos(a) * rx, cy + Math.sin(a) * ry);
+    var nk = key.length / 2;
+    for (var i = 0; i < nk; i++) {
+      var x0 = key[i * 2], y0 = key[i * 2 + 1], x1 = key[((i + 1) % nk) * 2], y1 = key[((i + 1) % nk) * 2 + 1];
+      for (var sgi = 0; sgi < 4; sgi++) {
+        var u = sgi / 4, jit = sgi ? (hsh(i, sgi, 77) - 0.5) * 6 : 0;
+        var nx = -(y1 - y0), ny = x1 - x0, nl = Math.sqrt(nx * nx + ny * ny) || 1;
+        pts.push(x0 + (x1 - x0) * u + nx / nl * jit, y0 + (y1 - y0) * u + ny / nl * jit);
+      }
     }
     // 浅滩
     var shoal = [];
     for (var j = 0; j < pts.length; j += 2) shoal.push(cx + (pts[j] - cx) * 1.05, cy + (pts[j + 1] - cy) * 1.07);
     b.poly(shoal, seaC[3]);
-    b.dither(0, 0, 480, 270, null, seaC[2], 0);
     var land = new X.Buf(480, 270);
     land.poly(pts, 1);
     var L = land.d;
@@ -2292,8 +2321,8 @@
       var e = 0;
       if (!L[k - 1] || !L[k + 1] || !L[k - 480] || !L[k + 480]) return C('#c9b88a');
       if (!L[k - 2] || !L[k + 2] || !L[k - 960] || !L[k + 960]) e = 1;
-      var n = Math.sin(x * 0.08) + Math.sin(y * 0.11 + x * 0.03) + (hsh(x >> 1, y >> 1, 3) - 0.5);
-      var idx = n > 1 ? 3 : n > 0 ? 2 : 1;
+      var n = hsh(x >> 4, y >> 4, 3) * 1.4 + hsh(x >> 3, y >> 3, 5) * 0.6 + (bay(x, y) / 16) * 0.5;
+      var idx = n > 1.55 ? 3 : n > 0.8 ? 2 : 1;
       if (e) return C('#6a5e48');
       return gr[idx];
     });
@@ -2314,7 +2343,7 @@
     // 北侧悬崖阴影线
     for (var q = 0; q < pts.length; q += 2) {
       var px = pts[q], py = pts[q + 1];
-      if (py < cy - 70 && px > 260) { b.line(px, py, px + 1, py + 5, C('#3a3a40')); b.line(px + 2, py, px + 3, py + 4, C('#2a2a30')); }
+      if (py < 60 && px > 270 && px < 350) { b.line(px, py, px + 1, py + 6, C('#6a6a74')); b.line(px + 2, py + 1, px + 3, py + 5, C('#3a3a40')); }
     }
     // 道路
     var road = C('#8a7a58'), road2 = C('#5a4e38');
@@ -2360,8 +2389,12 @@
     b.rect(sh[0] - 3, sh[1] + 8, 1, 6, C('#b03020')); b.rect(sh[0] + 3, sh[1] + 8, 1, 6, C('#b03020')); b.hl(sh[0] - 5, sh[1] + 8, 11, C('#b03020')); b.hl(sh[0] - 4, sh[1] + 10, 9, C('#b03020'));
     // 北侧海滩（沙）
     var bc = node('beach');
-    b.ellipse(bc[0], bc[1] - 6, 26, 7, C('#a8987a')); b.ellipse(bc[0], bc[1] - 5, 22, 4, C('#c8b890'));
-    b.hl(bc[0] - 24, bc[1] - 12, 48, C('#c8d8e8'));
+    b.pat(bc[0] - 34, bc[1] - 20, 68, 26, function (x, y) {
+      var k = y * 480 + x; if (!L[k]) return 0;
+      var dd = 0; for (var s3 = 1; s3 < 9; s3++) if (!L[k - s3 * 480]) { dd = s3; break; }
+      if (!dd) return 0;
+      return dd < 3 ? C('#d8c8a0') : (bay(x, y) < 10 ? C('#b8a680') : C('#9a8a68'));
+    });
     // 海蚀洞
     var sc2 = node('seacave');
     b.ellipse(sc2[0], sc2[1], 9, 6, C('#2a2a30')); b.ellipse(sc2[0] + 1, sc2[1], 6, 4, ink); b.px(sc2[0] - 6, sc2[1] - 4, C('#6a6a72'));
