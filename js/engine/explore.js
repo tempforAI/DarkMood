@@ -151,9 +151,16 @@
   F.available = function () {
     var d = DM.freetimeDef; if (!d || !d.events) return [];
     var out = [];
+    var order = St.CHAPTER_ORDER, cur = order.indexOf(St.s.chapter);
     Object.keys(d.events).forEach(function (c) {
-      var idx = St.s.ft[c] || 0, ev = d.events[c][idx];
-      if (ev && ev.chapters.indexOf(St.s.chapter) >= 0) out.push({ char: c, ev: ev, idx: idx });
+      var list = d.events[c];
+      // 从下一个未看事件开始；窗口已经过去的事件（错过了）自动跳过，避免后续事件被锁死
+      for (var idx = St.s.ft[c] || 0; idx < list.length; idx++) {
+        var ev = list[idx];
+        if (ev.chapters.indexOf(St.s.chapter) >= 0) { out.push({ char: c, ev: ev, idx: idx }); break; }
+        var latest = Math.max.apply(null, ev.chapters.map(function (x) { return order.indexOf(x); }));
+        if (latest >= cur) break;   // 窗口还没到：保持顺序，等待
+      }
     });
     return out;
   };
