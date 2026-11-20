@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#07080f">
+<title>DARK MOOD：宵鸦岛审判</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="screen" width="480" height="270"></canvas>
+  <div id="ui"></div>
+</div>
+<noscript><p style="color:#ccc;padding:2em">本游戏需要启用 JavaScript。</p></noscript>
+
+<!-- 数据注册表 -->
+<script src="js/data/characters.js"></script>
+<script src="js/data/locations.js"></script>
+<!-- 像素美术（程序化生成） -->
+<script src="js/art/palette.js"></script>
+<script src="js/art/pixel.js"></script>
+<script src="js/art/portraits.js"></script>
+<script src="js/art/backgrounds.js"></script>
+<script src="js/art/icons.js"></script>
+<script src="js/art/index.js"></script>
+<!-- 引擎 -->
+<script src="js/engine/parser.js"></script>
+<script src="js/engine/core.js"></script>
+<script src="js/engine/audio.js"></script>
+<script src="js/engine/state.js"></script>
+<script src="js/engine/render.js"></script>
+<script src="js/engine/ui.js"></script>
+<script src="js/engine/interp.js"></script>
+<script src="js/engine/explore.js"></script>
+<script src="js/engine/games.js"></script>
+<script src="js/engine/menus.js"></script>
+<!-- 自由时间事件（章节剧本按需加载） -->
+<script src="js/data/freetime.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

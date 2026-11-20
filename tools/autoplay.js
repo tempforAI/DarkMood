@@ -1,0 +1,165 @@
+#!/usr/bin/env node
+/* 无头浏览器自动通关测试：node tools/autoplay.js [章节id] [--shots 目录] [--max 步数] [--all]
+ * 自动推进对话、选择第一个选项、搜遍所有调查点、自动解出所有小游戏。
+ * 报告：控制台错误、卡死位置、耗时。需要 playwright（开发用）。
+ */
+'use strict';
+var path = require('path');
+var fs = require('fs');
+var { chromium } = require('playwright');
+
+var args = process.argv.slice(2);
+var chapter = args.find(function (a) { return !a.startsWith('--'); }) || 'prologue';
+var shotsDir = (function () { var i = args.indexOf('--shots'); return i >= 0 ? args[i + 1] : null; })();
+var maxSteps = (function () { var i = args.indexOf('--max'); return i >= 0 ? +args[i + 1] : 20000; })();
+var all = args.indexOf('--all') >= 0;   // 章节结束后继续下一章
+
+(async function () {
+  var browser = await chromium.launch();
+  var page = await browser.newPage({ viewport: { width: 960, height: 540 } });
+  var errors = [];
+  page.on('console', function (m) { if (m.type() === 'error' || m.type() === 'warning') errors.push('[' + m.type() + '] ' + m.text()); });
+  page.on('pageerror', function (e) { errors.push('[pageerror] ' + e.message); });
+  var url = 'file://' + path.resolve(__dirname, '..', 'index.html') + '?ch=' + chapter;
+  await page.goto(url);
+  await page.waitForTimeout(400);
+  await page.evaluate(function () { DM.State.settings.textSpeed = 3; DM.State.settings.shake = false; });
+  if (shotsDir) fs.mkdirSync(shotsDir, { recursive: true });
+
+  var t0 = Date.now(), steps = 0, shot = 0, stuck = 0, lastSig = '', chaptersSeen = [chapter], ended = false;
+  var stats = { lines: 0, games: 0, spots: 0, choices: 0 };
+  while (steps++ < maxSteps) {
+    var r = await page.evaluate(step);
+    if (r.act === 'say') stats.lines++;
+    if (r.act && r.act.indexOf('game') === 0) stats.games++;
+    if (r.act === 'spot') stats.spots++;
+    if (r.act === 'choice') stats.choices++;
+    if (r.chapter && chaptersSeen.indexOf(r.chapter) < 0) {
+      chaptersSeen.push(r.chapter);
+      if (!all) { console.log('到达下一章 ' + r.chapter + '，停止。'); break; }
+    }
+    if (r.act === 'credits' || r.act === 'title') { ended = true; console.log('到达' + (r.act === 'credits' ? '片尾' : '标题')); break; }
+    if (shotsDir && (r.act.indexOf('game') === 0 || r.act === 'explore' || (r.act === 'say' && stats.lines % 60 === 1))) {
+      await page.screenshot({ path: path.join(shotsDir, String(++shot).padStart(4, '0') + '_' + r.act + '.png') });
+    }
+    var sig = r.sig;
+    if (sig === lastSig) { stuck++; await page.waitForTimeout(60); } else { stuck = 0; lastSig = sig; }
+    if (stuck > 150) { console.log('卡住了：', JSON.stringify(r)); break; }
+    await page.waitForTimeout(r.wait || 8);
+  }
+  var secs = ((Date.now() - t0) / 1000).toFixed(1);
+  console.log('步数 ' + steps + '，对白 ' + stats.lines + '，小游戏操作 ' + stats.games + '，调查点 ' + stats.spots + '，选项 ' + stats.choices + '，用时 ' + secs + 's，经过章节 ' + chaptersSeen.join(' → '));
+  var perf = await page.evaluate(function () { return { heap: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) + 'MB' : 'n/a' }; });
+  console.log('JS 堆：' + perf.heap);
+  console.log(errors.length ? '控制台错误/警告 ' + errors.length + ' 条：\n  ' + errors.slice(0, 40).join('\n  ') : '没有控制台错误');
+  await browser.close();
+  process.exit(errors.some(function (e) { return /error/.test(e); }) ? 1 : 0);
+})();
+
+// ====== 在页面中执行的一步 ======
+function step() {
+  var DM = window.DM, St = DM.State, UI = DM.UI;
+  function vis(sel) { var e = document.querySelector(sel); return e && e.offsetParent !== null ? e : null; }
+  function click(e) { e.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
+  var sigBase = St.s ? (St.s.prog + ':' + St.s.ip) : 'none';
+  var res = function (act, extra) { var o = { act: act, chapter: St.s && St.s.chapter, sig: sigBase + ':' + act + ':' + (extra || '') }; return o; };
+
+  if (document.querySelector('.credits')) return res('credits');
+  if (!St.s && vis('#title .menu')) return res('title');
+  // 菜单面板
+  var panelClose = document.querySelector('#ui .panel .hd .btn');
+  if (panelClose && UI.layers.menu && !UI.layers.menu.classList.contains('hidden')) { click(panelClose); return res('closepanel'); }
+  // 全屏卡片
+  var card = document.querySelector('.card-full');
+  if (card) { UI.advance(); return res('card', card.textContent.slice(0, 20)); }
+  // 选项
+  var ch = document.querySelector('#choices:not(.hidden) .btn');
+  if (ch) { click(ch); return res('choice', ch.textContent); }
+  // 小游戏
+  var G = DM.Games.current;
+  var gl = UI.layers.game;
+  if (gl && !gl.classList.contains('hidden')) {
+    var vr = gl.querySelector('.vote-result');
+    if (vr) { click(vr); return res('game_voteresult'); }
+    if (!G) {
+      // 自由时间选择
+      var c0 = gl.querySelector('.pick-card');
+      if (c0) { click(c0); return res('freetime'); }
+      return res('game_wait');
+    }
+    var t = G.type;
+    if (t === 'debate' || t === 'rebuttal') {
+      var chips = gl.querySelectorAll('.ammo .chip');
+      var key = t === 'debate' ? G.ammo.indexOf(G.answer.ammo) : G.answer.blade;
+      if (!chips[key] || !chips[key].classList.contains('sel')) { if (chips[key]) click(chips[key]); return res('game_sel', key); }
+      var idxText = (gl.querySelector('.stmt-nav .idx') || {}).textContent || '';
+      var cur = parseInt(idxText, 10) - 1;
+      if (cur !== G.answer.line) { click(gl.querySelectorAll('.stmt-nav .btn')[2]); return res('game_nav', cur); }
+      var w = gl.querySelectorAll('.stmt-band .weakpt')[G.answer.weak || 0];
+      if (w) { click(w); return res('game_fire', cur); }
+      return res('game_wait');
+    }
+    if (t === 'present') {
+      var name = DM.Interp.findEvidence(G.answer).name;
+      var items = gl.querySelectorAll('.ev-item');
+      for (var i = 0; i < items.length; i++) if (items[i].textContent === name) {
+        if (!items[i].classList.contains('sel')) { click(items[i]); return res('game_pick'); }
+        click(gl.querySelector('.g-foot .btn')); return res('game_present');
+      }
+      return res('game_missing_evidence', G.answer);
+    }
+    if (t === 'pick' || t === 'vote') {
+      var nm = DM.CHARS[G.answer].name;
+      var cards = gl.querySelectorAll('.pick-card');
+      for (var j = 0; j < cards.length; j++) if (cards[j].querySelector('.nm').textContent === nm) { click(cards[j]); return res('game_' + t); }
+      return res('game_wait');
+    }
+    if (t === 'keyword') {
+      var filled = gl.querySelectorAll('.kw-slot.fill').length;
+      var need = Array.from(G.answer)[filled];
+      var bs = gl.querySelectorAll('.kw-ch:not(.used)');
+      for (var k = 0; k < bs.length; k++) if (bs[k].textContent === need) { click(bs[k]); return res('game_kw', filled); }
+      return res('game_wait');
+    }
+    if (t === 'logic') {
+      var qn = gl.querySelector('.logic-box .qn');
+      if (!qn) return res('game_wait');
+      var qi = parseInt(qn.textContent.replace(/[^0-9 ]/g, '').trim(), 10) - 1;
+      var ob = gl.querySelectorAll('.logic-box .opts .btn')[G.questions[qi].a];
+      if (ob) { click(ob); return res('game_logic', qi); }
+      return res('game_wait');
+    }
+    if (t === 'reconstruct') {
+      var fin = gl.querySelector('.recon-panel .g-foot .btn');
+      if (fin) { click(fin); return res('game_recon_done'); }
+      var no = gl.querySelector('.recon-frame .no');
+      if (!no) return res('game_wait');
+      var pi = parseInt(no.textContent.replace(/[^0-9 ]/g, '').trim(), 10) - 1;
+      var obs = gl.querySelectorAll('.recon-opts .btn');
+      if (obs[G.panels[pi].a] && !obs[G.panels[pi].a].disabled) { click(obs[G.panels[pi].a]); return res('game_recon', pi); }
+      return res('game_wait');
+    }
+  }
+  // 探索
+  var ex = UI.layers.explore;
+  if (ex && !ex.classList.contains('hidden') && ex.querySelector('.topbar')) {
+    var st = St.s.stack, f = st[st.length - 1];
+    var def = DM.Interp.progs[f.prog].def.explore[f.id];
+    var spot = ex.querySelector('.spot:not(.seen)');
+    if (spot) { click(spot); return res('spot', f.place); }
+    var per = ex.querySelector('.person:not(.talked)');
+    if (per) { click(per); return res('spot', f.place + 'p'); }
+    // 去下一个还有未调查点的地点
+    f._tour = f._tour || {};
+    f._tour[f.place] = true;
+    for (var pi2 = 0; pi2 < def.places.length; pi2++) {
+      var p = def.places[pi2];
+      if (!f._tour[p]) { f.place = p; DM.Explore.open(); return res('explore', p); }
+    }
+    var fin2 = Array.from(ex.querySelectorAll('.topbar .btn')).find(function (b) { return b.classList.contains('gold'); });
+    if (fin2) { delete f._tour; click(fin2); return res('explore_done'); }
+    return res('explore_stuck', JSON.stringify((def.done || {}).need));
+  }
+  if (UI.isWaiting()) { UI.advance(); return res('say'); }
+  return res('idle');
+}
