@@ -1651,6 +1651,7 @@
       for (s = -1; s <= 1; s += 2) for (i = 0; i < 6; i++) circ(g, cx + s * (H.ex * 0.7 + rf() * r * 0.08), H.eyeY + H.eh * 0.6 + rf() * r * 0.05, 1.2 * u), g.fill();
     }
     if ((m = hasMark(cf, 'mole'))) { circ(g, cx + (m.side || 1) * H.fw * 0.42, H.mouthY - r * 0.01, 1.8 * u); fillC(g, A('#4a2a2a', 0.8)); }
+    marksExtra(C, g, H, cf, sp);
     void X;
   }
   function beard(C, g, H, cf, sp, m, hc) {
@@ -2581,7 +2582,7 @@
     // 每根手指 [左x, 右x, 指尖y]（食指→小指）；握持时手指弯曲，只看到到第二指节
     var F = open ? [[-0.6, -0.31, -2.05], [-0.3, 0.0, -2.2], [0.01, 0.3, -2.1], [0.31, 0.56, -1.85]]
                  : [[-0.62, -0.32, -1.52], [-0.31, 0.0, -1.62], [0.01, 0.31, -1.56], [0.32, 0.58, -1.4]];
-    if (o.missing) for (i = 0; i < o.missing && i < 2; i++) F[3 - i][2] = -1.0;   // 缺指（藏在手套里时由手套补齐）
+    if (o.missing) for (i = 0; i < o.missing && i < 2; i++) F[3 - i][2] = o.knit ? F[3 - i][2] * 0.86 : -1.0;   // 缺指：手套里的空指略短而塌
     g.save(); g.translate(x, y); g.rotate(ang); g.scale(sd || 1, 1);
     var notchY = function (i) { return Math.max(F[i][2], F[i + 1][2]) + 0.24; };
     var body = function (g2) {
@@ -2616,6 +2617,7 @@
     if (C.m >= 1) { g.beginPath(); g.moveTo(-s * 0.86, -s * 0.98); g.quadraticCurveTo(-s * 0.76, -s * 0.94, -s * 0.66, -s * 1.0); strokeW(g, A(ln, 0.45), 0.9 * u); }
     if (o.glove) { g.beginPath(); g.moveTo(-s * 0.48, s * 0.05); g.quadraticCurveTo(0, s * 0.12, s * 0.48, s * 0.05); strokeW(g, A(p.ln, 0.6), 1.2 * u);
       if (C.m >= 1) { g.beginPath(); g.moveTo(-s * 0.12, -s * 0.15); g.lineTo(-s * 0.1, -s * 0.75); g.moveTo(s * 0.16, -s * 0.15); g.lineTo(s * 0.14, -s * 0.75); strokeW(g, A(p.s, 0.7), 0.9 * u); } }
+    if (o.watch) { rrect(g, -s * 0.5, s * 0.12, s, s * 0.26, s * 0.08); fillC(g, o.watch === true ? '#1a1a1e' : o.watch); strokeW(g, '#000000', 1 * u); rrect(g, -s * 0.28, s * 0.1, s * 0.56, s * 0.3, s * 0.06); fillC(g, '#2a2e2a'); rrect(g, -s * 0.2, s * 0.15, s * 0.4, s * 0.2, s * 0.03); fillC(g, '#9ab09a'); }
     if (o.knit && C.m >= 1) { g.save(); body(g); g.clip(); g.strokeStyle = A(p.s, 0.6); g.lineWidth = 0.9 * u; for (i = 0; i < 9; i++) { g.beginPath(); g.moveTo(-s * 0.7, -s * (0.1 + i * 0.18)); g.lineTo(s * 0.7, -s * (0.1 + i * 0.18)); g.stroke(); } g.restore(); g.fillStyle = A(p.d, 0.6); g.fillRect(-s * 0.5, -s * 0.05, s, s * 0.18); }
     g.restore();
   }
@@ -2655,6 +2657,11 @@
   }
   var PROP = {};
   HC.parts.prop = PROP;
+  // 手的选项：手套色/毛线手套/缺指（只作用于道具一侧的手）/手表
+  function hopt(o, cf, other) {
+    var gl = o.glove || cf._gloveC;
+    return { skin: !gl, glove: !!gl, knit: !!o.knit, missing: other ? 0 : (o.missing || 0), watch: other ? null : (o.watch || null) };
+  }
   PROP.notebook = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, cx = B.cx, c = o.c || '#b02838', p = pal(c), sd = o.side || 1;
     var x = cx + sd * B.sw * 0.4, y = B.ny + r * 0.6, w = r * 0.32, h = r * 0.44, ang = -sd * 0.16;
@@ -2669,7 +2676,7 @@
       if (C.l >= 2) { g2.fillStyle = A('#ffffff', 0.25); g2.fillRect(-w / 2 + r * 0.05, -h / 2 + r * 0.02, w * 0.6, r * 0.012); }
     }, ln: p.ln, lw: 1.2 * u, ow: 2 * u });
     g.restore();
-    hand(C, g, H, wx, wy, ang, 0.86, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC), glove: !!(o.glove || cf._gloveC) });
+    hand(C, g, H, wx, wy, ang, 0.86, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
   };
   PROP.book = function (C, g, H, B, o, cf) { PROP.notebook(C, g, H, B, { c: o.c || '#4a3a28', side: o.side, glove: o.glove }, cf); };
   PROP.doll = function (C, g, H, B, o, cf) {
@@ -2684,8 +2691,8 @@
     // 抱着人偶的双臂
     forearm(C, g, B, cx - B.sw * 0.75, cx - r * 0.12, y + r * 0.55, cf._sleeveC, cf._cuffC);
     forearm(C, g, B, cx + B.sw * 0.8, cx + r * 0.16, y + r * 0.47, cf._sleeveC, cf._cuffC);
-    hand(C, g, H, cx - r * 0.12, y + r * 0.56, 1.15, 0.92, 'hold', gc, 1, { skin: sk2 });
-    hand(C, g, H, cx + r * 0.16, y + r * 0.48, -1.2, 0.92, 'hold', gc, -1, { skin: sk2 });
+    hand(C, g, H, cx - r * 0.12, y + r * 0.56, 1.15, 0.92, 'hold', gc, 1, hopt(o, cf));
+    hand(C, g, H, cx + r * 0.16, y + r * 0.48, -1.2, 0.92, 'hold', gc, -1, hopt(o, cf, 1));
     // 头
     var hr = r * 0.11 * k;
     piece(C, g, { f: function (g2) { ell(g2, cx, y, hr, hr * 1.04); }, fill: sk.b, sh: function (g2) { ell(g2, cx + hr * 0.9, y + hr * 0.1, hr * 0.5, hr * 1.1); fillC(g2, A(sk.s, 0.6)); }, ln: sk.ln, lw: 1.2 * u, ow: 1.8 * u });
@@ -2715,7 +2722,7 @@
     // 握住杖身的手（手背朝外，手指横向绕住杖身）
     var gx = x, gy = top + r * 0.15;
     forearm(C, g, B, x + sd * r * 0.42, gx + sd * r * 0.15, gy + r * 0.02, cf._sleeveC, cf._cuffC);
-    hand(C, g, H, gx + sd * r * 0.13, gy, -sd * PI / 2, 0.72, 'hold', o.glove || cf._gloveC || H.sp.b, -sd, { skin: !(o.glove || cf._gloveC) });
+    hand(C, g, H, gx + sd * r * 0.13, gy, -sd * PI / 2, 0.72, 'hold', o.glove || cf._gloveC || H.sp.b, -sd, hopt(o, cf));
   };
   PROP.cards = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.82, y = B.shY + r * 0.12, i;
@@ -2729,13 +2736,13 @@
       else { circ(g, -r * 0.012, -r * 0.14, r * 0.016); g.fill(); circ(g, r * 0.012, -r * 0.14, r * 0.016); g.fill(); g.beginPath(); g.moveTo(-r * 0.027, -r * 0.133); g.lineTo(0, -r * 0.1); g.lineTo(r * 0.027, -r * 0.133); g.fill(); }
       g.restore();
     }
-    hand(C, g, H, x, y + r * 0.2, sd * 0.25, 0.95, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
+    hand(C, g, H, x, y + r * 0.2, sd * 0.25, 0.95, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
   };
   PROP.phone = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.5, y = B.ny + r * 0.6;
     forearm(C, g, B, B.cx + sd * B.sw * 0.95, x, y + r * 0.22, cf._sleeveC, cf._cuffC);
     piece(C, g, { f: function (g2) { rrect(g2, x - r * 0.065, y - r * 0.24, r * 0.13, r * 0.3, r * 0.025); }, fill: o.c || '#a8acb8', sh: function (g2) { g2.fillStyle = '#304050'; g2.fillRect(x - r * 0.04, y - r * 0.18, r * 0.08, r * 0.09); g2.fillStyle = A('#ffffff', 0.3); g2.fillRect(x - r * 0.04, y - r * 0.18, r * 0.02, r * 0.09); }, ln: '#404048', lw: 1.1 * u, ow: 1.6 * u });
-    hand(C, g, H, x, y + r * 0.2, 0, 0.7, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
+    hand(C, g, H, x, y + r * 0.2, 0, 0.7, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
   };
   PROP.clipboard = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.4, y = B.ny + r * 0.75;
@@ -2744,7 +2751,7 @@
     rrect(g, x - r * 0.15, y - r * 0.19, r * 0.3, r * 0.4, r * 0.005); fillC(g, '#fbfaf4');
     g.strokeStyle = A('#8090a8', 0.7); g.lineWidth = 1 * u; for (var i = 0; i < 6; i++) { g.beginPath(); g.moveTo(x - r * 0.12, y - r * 0.12 + i * r * 0.05); g.lineTo(x + r * 0.12, y - r * 0.12 + i * r * 0.05); g.stroke(); }
     rrect(g, x - r * 0.06, y - r * 0.25, r * 0.12, r * 0.05, r * 0.01); fillC(g, '#c0c0c8'); strokeW(g, '#505058', 1 * u);
-    hand(C, g, H, x - sd * r * 0.1, y + r * 0.2, 0, 0.95, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
+    hand(C, g, H, x - sd * r * 0.1, y + r * 0.2, 0, 0.95, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
   };
   PROP.lantern = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.7, y = B.bot - r * 0.3;
@@ -2752,7 +2759,7 @@
     g.beginPath(); g.moveTo(x, y - r * 0.2); g.lineTo(x, y - r * 0.12); strokeW(g, '#3a3a3a', 2 * u);
     piece(C, g, { f: function (g2) { ell(g2, x, y, r * 0.1, r * 0.12); }, fill: '#f0d8a0', sh: function (g2) { g2.fillStyle = K.rad(g2, x, y, 0, r * 0.12, ['#fff8e0', '#f0c070', '#b07030']); g2.fillRect(x - r * 0.12, y - r * 0.14, r * 0.24, r * 0.28); g2.strokeStyle = A('#8a5020', 0.6); g2.lineWidth = 1 * u; for (var i = -2; i <= 2; i++) { g2.beginPath(); g2.moveTo(x - r * 0.12, y + i * r * 0.04); g2.lineTo(x + r * 0.12, y + i * r * 0.04); g2.stroke(); } }, ln: '#6a4020', lw: 1.2 * u, ow: 1.8 * u });
     if (C.l >= 1) K.glow(g, x, y, r * 0.35, '#ffb060', 0.35);
-    hand(C, g, H, x, y - r * 0.18, sd * 0.2, 0.85, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
+    hand(C, g, H, x, y - r * 0.18, sd * 0.2, 0.85, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
   };
   PROP.gohei = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.6, y = B.ny + r * 0.55, i;
@@ -2763,7 +2770,7 @@
       P(g, ['M', 0, py, 'L', s2 * r * 0.08, py + r * 0.02, 'L', s2 * r * 0.06, py + r * 0.1, 'L', s2 * r * 0.12, py + r * 0.12, 'L', s2 * r * 0.09, py + r * 0.22, 'L', 0, py + r * 0.08, 'Z'], px, 1);
       fillC(g, '#fbfaf6'); strokeW(g, '#8a8a90', 1 * u);
     }
-    hand(C, g, H, x, y + r * 0.22, sd * 0.15, 0.9, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
+    hand(C, g, H, x, y + r * 0.22, sd * 0.15, 0.9, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
   };
   PROP.fan = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.45, y = B.ny + r * 0.6, i;
@@ -2771,7 +2778,7 @@
     var fc = o.c || '#f0e8d8';
     g.beginPath(); g.moveTo(x, y + r * 0.1); g.arc(x, y + r * 0.1, r * 0.3, -PI * 0.85, -PI * 0.15); g.closePath(); fillC(g, fc); strokeW(g, pal(fc).ln, 1.2 * u);
     g.strokeStyle = A(pal(fc).ln, 0.5); g.lineWidth = 0.9 * u; for (i = 0; i <= 8; i++) { var a = lerp(-PI * 0.85, -PI * 0.15, i / 8); g.beginPath(); g.moveTo(x, y + r * 0.1); g.lineTo(x + Math.cos(a) * r * 0.3, y + r * 0.1 + Math.sin(a) * r * 0.3); g.stroke(); }
-    hand(C, g, H, x, y + r * 0.18, 0, 0.85, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
+    hand(C, g, H, x, y + r * 0.18, 0, 0.85, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
   };
   // 手持乌鸦面具（判官的身份揭晓）
   PROP.crow_mask = function (C, g, H, B, o, cf) {
@@ -3216,6 +3223,10 @@
   } };
   MASK.moth = { cover: 'upper', draw: function (C, g, H, B, cf, X, o) {
     var r = H.r, u = H.u * C.lw, cx = H.cx, c = o.c || '#f4f0e8', p = pal(c), s, i, gl = X.glow === undefined ? 0.4 : X.glow;
+    if (o.cover === 'full') {
+      sym(g, cx, [0, H.T - r * 0.03], [[H.fw * 0.7, H.T - r * 0.03, H.fw * 1.1, H.T + r * 0.15, H.fw * 1.1, H.eyeY], [H.fw * 1.1, H.C, 0, H.C + r * 0.1]]);
+      g.fillStyle = K.rad(g, cx, H.eyeY, r * 0.1, r * 0.7, ['#1a1820', '#08070c']); g.fill();
+    }
     for (s = -1; s <= 1; s += 2) {
       (function (s) {
         var wf = function (g2) { P(g2, ['M', r * 0.02, H.browY - r * 0.05, 'C', H.fw * 0.6, H.browY - r * 0.3, H.fw * 1.5, H.browY - r * 0.35, H.fw * 1.55, H.browY - r * 0.05,
@@ -3226,8 +3237,19 @@
           circ(g2, cx + s * H.fw * 1.15, H.browY - r * 0.08, r * 0.06); fillC(g2, A('#6a4a3a', 0.6)); circ(g2, cx + s * H.fw * 1.15, H.browY - r * 0.08, r * 0.03); fillC(g2, A('#2a1a1a', 0.8));
         }, ln: p.ln, lw: 1.3 * u, ow: 2.4 * u });
         ell(g, cx + s * H.ex, H.eyeY, H.ew * 0.42, H.eh * 0.3, s * 0.15); fillC(g, '#0a0608');
-        circ(g, cx + s * H.ex, H.eyeY, H.ew * 0.08); fillC(g, A('#e0d8ff', 0.4 + gl * 0.5));
-        g.beginPath(); g.moveTo(cx + s * r * 0.03, H.browY - r * 0.08); g.bezierCurveTo(cx + s * r * 0.08, H.T - r * 0.05, cx + s * r * 0.25, H.T - r * 0.15, cx + s * r * 0.3, H.T - r * 0.05); strokeW(g, p.ln, 2.6 * u); g.beginPath(); g.moveTo(cx + s * r * 0.03, H.browY - r * 0.08); g.bezierCurveTo(cx + s * r * 0.08, H.T - r * 0.05, cx + s * r * 0.25, H.T - r * 0.15, cx + s * r * 0.3, H.T - r * 0.05); strokeW(g, p.b, 1.4 * u);
+        var gcm = (cf.glow && cf.glow.c) || '#e0d8ff';
+        circ(g, cx + s * H.ex, H.eyeY, H.ew * 0.08); fillC(g, A(gcm, 0.4 + gl * 0.5));
+        if (C.l >= 1 && cf.glow) K.glow(g, cx + s * H.ex, H.eyeY, r * (0.1 + gl * 0.1), gcm, 0.2 + gl * 0.35);
+        // 羽状触角：主干 + 两侧细羽枝
+        var ax0 = cx + s * r * 0.03, ay0 = H.browY - r * 0.08, c1x = cx + s * r * 0.08, c1y = H.T - r * 0.08, c2x = cx + s * r * 0.26, c2y = H.T - r * 0.2, ax1 = cx + s * r * 0.34, ay1 = H.T - r * 0.08;
+        if (C.m >= 1) {
+          g.strokeStyle = A(p.ln, 0.8); g.lineWidth = 1 * u;
+          for (i = 2; i < 15; i++) {
+            var tt = i / 15, bx = bz(ax0, c1x, c2x, ax1, tt), by = bz(ay0, c1y, c2y, ay1, tt), dx2 = bzd(ax0, c1x, c2x, ax1, tt), dy2 = bzd(ay0, c1y, c2y, ay1, tt), dl = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1, fl = r * 0.045 * Math.sin(tt * PI) + r * 0.008;
+            g.beginPath(); g.moveTo(bx - dy2 / dl * fl, by + dx2 / dl * fl - fl * 0.3); g.lineTo(bx, by); g.lineTo(bx + dy2 / dl * fl, by - dx2 / dl * fl - fl * 0.3); g.stroke();
+          }
+        }
+        g.beginPath(); g.moveTo(ax0, ay0); g.bezierCurveTo(c1x, c1y, c2x, c2y, ax1, ay1); strokeW(g, p.ln, 3 * u); g.beginPath(); g.moveTo(ax0, ay0); g.bezierCurveTo(c1x, c1y, c2x, c2y, ax1, ay1); strokeW(g, p.b, 1.6 * u);
       })(s);
     }
     ell(g, cx, H.eyeY, r * 0.03, r * 0.12); fillC(g, p.s); strokeW(g, p.ln, 1.2 * u);
@@ -3254,6 +3276,297 @@
     for (s = -1; s <= 1; s += 2) { g.beginPath(); g.moveTo(cx + s * H.fw * 0.92, H.noseY - r * 0.04); g.lineTo(cx + s * H.fw * 1.0, H.eyeY + r * 0.02); strokeW(g, p.ln, 1.6 * u); }
   } };
   MASK.half = MASK.cloth;
+
+  /* ====================== 冬装与和装扩展（续作用） ====================== */
+  function innerTop(C, g, H, B, kind, c) {
+    var r = B.r;
+    if (kind === 'turtle') { top(C, g, B, c, { tex: 'knit', nl: { y: B.ny + r * 0.06 } }); collarTurtle(C, g, H, B, c); }
+    else if (kind === 'sweater') { OUTFIT.sweater.draw(C, g, H, B, { c: c }); }
+    else if (kind === 'suit') { top(C, g, B, '#f0f0f2', { tex: 'shirt' }); collarShirt(C, g, B, '#f0f0f2'); tie(C, g, B, 'tie', '#4a2a3a', undefined, r * 0.6); jacket(C, g, H, B, { c: c, tex: 'wool', lapel: 'notch', vy: 0.56, buttons: 1, inf: 0.025 }); }
+    else if (kind === 'cardigan') { top(C, g, B, '#ece8e0', { tex: 'shirt' }); collarShirt(C, g, B, '#ece8e0'); jacket(C, g, H, B, { c: c, tex: 'knit', lapel: 'none', vy: 0.4, vx: 0.01, buttons: 4, btnC: dk(c, 0.4), inf: 0.025 }); }
+    else { top(C, g, B, c, { tex: 'shirt' }); collarShirt(C, g, B, c, { open: 1 }); }
+  }
+  // 长大衣：o.inner 'turtle'|'sweater'|'suit'|'cardigan'|'shirt'
+  OUTFIT.overcoat = { draw: function (C, g, H, B, o) {
+    innerTop(C, g, H, B, o.inner || 'turtle', o.c2 || '#2a3550');
+    jacket(C, g, H, B, { c: o.c, tex: 'wool', lapel: o.lapel || 'wide', vy: o.vy || 0.38, vx: 0.15, ox: 0.3, buttons: 0, inf: 0.065, drape: 1, double: o.double });
+  }, sprite: { legs: 'pants', coat: 0.85 } };
+  OUTFIT.peacoat = { draw: function (C, g, H, B, o) {
+    innerTop(C, g, H, B, o.inner || 'turtle', o.c2 || '#f0ece4');
+    jacket(C, g, H, B, { c: o.c, tex: 'wool', lapel: 'wide', lapW: 0.21, vy: 0.36, vx: 0.08, ox: 0.04, double: 1, buttons: 3, btnC: dk(o.c, 0.5), inf: 0.055 });
+  }, sprite: { legs: 'skirt', coat: 0.6 } };
+  OUTFIT.duffle = { draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, i, s, tc = o.toggle || '#e8dcc0';
+    innerTop(C, g, H, B, o.inner || 'sweater', o.c2 || '#8a2a3a');
+    var J = jacket(C, g, H, B, { c: o.c, tex: 'wool', lapel: 'none', vy: 0.14, vx: 0.13, ox: 0.15, buttons: 0, inf: 0.065, drape: 1 });
+    for (i = 0; i < 3; i++) {
+      var ty = B.ny + r * (0.4 + i * 0.24);
+      if (ty > B.bot - r * 0.03) break;
+      for (s = -1; s <= 1; s += 2) { g.beginPath(); g.moveTo(B.cx + s * r * 0.2, ty - r * 0.012); g.quadraticCurveTo(B.cx + s * r * 0.08, ty + r * 0.02, B.cx + s * r * 0.01, ty); strokeW(g, '#3a2a1a', r * 0.016); strokeW(g, '#8a7050', r * 0.009); }
+      g.save(); g.translate(B.cx - r * 0.02, ty); g.rotate(-0.15);
+      piece(C, g, { f: function (g2) { rrect(g2, -r * 0.06, -r * 0.017, r * 0.12, r * 0.034, r * 0.017); }, fill: tc, sh: function (g2) { g2.fillStyle = A(pal(tc).s, 0.6); g2.fillRect(-r * 0.07, 0, r * 0.14, r * 0.03); }, ln: pal(tc).ln, lw: 1 * u, ow: 1.4 * u });
+      g.restore();
+    }
+    void J;
+  }, back: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, p = pal(o.c);
+    piece(C, g, { f: function (g2) { ell(g2, B.cx, B.ny - r * 0.03, B.nw * 2.5, r * 0.17); }, fill: p.s, sh: function (g2) { ell(g2, B.cx, B.ny - r * 0.06, B.nw * 1.6, r * 0.09); fillC(g2, A(p.d, 0.6)); }, ln: p.ln, lw: 1.2 * u, ow: 2.2 * u });
+  }, sprite: { legs: 'skirt', coat: 0.55 } };
+  OUTFIT.quilted = { draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw;
+    innerTop(C, g, H, B, o.inner || 'sweater', o.c2 || '#d8d0bc');
+    jacket(C, g, H, B, { c: o.c, tex: 'cotton', lapel: 'stand', vy: 0.12, vx: 0.15, ox: 0.2, buttons: 0, inf: 0.06, sh: function (g2, p) {
+      g2.strokeStyle = A(p.s, 0.75); g2.lineWidth = 1.1 * u;
+      for (var i = -12; i <= 12; i++) { g2.beginPath(); g2.moveTo(B.cx + i * r * 0.14, B.ny - r * 0.2); g2.lineTo(B.cx + i * r * 0.14 + r * 0.9, B.ny + r * 0.7); g2.stroke(); g2.beginPath(); g2.moveTo(B.cx + i * r * 0.14, B.ny - r * 0.2); g2.lineTo(B.cx + i * r * 0.14 - r * 0.9, B.ny + r * 0.7); g2.stroke(); }
+    } });
+    for (var s = -1; s <= 1; s += 2) { var px = B.cx + s * B.sw * 0.48, py = B.ny + r * 0.62; rrect(g, px - r * 0.1, py, r * 0.2, r * 0.05, r * 0.01); fillC(g, K.shade(o.c, -0.12)); strokeW(g, pal(o.c).ln, 1.1 * u); }
+  }, sprite: { legs: 'pants', coat: 0.35 } };
+  OUTFIT.hunting = { draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, n = K.byModel(C.q, 12, 20, 30), i, fc = o.fur || '#c8b494', fp = pal(fc), rn = K.rng('hfur');
+    innerTop(C, g, H, B, 'shirt', o.c2 || '#5a4a30');
+    var J = jacket(C, g, H, B, { c: o.c, tex: 'canvas', lapel: 'none', vy: 0.18, vx: 0.11, ox: 0.16, buttons: 0, inf: 0.075, drape: 1 });
+    // 毛领：沿颈根一圈，前端止于开襟
+    piece(C, g, { f: function (g2) {
+      g2.beginPath();
+      for (i = 0; i <= n; i++) { var t = i / n, a = lerp(PI * 0.82, PI * 2.18, t), rr = (i % 2 ? 1 : 1.13) * (1 + rn.jit(0, 0.04)); var x = B.cx + Math.cos(a) * B.nw * 2.3 * rr, y = B.ny + r * 0.03 + Math.sin(a) * r * 0.16 * rr; if (i) g2.lineTo(x, y); else g2.moveTo(x, y); }
+      g2.lineTo(B.cx + r * 0.13, B.ny + r * 0.24); g2.quadraticCurveTo(B.cx + B.nw * 1.1, B.ny + r * 0.06, B.cx + B.nw * 0.9, B.ny - r * 0.05);
+      g2.quadraticCurveTo(B.cx, B.ny - r * 0.1, B.cx - B.nw * 0.9, B.ny - r * 0.05); g2.quadraticCurveTo(B.cx - B.nw * 1.1, B.ny + r * 0.06, B.cx - r * 0.13, B.ny + r * 0.24); g2.closePath();
+    }, fill: fp.b, tex: C.t > 0 ? ['noise', { c1: fp.s, c2: fp.l, scale: 20, oct: 2, seed: 9 }, 30] : null, sh: function (g2) { g2.fillStyle = A(fp.s, 0.6); g2.fillRect(B.cx + B.nw, B.ny - r * 0.3, r, r * 0.6); }, ln: fp.ln, lw: 1.1 * u, ow: 2 * u });
+    for (var s = -1; s <= 1; s += 2) { var px = B.cx + s * B.sw * 0.47, py = B.ny + r * 0.62; rrect(g, px - r * 0.11, py, r * 0.22, r * 0.2, r * 0.015); strokeW(g, J.p.ln, 1.3 * u); P(g, ['M', -r * 0.11, py, 'L', r * 0.11, py, 'L', r * 0.11, py + r * 0.06, 'L', -r * 0.11, py + r * 0.06, 'Z'], px, 1); fillC(g, K.shade(o.c, -0.1)); strokeW(g, J.p.ln, 1.2 * u); }
+  }, sprite: { legs: 'pants', legC: '#4a3a28', coat: 0.4 } };
+  // 袢缠 / 丹前 / 褞袍：o.eri 领条色（默认黑），o.inner 'kimono'|'sweater'，o.apron
+  function shortHaori(C, g, H, B, o, open) {
+    var r = B.r, u = B.u * C.lw;
+    var J = jacket(C, g, H, B, { c: o.c, tex: 'tweed', lapel: 'none', vy: 0.02, vx: open ? 0.22 : 0.14, ox: open ? 0.3 : 0.2, buttons: 0, inf: 0.1, drape: 1 });
+    for (var s = -1; s <= 1; s += 2) {
+      P(g, ['M', B.nw * 1.0 + r * 0.01, B.ny - r * 0.08, 'L', B.nw * 1.0 + r * 0.1, B.ny - r * 0.06, 'L', (open ? 0.3 : 0.2) * r + r * 0.09, B.bot + 4, 'L', (open ? 0.3 : 0.2) * r, B.bot + 4, 'Z'], B.cx, s);
+      fillC(g, o.eri || '#1e1a1a'); strokeW(g, J.p.ln, 1.2 * u);
+      if (C.l >= 1) { P(g, ['M', B.nw * 1.0 + r * 0.03, B.ny - r * 0.07, 'L', (open ? 0.3 : 0.2) * r + r * 0.03, B.bot], B.cx, s); strokeW(g, A('#ffffff', 0.12), r * 0.012); }
+    }
+    return J;
+  }
+  function apron(C, g, B, kind, c, c2) {
+    var r = B.r, u = B.u * C.lw, cx = B.cx, ap = pal(c || '#f4f2ee'), i;
+    var f = function (g2) { sym(g2, cx, [0, B.ny + r * 0.42], [[B.sw * 0.36, B.ny + r * 0.4], [B.sw * 0.44, B.bot + 4], [0, B.bot + 4]]); };
+    piece(C, g, { f: f, fill: ap.b, sh: function (g2) {
+      clothShade(C, g2, B, ap, { noArms: 1, noNeckShadow: 1, drape: 1 });
+      if (kind === 'check') { g2.strokeStyle = A(c2 || '#a04040', 0.5); g2.lineWidth = r * 0.012; for (i = -12; i <= 12; i++) { g2.beginPath(); g2.moveTo(cx + i * r * 0.06, B.ny); g2.lineTo(cx + i * r * 0.06, B.bot + 4); g2.stroke(); g2.beginPath(); g2.moveTo(cx - B.sw, B.ny + r * 0.4 + (i + 12) * r * 0.06); g2.lineTo(cx + B.sw, B.ny + r * 0.4 + (i + 12) * r * 0.06); g2.stroke(); } }
+    }, ln: ap.ln, lw: 1.3 * u, ow: 2 * u });
+    for (var s = -1; s <= 1; s += 2) { g.beginPath(); g.moveTo(cx + s * B.sw * 0.34, B.ny + r * 0.41); g.lineTo(cx + s * B.nw * 1.3, B.ny - r * 0.02); strokeW(g, ap.ln, r * 0.03); strokeW(g, ap.b, r * 0.02); }
+  }
+  // 割烹着：带袖的白色罩衫，露出和服领
+  function kappogi(C, g, B, c) {
+    var r = B.r, cp = pal(c || '#f6f4f0');
+    garment(C, g, B, bodyPath(B, 0.09 * r, { y: B.ny + r * 0.26, v: 1, w: B.nw * 1.55 }), cp.b, { tex: 'cotton', inf: 0.09 * r, drape: 1 });
+  }
+  var _kimonoDraw = OUTFIT.kimono.draw;
+  OUTFIT.kimono = { draw: function (C, g, H, B, o) {
+    if (o.open) { kimonoBody(C, g, H, B, o.c || '#2a2424', o.eri || dk(o.c || '#2a2424', 0.3), H.sp.b, { tex: 'cotton', cross: 0.58 }); if (o.obi !== false) obi(C, g, B, o.c3 || '#5a3a30', B.ny + B.r * 1.1, {}); return; }
+    _kimonoDraw(C, g, H, B, o);
+    if (o.apron === 'kappogi') kappogi(C, g, B, o.apronC);
+    else if (o.apron) apron(C, g, B, o.apron, o.apronC, o.checkC);
+  }, sprite: { legs: 'robe' } };
+  OUTFIT.tanzen = { draw: function (C, g, H, B, o) { OUTFIT.kimono.draw(C, g, H, B, merge(o, { open: 1 })); }, sprite: { legs: 'robe' } };
+  OUTFIT.dotera = { draw: function (C, g, H, B, o) {
+    kimonoBody(C, g, H, B, o.c || '#3a2a24', o.eri || '#141010', o.c2 || '#8a7a68', { tex: 'tweed', cross: 0.4 });
+    if (C.m >= 1) { var r = B.r, u = B.u * C.lw; g.save(); bodyPath(B, 0.05 * r, { y: B.ny + r * 0.04 })(g); g.clip(); g.strokeStyle = A(pal(o.c || '#3a2a24').s, 0.6); g.lineWidth = 1.2 * u; for (var i = 0; i < 6; i++) { g.beginPath(); g.moveTo(B.cx - B.bw * 1.2, B.ny + r * (0.2 + i * 0.16)); g.quadraticCurveTo(B.cx, B.ny + r * (0.14 + i * 0.16), B.cx + B.bw * 1.2, B.ny + r * (0.2 + i * 0.16)); g.stroke(); } g.restore(); }
+  }, sprite: { legs: 'robe' } };
+  OUTFIT.hanten = { draw: function (C, g, H, B, o) {
+    if (o.inner === 'sweater') innerTop(C, g, H, B, 'sweater', o.c2 || '#6a6a72');
+    else kimonoBody(C, g, H, B, o.c2 || '#5a5a6a', o.c2 || '#5a5a6a', o.c4 || '#e8e0d4', { tex: 'cotton', cross: 0.34 });
+    if (o.apron) apron(C, g, B, o.apron, o.apronC, o.checkC);
+    shortHaori(C, g, H, B, o, true);
+  }, sprite: { legs: 'pants', legC: '#4a4a58', coat: 0.3 } };
+  var _hakamaMiko = OUTFIT.miko.draw;
+  OUTFIT.miko = { draw: function (C, g, H, B, o) {
+    _hakamaMiko(C, g, H, B, o);
+    if (o.haori) {
+      var J = shortHaori(C, g, H, B, { c: o.haori, eri: o.haoriEri || K.shade(o.haori, -0.06) }, true);
+      var hc = o.himo || '#e8e0f0', r = B.r, u = B.u * C.lw;
+      g.beginPath(); g.moveTo(B.cx - r * 0.24, B.ny + r * 0.6); g.quadraticCurveTo(B.cx, B.ny + r * 0.68, B.cx + r * 0.24, B.ny + r * 0.6); strokeW(g, pal(hc).ln, r * 0.024); strokeW(g, hc, r * 0.015);
+      circ(g, B.cx, B.ny + r * 0.665, r * 0.028); fillC(g, hc); strokeW(g, pal(hc).ln, 1 * u);
+      void J;
+    }
+  }, sprite: { legs: 'hakama', legC: '#c02030' } };
+  // 斗篷（红里子）罩在和服外
+  OUTFIT.cape = { draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, s, lin = o.lining || '#c02030';
+    kimonoBody(C, g, H, B, o.c2 || '#f6f4f0', o.c2 || '#f6f4f0', o.under || lin, { tex: 'cotton', cross: 0.36 });
+    jacket(C, g, H, B, { c: o.c || '#2a2a30', tex: 'wool', lapel: 'none', vy: 0.06, vx: 0.2, ox: 0.4, buttons: 0, inf: 0.11, drape: 1 });
+    var npx = B.nw + r * 0.01 + 0.11 * r * 0.15, npy = B.ny - r * 0.075, vx = 0.2 * r, vy = B.ny + 0.06 * r, ox = 0.4 * r, bot = B.bot + 4;
+    for (s = -1; s <= 1; s += 2) {
+      P(g, ['M', npx - r * 0.01, npy, 'C', npx - r * 0.05, npy + r * 0.12, vx + r * 0.02, lerp(vy, npy, 0.5), vx, vy, 'C', vx, vy + (bot - vy) * 0.2, ox, lerp(vy, bot, 0.5), ox, bot], B.cx, s);
+      strokeW(g, lin, r * 0.045); strokeW(g, A(pal(lin).ln, 0.8), 1.1 * u);
+    }
+    var cl = o.clasp || '#c0a060'; circ(g, B.cx - r * 0.2, B.ny + r * 0.05, r * 0.022); fillC(g, cl); circ(g, B.cx + r * 0.2, B.ny + r * 0.05, r * 0.022); fillC(g, cl);
+    g.beginPath(); g.moveTo(B.cx - r * 0.2, B.ny + r * 0.05); g.lineTo(B.cx + r * 0.2, B.ny + r * 0.05); strokeW(g, cl, r * 0.01);
+  }, sprite: { legs: 'robe' } };
+  // 立领学生服（可外罩棉外套）
+  OUTFIT.gakuran = { draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, c = o.c || '#1a1a24', i;
+    garment(C, g, B, bodyPath(B, 0.02 * r, { y: B.ny + r * 0.02 }), c, { tex: 'wool' });
+    collarBand(C, g, B, c, 0.11);
+    g.beginPath(); g.moveTo(B.cx, B.ny + r * 0.06); g.lineTo(B.cx, B.bot + 4); strokeW(g, pal(c).ln, 1.3 * u);
+    for (i = 0; i < 5; i++) button(C, g, B.cx, B.ny + r * (0.12 + i * 0.17), r * 0.02, '#d8b050', u);
+    if (o.coat) jacket(C, g, H, B, { c: o.coat, tex: 'cotton', lapel: 'stand', vy: 0.15, vx: 0.2, ox: 0.28, buttons: 0, inf: 0.07, sh: function (g2, p) {
+      g2.strokeStyle = A(p.s, 0.8); g2.lineWidth = 1.3 * u; for (var k = 0; k < 6; k++) { var y = B.ny + r * (0.15 + k * 0.17); g2.beginPath(); g2.moveTo(B.cx - B.sw * 1.4, y + r * 0.03); g2.quadraticCurveTo(B.cx, y - r * 0.02, B.cx + B.sw * 1.4, y + r * 0.03); g2.stroke(); }
+    } });
+  }, sprite: { legs: 'pants', legC: '#1a1a24' } };
+
+  /* ---- 新配件 ---- */
+  ACC.camellia = { slot: 'head', draw: function (C, g, H, B, o, cf, X, hd) {
+    var G = capG(H, hd), r = H.r, u = H.u * C.lw, s = o.side || 1, sz = r * 0.06 * (o.size || 1), i;
+    var x = H.cx + s * G.rx * (o.x || 0.8), y = G.top + G.ry * (o.y || 0.5), c = o.c || '#c8102e', p = pal(c);
+    if (o.pin) { g.beginPath(); g.moveTo(x - s * sz * 0.2, y + sz * 0.3); g.lineTo(x - s * sz * 2.4, y - sz * 1.2); strokeW(g, '#5a4020', 3 * u); strokeW(g, '#c8a060', 1.6 * u); }
+    for (i = 0; i < 2; i++) { var la = s * (0.6 + i * 1.6) + PI * 0.5; piece(C, g, { f: (function (la) { return function (g2) { ell(g2, x + Math.cos(la) * sz * 1.25, y + Math.sin(la) * sz * 1.0, sz * 0.75, sz * 0.38, la); }; })(la), fill: '#2a6a3a', sh: function (g2) { g2.fillStyle = A('#103a1a', 0.5); g2.fillRect(x, y - sz * 3, sz * 3, sz * 6); }, ln: '#0e2a14', lw: 1 * u, ow: 1.4 * u }); }
+    for (i = 0; i < 6; i++) { var a = i / 6 * PI * 2 + 0.3; piece(C, g, { f: (function (a) { return function (g2) { ell(g2, x + Math.cos(a) * sz * 0.55, y + Math.sin(a) * sz * 0.5, sz * 0.62, sz * 0.5, a); }; })(a), fill: p.b, sh: function (g2) { g2.fillStyle = K.rad(g2, x - sz * 0.3, y - sz * 0.3, 0, sz * 1.4, [A(p.l, 0.4), A(p.b, 0), A(p.d, 0.5)]); g2.fillRect(x - sz * 2, y - sz * 2, sz * 4, sz * 4); }, ln: p.ln, lw: 1 * u, ow: 1.4 * u }); }
+    circ(g, x, y, sz * 0.42); fillC(g, K.shade(c, 0.12)); strokeW(g, p.ln, 1 * u);
+    for (i = 0; i < 7; i++) { var a2 = i / 7 * PI * 2; circ(g, x + Math.cos(a2) * sz * 0.2, y + Math.sin(a2) * sz * 0.2, sz * 0.09); fillC(g, '#f0d040'); }
+  } };
+  ACC.kanzashi = { slot: 'head', draw: function (C, g, H, B, o, cf, X, hd) { ACC.camellia.draw(C, g, H, B, merge({ pin: 1 }, o), cf, X, hd); } };
+  ACC.comb = { slot: 'head', draw: function (C, g, H, B, o, cf, X, hd) {
+    var G = capG(H, hd), r = H.r, u = H.u * C.lw, s = o.side || 1, x = H.cx + s * G.rx * 0.38, y = G.top + G.ry * 0.12, c = o.c || '#8a4a1a', i;
+    g.save(); g.translate(x, y); g.rotate(s * 0.35);
+    var f = function (g2) { g2.beginPath(); g2.arc(0, r * 0.06, r * 0.1, PI * 1.08, PI * 1.92); g2.lineTo(r * 0.09, r * 0.07); g2.lineTo(-r * 0.09, r * 0.07); g2.closePath(); };
+    piece(C, g, { f: f, fill: c, sh: function (g2) { var rn = K.rng('tort'); for (i = 0; i < 12; i++) { ell(g2, (rn() - 0.5) * r * 0.18, rn() * r * 0.06 - r * 0.02, r * 0.02, r * 0.012, rn()); fillC(g2, A(rn() < 0.5 ? '#e0a050' : '#3a1a08', 0.6)); } if (C.l >= 2) { g2.beginPath(); g2.arc(0, r * 0.06, r * 0.09, PI * 1.2, PI * 1.5); strokeW(g2, A('#ffffff', 0.4), r * 0.01); } }, ln: '#2a1006', lw: 1.1 * u, ow: 1.6 * u });
+    g.restore();
+  } };
+  ACC.nurse_watch = { slot: 'body', draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, x = B.cx + B.sw * (o.x || 0.42), y = B.ny + r * (o.y || 0.42);
+    g.beginPath(); g.moveTo(x, y - r * 0.08); g.lineTo(x, y - r * 0.035); strokeW(g, '#c0c0c8', 1.6 * u);
+    rrect(g, x - r * 0.02, y - r * 0.1, r * 0.04, r * 0.025, r * 0.006); fillC(g, '#c0c0c8'); strokeW(g, '#505058', 0.8 * u);
+    circ(g, x, y, r * 0.035); fillC(g, o.c || '#d8d8e0'); strokeW(g, '#40404a', 1.1 * u);
+    circ(g, x, y, r * 0.026); fillC(g, '#fbfbf6'); g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - r * 0.018); g.moveTo(x, y); g.lineTo(x + r * 0.013, y); strokeW(g, '#202020', 0.9 * u);
+  } };
+  ACC.cig_pack = { slot: 'body', draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, x = B.cx + B.sw * (o.x || 0.46), y = B.ny + r * (o.y || 0.55);
+    rrect(g, x - r * 0.05, y - r * 0.05, r * 0.1, r * 0.08, r * 0.008); fillC(g, '#f0f0f4'); strokeW(g, '#404050', 1 * u);
+    g.fillStyle = '#2a4a9a'; g.fillRect(x - r * 0.05, y - r * 0.02, r * 0.1, r * 0.025);
+    for (var i = 0; i < 2; i++) { g.fillStyle = '#f4ecdc'; g.fillRect(x - r * 0.03 + i * r * 0.025, y - r * 0.075, r * 0.016, r * 0.03); g.fillStyle = '#d8a860'; g.fillRect(x - r * 0.03 + i * r * 0.025, y - r * 0.075, r * 0.016, r * 0.01); }
+  } };
+  ACC.rifle = { slot: 'back', draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, s = o.side || 1, x = B.cx + s * B.sw * 0.55, y = B.shY - r * 0.1;
+    g.save(); g.translate(x, y); g.rotate(s * 0.32);
+    piece(C, g, { f: function (g2) { rrect(g2, -r * 0.018, -r * 0.75, r * 0.036, r * 0.95, r * 0.01); }, fill: '#2a2a2e', sh: function (g2) { g2.fillStyle = K.lin(g2, -r * 0.02, 0, r * 0.02, 0, ['rgba(255,255,255,0.3)', 'rgba(0,0,0,0)']); g2.fillRect(-r * 0.02, -r * 0.8, r * 0.04, r); }, ln: '#000000', lw: 1 * u, ow: 1.8 * u });
+    piece(C, g, { f: function (g2) { g2.beginPath(); g2.moveTo(-r * 0.03, r * 0.1); g2.lineTo(r * 0.04, r * 0.1); g2.lineTo(r * 0.06, r * 0.4); g2.lineTo(-r * 0.05, r * 0.42); g2.closePath(); }, fill: '#6a4020', ln: '#2a1408', lw: 1 * u, ow: 1.8 * u });
+    g.restore();
+  } };
+  ACC.rifle_sling = { slot: 'body', draw: function (C, g, H, B, o) {
+    var r = B.r, s = o.side || 1;
+    g.beginPath(); g.moveTo(B.cx + s * B.sw * 0.68, B.shY - r * 0.04); g.quadraticCurveTo(B.cx, B.ny + r * 0.55, B.cx - s * B.sw * 0.5, B.bot + 4);
+    strokeW(g, '#1a1008', r * 0.045); strokeW(g, o.c || '#5a3a20', r * 0.032);
+  } };
+  ACC.whistle_cord = { slot: 'body', draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, s = o.side || -1, x0 = B.cx + s * B.sw * 0.62, y0 = B.shY - r * 0.02, x1 = B.cx + s * B.sw * 0.4, y1 = B.ny + r * 0.45;
+    g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo(x0 + s * r * 0.02, lerp(y0, y1, 0.7), x1, y1); strokeW(g, o.c || '#d8d8e0', 2 * u);
+    rrect(g, x1 - r * 0.012, y1, r * 0.024, r * 0.06, r * 0.006); fillC(g, '#c8c8d0'); strokeW(g, '#505058', 0.8 * u);
+  } };
+  ACC.hachimaki = { slot: 'head', draw: function (C, g, H, B, o, cf, X, hd) {
+    var G = capG(H, hd), r = H.r, u = H.u * C.lw, c = o.c || '#e8e4d8', p = pal(c), cx = H.cx, y = G.hl + r * 0.03;
+    var f = function (g2) { g2.beginPath(); g2.moveTo(cx - G.rx * 1.02, y + r * 0.02); g2.quadraticCurveTo(cx, y - r * 0.08, cx + G.rx * 1.02, y + r * 0.02); g2.lineTo(cx + G.rx * 1.0, y + r * 0.08); g2.quadraticCurveTo(cx, y - r * 0.01, cx - G.rx * 1.0, y + r * 0.08); g2.closePath(); };
+    piece(C, g, { f: f, fill: p.b, tex: C.t > 0 ? clothTex(p.b, 'cotton') : null, sh: function (g2) { g2.fillStyle = K.lin(g2, cx - G.rx, 0, cx + G.rx, 0, [A(p.l, 0.3), A(p.b, 0), A(p.s, 0.6)]); g2.fillRect(cx - G.rx * 1.1, y - r * 0.1, G.rx * 2.2, r * 0.2); if (o.stripe) { g2.fillStyle = o.stripe; g2.fillRect(cx - G.rx * 1.1, y + r * 0.015, G.rx * 2.2, r * 0.012); } }, ln: p.ln, lw: 1.2 * u, ow: 2 * u });
+    var kx = cx + G.rx * 0.98, ky = y + r * 0.05;
+    for (var i = 0; i < 2; i++) piece(C, g, { f: (function (i) { return function (g2) { g2.beginPath(); g2.moveTo(kx, ky); g2.lineTo(kx + r * (0.1 + i * 0.03), ky + r * (0.03 + i * 0.08)); g2.lineTo(kx + r * (0.06 + i * 0.03), ky + r * (0.08 + i * 0.08)); g2.closePath(); }; })(i), fill: K.shade(c, -0.08 * i), ln: p.ln, lw: 1.1 * u, ow: 1.6 * u });
+    circ(g, kx, ky, r * 0.028); fillC(g, p.b); strokeW(g, p.ln, 1.1 * u);
+  } };
+  ACC.mino = { slot: 'neck', draw: function (C, g, H, B, o) {
+    var r = B.r, u = B.u * C.lw, cx = B.cx, c = o.c || '#9a8250', p = pal(c), n = K.byModel(C.q, 16, 26, 40), i, rn = K.rng('mino'), by = B.ny + r * 0.7;
+    var f = function (g2) {
+      g2.beginPath(); g2.moveTo(cx - B.nw * 1.1, B.ny - r * 0.06);
+      g2.quadraticCurveTo(cx - B.sw * 0.7, B.ny - r * 0.02, cx - B.sw - r * 0.08, B.shY + r * 0.1);
+      for (i = 0; i <= n; i++) { var t = i / n, x = lerp(cx - B.sw - r * 0.1, cx + B.sw + r * 0.1, t); g2.lineTo(x, by + Math.sin(t * PI) * r * 0.08 + (i % 2 ? -r * 0.03 : r * 0.02) + rn.jit(0, r * 0.015)); }
+      g2.lineTo(cx + B.sw + r * 0.08, B.shY + r * 0.1); g2.quadraticCurveTo(cx + B.sw * 0.7, B.ny - r * 0.02, cx + B.nw * 1.1, B.ny - r * 0.06); g2.closePath();
+    };
+    piece(C, g, { f: f, fill: p.b, tex: C.t > 0 ? ['thatch', { c1: K.shade(c, -0.25), c2: K.shade(c, 0.12), seed: 8 }, 50] : null, sh: function (g2) {
+      clothShade(C, g2, B, p, { noArms: 1, noNeckShadow: 1, noFolds: 1 });
+      g2.strokeStyle = A(p.d, 0.6); g2.lineWidth = 1 * u;
+      for (i = 0; i < n * 2; i++) { var x = cx + (rn() * 2 - 1) * (B.sw + r * 0.1), y = B.ny + rn() * r * 0.75; g2.beginPath(); g2.moveTo(x, y); g2.lineTo(x + (x - cx) * 0.04, y + r * 0.1); g2.stroke(); }
+      for (i = 0; i < 4; i++) { g2.beginPath(); g2.moveTo(cx - B.sw * 1.2, B.ny + r * (0.15 + i * 0.15)); g2.quadraticCurveTo(cx, B.ny + r * (0.08 + i * 0.15), cx + B.sw * 1.2, B.ny + r * (0.15 + i * 0.15)); strokeW(g2, A(p.d, 0.5), 1.6 * u); }
+    }, ln: p.ln, lw: 1.2 * u, ow: 2.2 * u });
+    g.beginPath(); g.moveTo(cx - B.nw * 1.1, B.ny - r * 0.04); g.quadraticCurveTo(cx, B.ny + r * 0.06, cx + B.nw * 1.1, B.ny - r * 0.04); strokeW(g, '#5a4020', r * 0.018);
+  } };
+  ACC.muffler = { slot: 'neck', draw: function (C, g, H, B, o) { ACC.scarf.draw(C, g, H, B, merge({ long: false }, o)); } };
+  ACC.glove_right = { slot: 'none' };
+
+  /* ---- 新发型 ---- */
+  HAIR.bowl = { vol: 0.09, w: 1.05, bangs: { k: 'blunt', len: 0.32 }, side: { k: 'blunt', len: 0.4 }, back: { k: 'short', len: -0.04 }, noFly: 1 };
+  HAIR.shoulder_straight = { vol: 0.06, bangs: { k: 'spiky', n: [6, 9, 11], len: 0.48, part: 0.15 }, side: { k: 'lock', len: 1.12, w: 0.18 }, back: { k: 'long', len: 0.3, w: 1.25 } };
+  HAIR.shaggy = { vol: 0.1, w: 1.06, cap: 'tufts', bangs: { k: 'messy', n: [6, 8, 10], len: 0.5, part: 0.2, irr: 1.4 }, side: { k: 'ragged', len: 0.6, w: 0.16 }, back: { k: 'spiky', len: 0.12 } };
+  HAIR.updo = { vol: 0.04, hl: 0.15, cap: 'swept', bangs: { k: 'parted', len: 0.4, part: 0.25 }, side: { k: 'lock', len: 0.55, w: 0.07, n: 1 }, back: { k: 'short', len: -0.12 }, extras: [{ k: 'bun', pos: 'back', r: 0.18 }] };
+
+  /* ---- 新道具 ---- */
+  PROP.slate = function (C, g, H, B, o, cf) {
+    var r = B.r, u = B.u * C.lw, cx = B.cx, sd = o.side || 1, x = cx + sd * B.sw * 0.34, y = B.ny + r * 0.66, w = r * 0.42, h = r * 0.3, ang = -sd * 0.12, i;
+    var wx = x + Math.cos(ang) * (-sd * w * 0.12) - Math.sin(ang) * (h * 0.5 + r * 0.06), wy = y + Math.sin(ang) * (-sd * w * 0.12) + Math.cos(ang) * (h * 0.5 + r * 0.06);
+    forearm(C, g, B, cx + sd * B.sw * 0.98, wx, wy + r * 0.02, cf._sleeveC, cf._cuffC);
+    // 挂粉笔的绳
+    g.beginPath(); g.moveTo(x - sd * w * 0.45, y - h * 0.4); g.quadraticCurveTo(x - sd * w * 0.7, y + h * 0.3, x - sd * w * 0.55, y + h * 0.75); strokeW(g, '#c8b8a0', 1.6 * u);
+    rrect(g, x - sd * w * 0.55 - r * 0.012, y + h * 0.72, r * 0.024, r * 0.07, r * 0.008); fillC(g, '#f4f2ec'); strokeW(g, '#9a9488', 0.8 * u);
+    g.save(); g.translate(x, y); g.rotate(ang);
+    piece(C, g, { f: function (g2) { rrect(g2, -w / 2, -h / 2, w, h, r * 0.015); }, fill: '#a07850', tex: C.t > 0 ? ['wood', { c1: '#7a5634', c2: '#b08860', planks: 1, dir: 'h', seed: 4 }, 60] : null, ln: '#3a2814', lw: 1.2 * u, ow: 2 * u });
+    piece(C, g, { f: function (g2) { rrect(g2, -w / 2 + r * 0.025, -h / 2 + r * 0.025, w - r * 0.05, h - r * 0.05, r * 0.006); }, fill: '#2e3634', sh: function (g2) {
+      g2.fillStyle = K.lin(g2, -w / 2, -h / 2, w / 2, h / 2, ['rgba(255,255,255,0.08)', 'rgba(0,0,0,0.2)']); g2.fillRect(-w, -h, w * 2, h * 2);
+      // 粉笔字（波浪的「雪」样笔画）
+      g2.strokeStyle = 'rgba(240,240,232,0.85)'; g2.lineWidth = 1.4 * u;
+      for (i = 0; i < 3; i++) { var lx = -w * 0.32 + i * w * 0.24, ly = -h * 0.15; g2.beginPath(); g2.moveTo(lx, ly - h * 0.12); g2.quadraticCurveTo(lx + w * 0.04, ly - h * 0.2, lx + w * 0.08, ly - h * 0.12); g2.quadraticCurveTo(lx + w * 0.12, ly - h * 0.04, lx + w * 0.16, ly - h * 0.12); g2.moveTo(lx + w * 0.02, ly); g2.lineTo(lx + w * 0.14, ly); g2.moveTo(lx + w * 0.08, ly - h * 0.06); g2.lineTo(lx + w * 0.08, ly + h * 0.22); g2.moveTo(lx + w * 0.02, ly + h * 0.12); g2.lineTo(lx + w * 0.15, ly + h * 0.1); g2.stroke(); }
+    }, ln: '#141a18', lw: 1 * u });
+    g.restore();
+    hand(C, g, H, wx, wy, ang, 0.86, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
+  };
+  PROP.flask = function (C, g, H, B, o, cf) {
+    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.45, y = B.ny + r * 0.62;
+    forearm(C, g, B, B.cx + sd * B.sw * 0.95, x, y + r * 0.22, cf._sleeveC, cf._cuffC);
+    piece(C, g, { f: function (g2) { rrect(g2, x - r * 0.075, y - r * 0.2, r * 0.15, r * 0.28, r * 0.03); }, fill: '#b0b4bc', sh: function (g2) { g2.fillStyle = K.lin(g2, x - r * 0.08, 0, x + r * 0.08, 0, ['#e8eaf0', '#a0a4ac', '#70747c']); g2.fillRect(x - r * 0.08, y - r * 0.2, r * 0.16, r * 0.3); }, ln: '#3a3c44', lw: 1.1 * u, ow: 1.8 * u });
+    rrect(g, x - r * 0.025, y - r * 0.25, r * 0.05, r * 0.05, r * 0.01); fillC(g, '#808490'); strokeW(g, '#3a3c44', 1 * u);
+    hand(C, g, H, x, y + r * 0.2, 0, 0.8, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
+  };
+  PROP.sake = function (C, g, H, B, o, cf) {
+    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.5, y = B.ny + r * 0.58, c = o.c || '#ece4d4';
+    forearm(C, g, B, B.cx + sd * B.sw * 0.98, x, y + r * 0.28, cf._sleeveC, cf._cuffC);
+    piece(C, g, { f: function (g2) { g2.beginPath(); g2.moveTo(x - r * 0.025, y - r * 0.24); g2.lineTo(x + r * 0.025, y - r * 0.24); g2.bezierCurveTo(x + r * 0.03, y - r * 0.12, x + r * 0.11, y - r * 0.06, x + r * 0.1, y + r * 0.08); g2.quadraticCurveTo(x, y + r * 0.13, x - r * 0.1, y + r * 0.08); g2.bezierCurveTo(x - r * 0.11, y - r * 0.06, x - r * 0.03, y - r * 0.12, x - r * 0.025, y - r * 0.24); g2.closePath(); }, fill: c,
+      sh: function (g2) { g2.fillStyle = K.lin(g2, x - r * 0.1, 0, x + r * 0.1, 0, [A('#ffffff', 0.5), A(c, 0), A('#5a4a3a', 0.4)]); g2.fillRect(x - r * 0.12, y - r * 0.3, r * 0.24, r * 0.45); g2.fillStyle = '#3a4a7a'; g2.fillRect(x - r * 0.1, y - r * 0.06, r * 0.2, r * 0.02); }, ln: pal(c).ln, lw: 1.1 * u, ow: 1.8 * u });
+    hand(C, g, H, x, y + r * 0.26, 0, 0.82, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
+  };
+  PROP.briefcase = function (C, g, H, B, o, cf) {
+    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * (B.bw + r * 0.06), y = B.bot - r * 0.06, c = o.c || '#3a2618', p = pal(c);
+    piece(C, g, { f: function (g2) { rrect(g2, x - r * 0.3, y, r * 0.6, r * 0.4, r * 0.03); }, fill: p.b, tex: C.t > 0 ? clothTex(p.b, 'leather') : null, sh: function (g2) { g2.fillStyle = K.lin(g2, 0, y, 0, y + r * 0.2, [A(p.l, 0.4), A(p.b, 0)]); g2.fillRect(x - r * 0.3, y, r * 0.6, r * 0.2); }, ln: p.ln, lw: 1.2 * u, ow: 2 * u });
+    g.beginPath(); g.moveTo(x - r * 0.08, y); g.quadraticCurveTo(x, y - r * 0.12, x + r * 0.08, y); strokeW(g, p.ln, r * 0.03); strokeW(g, p.b, r * 0.018);
+    hand(C, g, H, x, y + r * 0.02, PI, 0.8, 'hold', o.glove || cf._gloveC || H.sp.b, -sd, hopt(o, cf));
+  };
+
+  /* ---- 新的脸部特征 ---- */
+  function marksExtra(C, g, H, cf, sp) {
+    var r = H.r, cx = H.cx, u = H.u * C.lw, m, s, i, j;
+    if ((m = hasMark(cf, 'frostbite')) && !H.chibi) {
+      // 两颊冻疤：不规则的紫红斑 + 发白的疤痕纹
+      var rb = K.rng('frost' + cf._id);
+      g.save(); facePath(H)(g); g.clip();
+      for (s = -1; s <= 1; s += 2) {
+        var fx = cx + s * H.fw * 0.56, fy = H.eyeY + H.eh * 0.55 + r * 0.06, pts = [];
+        for (i = 0; i < 11; i++) { var an = i / 11 * PI * 2, rr = r * (0.06 + rb() * 0.035); pts.push(fx + Math.cos(an) * rr * 1.25, fy + Math.sin(an) * rr * 0.95); }
+        smoothPoly(g, pts, true); fillC(g, A(K.mix(sp.b, '#a84a62', 0.5), C.l >= 1 ? 0.55 : 0.65));
+        if (C.l >= 1) { g.fillStyle = K.rad(g, fx, fy, 0, r * 0.12, [A('#9a3a54', 0.25), A('#9a3a54', 0)]); g.fillRect(fx - r * 0.13, fy - r * 0.13, r * 0.26, r * 0.26); }
+        if (C.m >= 1) for (j = 0; j < 9; j++) { ell(g, fx + (rb() - 0.5) * r * 0.15, fy + (rb() - 0.5) * r * 0.1, r * 0.012, r * 0.007, rb() * 3); fillC(g, A(rb() < 0.5 ? '#f4d8d0' : '#7a2a40', 0.5)); }
+        g.strokeStyle = A('#f6e2da', 0.7); g.lineWidth = 1 * u;
+        for (j = 0; j < 3; j++) { var sx0 = fx - r * 0.05 + j * r * 0.035; g.beginPath(); g.moveTo(sx0, fy - r * 0.035); g.lineTo(sx0 + s * r * 0.02, fy + r * 0.035); g.stroke(); }
+        smoothPoly(g, pts, true); strokeW(g, A(sp.ln, 0.35), 0.9 * u);
+      }
+      g.restore();
+    }
+    if ((m = hasMark(cf, 'liver_spots')) && !H.chibi) {
+      var rl = K.rng('liver' + cf._id);
+      for (i = 0; i < 9; i++) { var lx = cx + (rl() * 2 - 1) * H.fw * 0.8, ly = rl() < 0.5 ? H.T + r * (0.2 + rl() * 0.12) : H.eyeY + r * (0.08 + rl() * 0.12); if (Math.abs(lx - cx) < H.ex * 0.6 && ly > H.eyeY) continue; ell(g, lx, ly, r * (0.008 + rl() * 0.01), r * (0.006 + rl() * 0.008), rl()); fillC(g, A('#8a5a3a', 0.35)); }
+    }
+    if ((m = hasMark(cf, 'red_nose'))) {
+      ell(g, cx + r * 0.004, H.noseY - r * 0.005, r * 0.035, r * 0.028); fillC(g, A('#e05a5a', 0.35));
+      for (s = -1; s <= 1; s += 2) { ell(g, cx + s * H.ex * 1.05, H.eyeY + H.eh * 0.7, r * 0.06, r * 0.03); fillC(g, A('#e06060', 0.18)); }
+    }
+    if ((m = hasMark(cf, 'soot')) && !H.chibi) {
+      var rs = K.rng('soot' + cf._id);
+      for (i = 0; i < 4; i++) { var sxx = cx + (i % 2 ? 1 : -1) * H.fw * (0.3 + rs() * 0.4), syy = i < 2 ? H.eyeY + r * (0.12 + rs() * 0.06) : H.T + r * (0.22 + rs() * 0.05); g.fillStyle = K.rad(g, sxx, syy, 0, r * 0.05, [A('#2a2420', 0.45), A('#2a2420', 0)]); g.fillRect(sxx - r * 0.06, syy - r * 0.06, r * 0.12, r * 0.12); }
+    }
+    void j;
+  }
 
   /* ====================== 配置解析 ====================== */
   var NEUTRAL = { sex: 'm', age: 30, height: 170, skin: '#dccabe', hair: { style: 'short', color: '#4a4a56' }, eyes: { shape: 'round', color: '#505064' },
@@ -3344,6 +3657,7 @@
     var B = bodyGeom(cf, H, PH);
     var X = exprFor(cf, expr);
     var mask = cf.mask ? MASK[cf.mask.k || cf.mask] : null, mo = isObj(cf.mask) ? cf.mask : {};
+    if (mask && mo.cover && mo.cover !== mask.cover) mask = { cover: mo.cover, draw: mask.draw };
     if (mask) { X.glow = (cf.glowBy && cf.glowBy[expr] !== undefined) ? cf.glowBy[expr] : (JUDGE_GLOW[expr] === undefined ? 0.6 : JUDGE_GLOW[expr]); }
     if (mask && mask.cover === 'full') { cf._noFace = 1; X = merge(X, { fx: [] }); }
     if (mask && mask.cover === 'upper') { X.eye = merge(X.eye, { hl: 0 }); }
@@ -3412,6 +3726,7 @@
     H.lines = Math.min(1, linesFor(cf)); H.skin = cf.skin; H.sp = skinPal(cf.skin);
     var X = exprFor(cf, 'normal'), u = H.u * C.lw, cx = SW / 2;
     var mask = cf.mask ? MASK[cf.mask.k || cf.mask] : null;
+    if (mask && isObj(cf.mask) && cf.mask.cover) mask = { cover: cf.mask.cover, draw: mask.draw };
     if (mask) X.glow = 0.7;
     if (mask && mask.cover === 'full') cf._noFace = 1;
     var oc = OUTFIT[cf.outfit.k] || OUTFIT.shirt, sp0 = merge(oc.sprite || {}, cf.sprite || {});
