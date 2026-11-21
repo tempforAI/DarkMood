@@ -763,8 +763,8 @@
       var s = steps[i], xl = s.xl, xr = s.xr, y = s.y, td = s.td, bl = s.bl, br = s.br, rh = s.rh, wv = xr - xl;
       // 踏面
       if (td > 0.5) {
-        K.poly(g, [bl, y - td, br, y - td, xr, y, xl, y]);
-        mat(g, q, o.top, 'rock', o.tex, 192, 0, 0);
+        K.poly(g, [bl, y - td, br, y - td, xr, y, xl, y]); fillP(g, o.top);
+        if (q.tex > 0) { K.poly(g, [bl, y - td, br, y - td, xr, y, xl, y]); texFill(g, q, 'noise', STEP_GRAIN, 128, xl, y, 0.35, 1, 1, null, 'overlay'); }
         K.poly(g, [bl, y - td, br, y - td, xr, y, xl, y]);
         fillP(g, K.lin(g, 0, y - td, 0, y, ['rgba(0,0,0,0.3)', 'rgba(220,220,236,0.06)', 'rgba(230,230,245,0.14)']));
         // 磨损：中间被踩得发亮
@@ -783,24 +783,24 @@
         if (o.wet && q.light >= 2) { K.poly(g, [bl, y - td, br, y - td, xr, y, xl, y]); fillP(g, K.lin(g, xl, 0, xr, 0, ['rgba(200,205,225,0)', 'rgba(200,205,225,0.12)', 'rgba(200,205,225,0)'])); }
       }
       // 立面
-      rectP(g, xl, y, wv, rh);
-      mat(g, q, o.front, 'rock', o.tex, 192, 0, 0);
+      rectP(g, xl, y, wv, rh); fillP(g, o.front);
+      if (q.tex > 0) { rectP(g, xl, y, wv, rh); texFill(g, q, 'noise', STEP_GRAIN, 128, xl + 37, y, 0.4, 1, 1, null, 'overlay'); }
       rectP(g, xl, y, wv, rh);
       fillP(g, K.lin(g, 0, y, 0, y + rh, ['rgba(0,0,0,0.55)', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.45)']));
       // 前缘：受光的圆角 + 缺口
       g.fillStyle = K.rgba(o.edge || '#c4c2d0', q.light >= 1 ? 0.42 : 0.25); g.fillRect(xl, y - 1, wv, Math.max(1.5, rh * 0.08));
       if (q.model >= 1) {
-        g.fillStyle = 'rgba(14,13,18,0.75)';
-        for (var c = 0; c < 2 + (wv / 120 | 0); c++) { var cx = r.range(xl + 6, xr - 6), cw = r.range(4, 14); K.poly(g, [cx, y - 1, cx + cw, y - 1, cx + cw * 0.6, y + rh * 0.25]); g.fill(); }
+        g.fillStyle = 'rgba(24,23,30,0.45)';
+        for (var c = 0; c < 1 + (wv / 200 | 0); c++) { var cx = r.range(xl + 6, xr - 6), cw = r.range(4, 10); K.poly(g, [cx, y - 1, cx + cw, y - 1, cx + cw * 0.5, y + rh * 0.15]); g.fill(); }
       }
       // 青苔：两端与踏面后缘
       if (q.model >= 1) {
         g.beginPath();
-        for (var m = 0; m < K.byModel(q, 0, 4, 7); m++) {
-          var endSide = r() < 0.5, mx = endSide ? (r() < 0.5 ? xl + r.range(0, wv * 0.12) : xr - r.range(0, wv * 0.12)) : r.range(xl, xr);
-          var my = endSide ? y - r.range(0, Math.max(1, td)) : y - td + r.range(0, Math.max(1, td * 0.3));
-          var mr = r.range(5, 14) * (0.5 + rh / 40);
-          g.moveTo(mx + mr, my); g.ellipse ? g.ellipse(mx, my, mr, mr * 0.35, 0, 0, TAU) : g.arc(mx, my, mr, 0, TAU);
+        for (var m = 0; m < K.byModel(q, 0, 5, 9); m++) {
+          // 青苔团：靠两端（墙脚）与踏面后缘（立面根部）的一簇小点
+          var endSide = r() < 0.65, mx = endSide ? (r() < 0.5 ? xl + r.range(0, wv * 0.08) : xr - r.range(0, wv * 0.08)) : r.range(xl, xr);
+          var my = y - td + r.range(0, Math.max(1, td * 0.35)), sc = 0.5 + rh / 50;
+          for (var d2 = 0; d2 < 4; d2++) { var dx2 = mx + r.range(-10, 10) * sc, dy2 = my + r.range(-1, 2) * sc, dr = r.range(2, 5) * sc; g.moveTo(dx2 + dr, dy2); g.arc(dx2, dy2, dr, 0, TAU); }
         }
         g.fillStyle = moss; g.fill();
         if (q.model >= 2 && o.grass) grassTufts(g, q, r, 2, xl - 4, y - 2, 10, 2, o.grass, 10);
@@ -1082,6 +1082,7 @@
   var QUAY_STONE = { c1: '#3a3944', c2: '#6c6a76', mortar: '#1d1c22', rows: 3, cols: 2, seed: 41, irregular: 1, mortarW: 0.03 };
   var STEP_STONE = { c1: '#4a4854', c2: '#7c7a86', mortar: '#26252c', rows: 2, cols: 2, seed: 43, mortarW: 0.025 };
   var STEP_ROCK = { c1: '#3e3c46', c2: '#76747e', seed: 44 };
+  var STEP_GRAIN = { c1: '#000000', c2: '#ffffff', scale: 24, oct: 4, seed: 45, contrast: 1.3 };
   var BOARD_WOOD = { c1: '#2c2520', c2: '#5e5146', gap: '#16110e', planks: 5, dir: 'v', ring: 2, seed: 61 };
   var PIER_WOOD = { c1: '#3a3129', c2: '#6b5d50', gap: '#1a1410', planks: 1, dir: 'h', ring: 1.4, seed: 63 };
   function drawDock(g, q) {
@@ -1224,7 +1225,7 @@
     // 右侧岩坡
     var poly = [1440, 790, 1452, 560, 1470, 380, 1500, 300, 1560, 240, 1700, 205, 1830, 190, 1930, 196, 1930, 800];
     g.save(); K.poly(g, poly); g.clip();
-    rockCells(g, q, 1430, 180, 500, 630, { seed: 51, cw: 110, ch: 90, dark: '#16151c', mid: '#3e3c48', lite: '#9592a2', L: [-0.6, -0.6, 0.55], amb: 0.3, crack: 0.05, tilt: 0.2,
+    rockCells(g, q, 1430, 180, 500, 630, { seed: 51, cw: 150, ch: 120, dark: '#16151c', mid: '#3e3c48', lite: '#9592a2', L: [-0.6, -0.6, 0.55], amb: 0.3, crack: 0.03, tilt: 0.2,
       wet: function (u, v) { return sat((v - 0.6) * 2); }, moss: function (u, v) { return sat(0.3 - v) * 2; } });
     if (q.tex > 0) { K.poly(g, poly); texFill(g, q, 'rock', ROCK, 256, 0, 0, 0.4, null, null, null, 'overlay'); }
     // 坡顶植被

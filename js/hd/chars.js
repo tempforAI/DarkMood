@@ -578,16 +578,22 @@
     }
   };
   BANGS.parted = function (o, H, hs, G, rnd, C) {
-    var b = hs.bangs, r = H.r, cx = H.cx, fw = H.fw, px = G.partX, s, i, n = K.byModel(C.q, 1, 2, 3);
-    var tip = lerp(H.browY, H.eyeY + H.eh * 0.4, b.len === undefined ? 0.6 : b.len);
+    // 中分 / 偏分的帘式刘海：从分缝向两侧垂下，内侧短、外侧长；中间留几缕细发
+    var b = hs.bangs, r = H.r, cx = H.cx, fw = H.fw, px = G.partX, s, i, n = K.byModel(C.q, 2, 3, 4);
+    var tip = lerp(H.browY, H.eyeY + H.eh * 0.3, b.len === undefined ? 0.6 : b.len), list = [];
     for (s = -1; s <= 1; s += 2) {
-      for (i = n - 1; i >= 0; i--) {
-        var t = n === 1 ? 0 : i / (n - 1);
-        var x0 = px + s * fw * (0.04 + t * 0.18), y0 = G.top + G.ry * (0.3 + t * 0.1);
-        var x1 = cx + s * fw * (0.82 + t * 0.12) + (s > 0 ? (cx - px) * 0.3 : 0), y1 = tip + (s * (px - cx) / fw) * r * 0.05 + t * r * 0.05 + rnd.jit(0, r * 0.015);
-        o.front.push({ bang: 1, L: lock(x0, y0, x1, y1, fw * (0.6 - t * 0.15), -s * r * (0.08 + t * 0.02)) });
+      var span = s < 0 ? (px - (cx - fw * 0.95)) : ((cx + fw * 0.95) - px);
+      for (i = 0; i < n; i++) {
+        var t = (i + 0.5) / n;
+        var x0 = px + s * span * (0.06 + t * 0.3), y0 = G.top + G.ry * (0.24 + t * 0.12);
+        var x1 = px + s * span * (0.3 + t * 0.68) + rnd.jit(0, r * 0.01);
+        var y1 = lerp(H.browY - r * 0.04, tip, 0.3 + t * 0.7) + rnd.jit(0, r * 0.015);
+        list.push({ d: -t, L: lock(x0, y0, x1, y1, span * (0.62 - t * 0.12), -s * r * (0.06 + t * 0.03)) });
       }
     }
+    list.sort(function (p, q) { return p.d - q.d; });
+    for (i = 0; i < list.length; i++) o.front.push({ bang: 1, L: list[i].L });
+    if (C.m >= 1) for (i = -1; i <= 1; i += 2) o.front.push({ bang: 1, L: lock(px + i * r * 0.012, G.top + G.ry * 0.32, px + i * r * 0.05, H.browY - r * 0.01, r * 0.035, -i * r * 0.015) });
   };
   /* ---- 侧发 ---- */
   SIDES.none = function () {};
@@ -743,6 +749,13 @@
     (BACKS[hs.back.k] || BACKS.short)(o, H, hs, G, rnd, C);
     o.front.push({ cap: 1, f: capShape(H, G, hs) });
     if (hs.cap === 'tufts') capTufts(o, H, hs, G, rnd, C);
+    if (C.m >= 2 && !hs.noFly && hs.cap !== 'buzz' && hs.cap !== 'thin' && hs.cap !== 'swept') {
+      // 几缕飞出的细发，打破头盔般的轮廓
+      for (var fsd = -1; fsd <= 1; fsd += 2) {
+        var fth = fsd < 0 ? 0.62 : 0.85, fx0 = H.cx + fsd * G.rx * 0.8 * Math.sin(fth), fy0 = G.cy - G.ry * 0.85 * Math.cos(fth);
+        o.front.push({ thin: 1, fly: 1, L: lock(fx0, fy0, fx0 + fsd * H.r * 0.11, fy0 - H.r * 0.035, H.r * 0.022, -fsd * H.r * 0.035) });
+      }
+    }
     (SIDES[hs.side.k] || SIDES.none)(o, H, hs, G, rnd, C);
     (BANGS[hs.bangs.k] || BANGS.spiky)(o, H, hs, G, rnd, C);
     for (var i = 0; i < hs.extras.length; i++) {
