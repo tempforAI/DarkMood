@@ -389,7 +389,7 @@
   HAIR.buzz = { vol: 0.015, hl: 0.14, w: 0.97, cap: 'buzz', bangs: { k: 'none' }, side: { k: 'none' }, back: { k: 'none' } };
   HAIR.cropped = { vol: 0.03, hl: 0.15, w: 0.99, bangs: { k: 'short', n: [6, 9, 12], len: 0.14, part: 0 }, side: { k: 'sideburn', short: 1 }, back: { k: 'short', len: -0.05 } };
   HAIR.cropped_grey = HAIR.cropped;
-  HAIR.wavy_medium = { vol: 0.08, w: 1.04, wave: 1, bangs: { k: 'swept', len: 0.62, part: 0.5, n: [3, 4, 5] }, side: { k: 'lock', len: 0.55, w: 0.16, wave: 1 }, back: { k: 'wavy', len: -0.12, w: 1.28 } };
+  HAIR.wavy_medium = { vol: 0.09, w: 1.05, cap: 'tufts', wave: 1, bangs: { k: 'swept', len: 0.6, part: 0.5, n: [3, 4, 5] }, side: { k: 'lock', len: 0.55, w: 0.16, wave: 1 }, back: { k: 'spiky', len: -0.06 } };
   HAIR.long_straight = { vol: 0.06, bangs: { k: 'spiky', n: [6, 9, 12], len: 0.48, part: 0.1 }, side: { k: 'lock', len: 2.1, w: 0.2, n: 2 }, back: { k: 'long', len: 1.6, w: 1.32 } };
   HAIR.long_ribbon = HAIR.long_straight;
   HAIR.hime_cut = { vol: 0.05, bangs: { k: 'blunt', len: 0.5 }, side: { k: 'blunt', len: 0.98 }, back: { k: 'long', len: 1.7, w: 1.3, blunt: 1 } };
@@ -518,7 +518,7 @@
   BANGS.none = function (o, H, hs, G, rnd) {
     if (hs.bangs.stray) {
       var x = H.cx + H.fw * 0.2, r = H.r;
-      o.front.push({ L: lock(x, G.hl - r * 0.04, x - r * 0.03, H.browY - r * 0.02, r * 0.035, r * 0.04), thin: 1 });
+      o.front.push({ L: lock(x, G.hl - r * 0.04, x - r * 0.05, G.hl + r * 0.1, r * 0.03, r * 0.035), thin: 1 });
     }
     void rnd;
   };
@@ -677,14 +677,17 @@
   HEXTRA.braids = function (o, H, hs, G, rnd, C, ex) {
     var r = H.r, cx = H.cx, len = ex.len || 0.9, s, i, n = K.byModel(C.q, 5, 7, 9);
     for (s = -1; s <= 1; s += 2) {
-      var x0 = cx + s * H.fw * 0.98, y0 = H.jawY - r * 0.02, x1 = cx + s * H.fw * 1.12, y1 = H.C + len * r;
+      var x0 = cx + s * H.fw * 0.96, y0 = H.jawY - r * 0.04, x1 = cx + s * H.fw * 1.1, y1 = H.C + len * r;
+      o.front.push({ side: 1, L: lock(cx + s * H.fw * 0.86, G.cy - r * 0.05, x0, y0 + r * 0.04, r * 0.13, -s * r * 0.02) });
       for (i = 0; i < n; i++) {
-        var t = i / n, t2 = (i + 1) / n, xa = lerp(x0, x1, t), ya = lerp(y0, y1, t), xb = lerp(x0, x1, t2), yb = lerp(y0, y1, t2);
-        var w = r * 0.1 * (1 - t * 0.25);
-        o.front.push({ braid: 1, L: lock(xa + (i % 2 ? 1 : -1) * w * 0.35, ya - r * 0.02, xb - (i % 2 ? 1 : -1) * w * 0.25, yb + r * 0.025, w * 1.25, (i % 2 ? 1 : -1) * r * 0.025, w * 0.35) });
+        (function (i) {
+          var t = (i + 0.5) / n, x = lerp(x0, x1, t), y = lerp(y0, y1, t), w = r * 0.075 * (1 - t * 0.25), hh = (y1 - y0) / n * 0.85;
+          var sd = i % 2 ? 1 : -1;
+          o.front.push({ braid: 1, sliver: [-sd * w * 0.25, -hh * 0.15], f: function (g) { ell(g, x + sd * w * 0.22, y, w * 0.78, hh * 0.72, sd * 0.55); } });
+        })(i);
       }
-      o.front.push({ tie: 1, c: ex.c || hs.tieC || '#c03040', f: (function (x, y) { return function (g) { rrect(g, x - r * 0.045, y - r * 0.02, r * 0.09, r * 0.04, r * 0.015); }; })(x1, y1 + r * 0.01) });
-      o.front.push({ L: lock(x1, y1 + r * 0.02, x1 + s * r * 0.01, y1 + r * 0.12, r * 0.07, 0) });
+      o.front.push({ tie: 1, c: ex.c || hs.tieC || '#c03040', f: (function (x, y) { return function (g) { rrect(g, x - r * 0.045, y - r * 0.02, r * 0.09, r * 0.04, r * 0.015); }; })(x1, y1 + r * 0.005) });
+      o.front.push({ L: lock(x1 - s * r * 0.01, y1 + r * 0.02, x1 + s * r * 0.015, y1 + r * 0.12, r * 0.075, 0) });
     }
   };
   HEXTRA.bun = function (o, H, hs, G, rnd, C, ex) {
@@ -780,6 +783,16 @@
       } else if (!it.cap || C.m > 0) {
         itemPath(g, it); strokeW(g, hp.ln, lw * (it.cap ? 0.8 : 1));
       }
+      if (it.cap && hs.cap === 'thin') {
+        g.save(); itemPath(g, it); g.clip();
+        var sk = H.sp || skinPal(H.skin), cy0 = G.top + G.ry * 0.45;
+        g.save(); g.translate(cx, cy0); g.scale(1, 0.8);
+        g.fillStyle = K.rad(g, 0, 0, 0, G.rx * 0.95, [[0, sk.b], [0.62, sk.b], [0.8, K.mix(sk.b, col, 0.5)], [1, A(col, 0)]]);
+        g.fillRect(-G.rx * 1.2, -G.rx * 1.2, G.rx * 2.4, G.rx * 2.4); g.restore();
+        if (C.l >= 1) { ell(g, cx - G.rx * 0.25, G.top + G.ry * 0.25, G.rx * 0.2, G.ry * 0.1, -0.3); fillC(g, A('#ffffff', 0.35)); }
+        if (C.m >= 1) { g.strokeStyle = A(col, 0.6); g.lineWidth = 1 * u; for (var tk = 0; tk < 7; tk++) { var tx = cx + (tk - 3) * G.rx * 0.2; g.beginPath(); g.moveTo(tx, G.top + G.ry * 0.25); g.quadraticCurveTo(tx + (tk - 3) * r * 0.02, G.top + G.ry * 0.4, tx + (tk - 3) * r * 0.04, G.top + G.ry * 0.5); g.stroke(); } }
+        g.restore();
+      }
       if (it.bun && it.wrap && C.m >= 1) {
         var w = it.wrap;
         g.save(); itemPath(g, it); g.clip();
@@ -855,20 +868,25 @@
     var rx = G.rx * (back ? 1.12 : 0.96), dip = back ? r * 0.04 : r * 0.13;
     var n = K.byModel(C.q, 8, 13, 18), rnd = K.rng('ring' + (back ? 1 : 0) + (hd.hs.style || ''));
     var a0 = (C.l >= 2 ? 0.62 : C.l >= 1 ? 0.5 : 0.4) * (hs.shine || 1) * (back ? 0.6 : 1);
-    var th0 = -1.28, th1 = 1.22;
+    var TH0 = -1.28, TH1 = 1.22;
     function X(th) { return cx + rx * Math.sin(th); }
     function Y(th) { return yr + dip * (1 - Math.cos(th)); }
+    // 光带分成几段（中间留缝），每段下缘为锯齿
+    var segs = C.m >= 1 ? [[-1.28, -0.62], [-0.52, 0.18], [0.3, 0.72], [0.84, 1.22]] : [[-1.28, -0.1], [0.05, 1.22]];
     var band = function (g2, k) {
       g2.beginPath();
-      var j, th, x, y, w0 = r * 0.022 * k;
-      for (j = 0; j <= 16; j++) { th = lerp(th0, th1, j / 16); x = X(th); y = Y(th) - w0 * (1.3 - 0.6 * j / 16); if (j) g2.lineTo(x, y); else g2.moveTo(x, y); }
-      for (j = n; j >= 0; j--) {
-        th = lerp(th0, th1, j / n); x = X(th); y = Y(th);
-        var lit = 1 - j / n * 0.7, sp = r * (0.03 + rnd() * 0.07) * lit * k;
-        g2.lineTo(x + r * 0.008, y + w0 * 0.3);
-        if (j > 0) { var thm = lerp(th0, th1, (j - 0.5) / n); g2.lineTo(X(thm) + Math.sin(thm) * r * 0.01, Y(thm) + sp); }
+      for (var sg = 0; sg < segs.length; sg++) {
+        var th0 = segs[sg][0], th1 = segs[sg][1], m = Math.max(2, Math.round(n * (th1 - th0) / (TH1 - TH0))), j, th, x, y;
+        var w0 = r * 0.02 * k * (1 + 0.4 * Math.sin(sg * 2.1 + 1));
+        for (j = 0; j <= 6; j++) { th = lerp(th0, th1, j / 6); x = X(th); y = Y(th) - w0 * (1 + 0.5 * Math.sin(j / 6 * PI)); if (j) g2.lineTo(x, y); else g2.moveTo(x, y); }
+        for (j = m; j >= 0; j--) {
+          th = lerp(th0, th1, j / m); x = X(th); y = Y(th);
+          var lit = 1 - (th - TH0) / (TH1 - TH0) * 0.7, sp = r * (0.03 + rnd() * 0.07) * lit * k;
+          g2.lineTo(x, y + w0 * 0.3);
+          if (j > 0) { var thm = lerp(th0, th1, (j - 0.5) / m); g2.lineTo(X(thm) + Math.sin(thm) * r * 0.01, Y(thm) + sp); }
+        }
+        g2.closePath();
       }
-      g2.closePath();
     };
     band(g, 1);
     g.fillStyle = K.lin(g, cx - rx, 0, cx + rx, 0, [[0, A(hp.h, a0)], [0.45, A(hp.h, a0 * 0.75)], [1, A(hp.h, a0 * 0.18)]]);
@@ -877,7 +895,7 @@
       // 亮侧的细锐高光
       g.save(); band(g, 1); g.clip();
       g.strokeStyle = A('#ffffff', 0.5); g.lineWidth = 1.4 * H.u * C.lw;
-      for (i = 0; i < 5; i++) { var th2 = lerp(th0 + 0.15, -0.1, i / 4), x2 = X(th2), y2 = Y(th2); g.beginPath(); g.moveTo(x2, y2 - r * 0.025); g.lineTo(x2 + Math.sin(th2) * r * 0.012, y2 + r * 0.035); g.stroke(); }
+      for (i = 0; i < 5; i++) { var th2 = lerp(TH0 + 0.15, -0.1, i / 4), x2 = X(th2), y2 = Y(th2); g.beginPath(); g.moveTo(x2, y2 - r * 0.025); g.lineTo(x2 + Math.sin(th2) * r * 0.012, y2 + r * 0.035); g.stroke(); }
       g.restore();
     }
   }
@@ -937,7 +955,7 @@
   function hairCast(C, g, H, sp, hd) {
     var it, i, r = H.r;
     var dx = r * 0.016, dy = r * 0.05;
-    var cols = C.l >= 2 ? [[dx * 1.3, dy * 1.25, sp.warm, 0.55], [dx, dy, sp.s, 1]] : [[dx, dy, sp.s, 1]];
+    var cols = C.l >= 2 ? [[dx * 1.3, dy * 1.22, sp.warm, 0.32], [dx, dy, sp.s, 1]] : [[dx, dy, sp.s, 1]];
     for (var k = 0; k < cols.length; k++) {
       g.save(); g.translate(cols[k][0], cols[k][1]); g.globalAlpha = cols[k][3];
       g.fillStyle = cols[k][2];
@@ -1184,7 +1202,7 @@
   }
 
   /* ====================== 嘴 ====================== */
-  function mouthW(H, cf) { return H.fw * (H.sex === 'm' ? 0.34 : 0.28) * ((cf.mouth && cf.mouth.w) || 1) * (H.child ? 0.9 : 1); }
+  function mouthW(H, cf) { return H.fw * (H.sex === 'm' ? 0.36 : 0.31) * ((cf.mouth && cf.mouth.w) || 1) * (H.child ? 0.9 : 1); }
   MOUTH.neutral = function (C, g, H, sp, cf) {
     var u = H.u * C.lw, w = mouthW(H, cf) * 0.75, x = H.cx, y = H.mouthY;
     g.beginPath(); g.moveTo(x - w * 0.5, y); g.quadraticCurveTo(x, y + H.r * (H.sex === 'm' ? 0.003 : 0.008), x + w * 0.5, y - H.r * 0.002);
@@ -1373,7 +1391,7 @@
     g.save(); fp(g); g.clip();
     // 远离光源一侧（右）的赛璐璐阴影
     var sx = cx + H.fw * 1.52, sy = H.eyeY + r * 0.16;
-    if (C.l >= 2) { ell(g, sx - r * 0.012, sy, H.fw * 0.78, r * 0.62, -0.08); fillC(g, A(sp.warm, 0.5)); }
+    if (C.l >= 2) { ell(g, sx - r * 0.012, sy, H.fw * 0.78, r * 0.62, -0.08); fillC(g, A(sp.warm, 0.3)); }
     ell(g, sx, sy, H.fw * 0.78, r * 0.62, -0.08); fillC(g, A(sp.s, C.l >= 1 ? 0.75 : 0.85));
     // 下颌下方阴影（下巴底面）
     g.beginPath(); g.moveTo(cx - H.jw * 1.1, H.jawY + r * 0.02); g.quadraticCurveTo(cx, H.C + r * 0.04, cx + H.jw * 1.1, H.jawY + r * 0.02);
@@ -2495,7 +2513,7 @@
   };
   PROP.book = function (C, g, H, B, o, cf) { PROP.notebook(C, g, H, B, { c: o.c || '#4a3a28', side: o.side, glove: o.glove }, cf); };
   PROP.doll = function (C, g, H, B, o, cf) {
-    var r = B.r, u = B.u * C.lw, cx = B.cx + (o.dx || 0.04) * r, y = B.bot - r * 0.5, k = 1.35;
+    var r = B.r, u = B.u * C.lw, cx = B.cx + (o.dx || 0.04) * r, y = B.bot - r * 0.58, k = 1.35;
     var kc = o.c || '#b02838', kp = pal(kc), hp = hairPal(o.hair || '#141018'), sk = skinPal(o.skin || '#fbeee6'), s;
     var gc = o.glove || cf._gloveC || H.sp.b, sk2 = !(o.glove || cf._gloveC);
     // 和服身体
@@ -2504,8 +2522,8 @@
         g2.fillStyle = '#e8c860'; g2.fillRect(cx - r * 0.3, y + r * 0.3 * k, r * 0.6, r * 0.06 * k); }, ln: kp.ln, lw: 1.2 * u, ow: 2 * u });
     g.beginPath(); g.moveTo(cx - r * 0.09 * k, y + r * 0.1 * k); g.lineTo(cx, y + r * 0.24 * k); g.lineTo(cx + r * 0.09 * k, y + r * 0.1 * k); strokeW(g, '#f4f0e8', r * 0.022);
     // 抱着人偶的双臂
-    forearm(C, g, B, cx - B.sw * 0.95, cx - r * 0.12, y + r * 0.55, cf._sleeveC, cf._cuffC);
-    forearm(C, g, B, cx + B.sw * 0.95, cx + r * 0.16, y + r * 0.47, cf._sleeveC, cf._cuffC);
+    forearm(C, g, B, cx - B.sw * 0.75, cx - r * 0.12, y + r * 0.55, cf._sleeveC, cf._cuffC);
+    forearm(C, g, B, cx + B.sw * 0.8, cx + r * 0.16, y + r * 0.47, cf._sleeveC, cf._cuffC);
     hand(C, g, H, cx - r * 0.12, y + r * 0.56, 1.15, 0.92, 'hold', gc, 1, { skin: sk2 });
     hand(C, g, H, cx + r * 0.16, y + r * 0.48, -1.2, 0.92, 'hold', gc, -1, { skin: sk2 });
     // 头
@@ -2523,16 +2541,21 @@
     circ(g, cx + hr * 0.95, y - hr * 0.8, hr * 0.2); fillC(g, '#d04050'); strokeW(g, '#6a1020', 1 * u);
   };
   PROP.cane = function (C, g, H, B, o, cf) {
-    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.6, y = B.bot - r * 0.36, wc = o.c || '#3a2418', p = pal(wc);
-    // 杖身与弯柄
-    piece(C, g, { f: function (g2) { g2.beginPath(); g2.moveTo(x - r * 0.018, B.bot + 10); g2.lineTo(x - r * 0.018, y + r * 0.02); g2.lineTo(x + r * 0.018, y + r * 0.02); g2.lineTo(x + r * 0.018, B.bot + 10); g2.closePath(); },
-      fill: p.b, sh: function (g2) { g2.fillStyle = K.lin(g2, x - r * 0.02, 0, x + r * 0.02, 0, [A(p.l, 0.6), A(p.b, 0), A(p.d, 0.6)]); g2.fillRect(x - r * 0.03, y, r * 0.06, r); }, ln: p.ln, lw: 1.2 * u, ow: 2 * u });
-    piece(C, g, { f: function (g2) { g2.beginPath(); g2.moveTo(x - r * 0.022, y + r * 0.02); g2.bezierCurveTo(x - r * 0.03, y - r * 0.12, x - sd * r * 0.2, y - r * 0.14, x - sd * r * 0.2, y - r * 0.04);
-      g2.lineTo(x - sd * r * 0.16, y - r * 0.04); g2.bezierCurveTo(x - sd * r * 0.16, y - r * 0.1, x + r * 0.02, y - r * 0.1, x + r * 0.022, y + r * 0.02); g2.closePath(); }, fill: p.b,
-      sh: function (g2) { if (C.l >= 2) { g2.beginPath(); g2.arc(x - sd * r * 0.09, y - r * 0.03, r * 0.07, PI * 1.1, PI * 1.6); strokeW(g2, A('#ffffff', 0.35), r * 0.012); } }, ln: p.ln, lw: 1.2 * u, ow: 2 * u });
-    rrect(g, x - r * 0.026, y + r * 0.0, r * 0.052, r * 0.035, r * 0.006); fillC(g, C.l >= 1 ? K.lin(g, x - r * 0.03, 0, x + r * 0.03, 0, ['#f0f0f8', '#9090a0', '#c8c8d0']) : '#b8b8c4'); strokeW(g, '#505060', 1 * u);
-    forearm(C, g, B, x + sd * r * 0.32, x + sd * r * 0.05, y + r * 0.1, cf._sleeveC, cf._cuffC);
-    hand(C, g, H, x + sd * r * 0.04, y + r * 0.1, -sd * 1.2, 0.95, 'hold', o.glove || cf._gloveC || H.sp.b, -sd, { skin: !(o.glove || cf._gloveC) });
+    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.58, y = B.bot - r * 0.3, wc = o.c || '#3a2418', p = pal(wc);
+    var top = y - r * 0.12, cr = r * 0.11;
+    // 杖身
+    piece(C, g, { f: function (g2) { g2.beginPath(); g2.moveTo(x - r * 0.02, B.bot + 10); g2.lineTo(x - r * 0.02, top); g2.lineTo(x + r * 0.02, top); g2.lineTo(x + r * 0.02, B.bot + 10); g2.closePath(); },
+      fill: p.b, sh: function (g2) { g2.fillStyle = K.lin(g2, x - r * 0.02, 0, x + r * 0.02, 0, [A(p.l, 0.6), A(p.b, 0), A(p.d, 0.6)]); g2.fillRect(x - r * 0.03, top, r * 0.06, r); }, ln: p.ln, lw: 1.2 * u, ow: 2 * u });
+    // 弯柄（朝身体外侧弯）
+    var crook = function (g2) { g2.beginPath(); g2.moveTo(x - r * 0.022, top + r * 0.01); g2.bezierCurveTo(x - r * 0.026, top - cr * 1.25, x + sd * cr * 2.1, top - cr * 1.3, x + sd * cr * 2.0, top + cr * 0.1);
+      g2.lineTo(x + sd * cr * 1.62, top + cr * 0.1); g2.bezierCurveTo(x + sd * cr * 1.7, top - cr * 0.85, x + r * 0.018, top - cr * 0.8, x + r * 0.022, top + r * 0.01); g2.closePath(); };
+    piece(C, g, { f: crook, fill: p.b, sh: function (g2) { g2.fillStyle = K.lin(g2, 0, top - cr * 1.3, 0, top, [A(p.l, 0.5), A(p.d, 0.5)]); g2.fillRect(x - cr * 3, top - cr * 2, cr * 6, cr * 2.5);
+      if (C.l >= 2) { g2.beginPath(); g2.arc(x + sd * cr * 0.95, top - cr * 0.1, cr * 0.85, PI * 1.15, PI * 1.6); strokeW(g2, A('#ffffff', 0.35), r * 0.01); } }, ln: p.ln, lw: 1.2 * u, ow: 2 * u });
+    rrect(g, x - r * 0.026, top + r * 0.005, r * 0.052, r * 0.035, r * 0.006); fillC(g, C.l >= 1 ? K.lin(g, x - r * 0.03, 0, x + r * 0.03, 0, ['#f0f0f8', '#9090a0', '#c8c8d0']) : '#b8b8c4'); strokeW(g, '#505060', 1 * u);
+    // 握住杖身的手（手背朝外，手指横向绕住杖身）
+    var gx = x, gy = top + r * 0.15;
+    forearm(C, g, B, x + sd * r * 0.42, gx + sd * r * 0.15, gy + r * 0.02, cf._sleeveC, cf._cuffC);
+    hand(C, g, H, gx + sd * r * 0.13, gy, -sd * PI / 2, 0.72, 'hold', o.glove || cf._gloveC || H.sp.b, -sd, { skin: !(o.glove || cf._gloveC) });
   };
   PROP.cards = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.82, y = B.shY + r * 0.12, i;
@@ -2549,10 +2572,10 @@
     hand(C, g, H, x, y + r * 0.2, sd * 0.25, 0.95, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
   };
   PROP.phone = function (C, g, H, B, o, cf) {
-    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.5, y = B.ny + r * 0.75;
-    forearm(C, g, B, B.cx + sd * B.sw * 0.95, x, y + r * 0.12, cf._sleeveC, cf._cuffC);
-    piece(C, g, { f: function (g2) { rrect(g2, x - r * 0.055, y - r * 0.2, r * 0.11, r * 0.24, r * 0.02); }, fill: o.c || '#a8acb8', sh: function (g2) { g2.fillStyle = '#304050'; g2.fillRect(x - r * 0.04, y - r * 0.18, r * 0.08, r * 0.09); g2.fillStyle = A('#ffffff', 0.3); g2.fillRect(x - r * 0.04, y - r * 0.18, r * 0.02, r * 0.09); }, ln: '#404048', lw: 1.1 * u, ow: 1.6 * u });
-    hand(C, g, H, x, y + r * 0.1, 0, 0.85, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
+    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.5, y = B.ny + r * 0.6;
+    forearm(C, g, B, B.cx + sd * B.sw * 0.95, x, y + r * 0.22, cf._sleeveC, cf._cuffC);
+    piece(C, g, { f: function (g2) { rrect(g2, x - r * 0.065, y - r * 0.24, r * 0.13, r * 0.3, r * 0.025); }, fill: o.c || '#a8acb8', sh: function (g2) { g2.fillStyle = '#304050'; g2.fillRect(x - r * 0.04, y - r * 0.18, r * 0.08, r * 0.09); g2.fillStyle = A('#ffffff', 0.3); g2.fillRect(x - r * 0.04, y - r * 0.18, r * 0.02, r * 0.09); }, ln: '#404048', lw: 1.1 * u, ow: 1.6 * u });
+    hand(C, g, H, x, y + r * 0.2, 0, 0.7, 'hold', o.glove || cf._gloveC || H.sp.b, sd, { skin: !(o.glove || cf._gloveC) });
   };
   PROP.clipboard = function (C, g, H, B, o, cf) {
     var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * B.sw * 0.4, y = B.ny + r * 0.75;
@@ -2749,11 +2772,11 @@
     fillC(g, C.l >= 1 ? K.lin(g, 0, byy - r * 0.05, 0, byy + r * 0.05, ['#fff4c0', '#c8a040']) : '#d8b050'); strokeW(g, '#6a4a10', 1 * u);
   } };
   ACC.straw_hat = { slot: 'head', draw: function (C, g, H, B, o, cf, X, hd) {
-    var r = H.r, u = H.u * C.lw, G = capG(H, hd), c = o.c || '#e8d090', p = pal(c), cx = H.cx, by = G.top + G.ry * 0.42, i;
-    var brim = function (g2) { ell(g2, cx, by, G.rx * 1.75, r * 0.2, o.tilt || -0.06); };
+    var r = H.r, u = H.u * C.lw, G = capG(H, hd), c = o.c || '#e8d090', p = pal(c), cx = H.cx, by = G.top + G.ry * 0.62, i;
+    var brim = function (g2) { ell(g2, cx, by, G.rx * 1.7, r * 0.22, o.tilt || -0.06); };
     var tex = function (g2) { if (C.m >= 1) { g2.strokeStyle = A(p.s, 0.6); g2.lineWidth = 1 * u; for (i = 1; i < 6; i++) { ell(g2, cx, by, G.rx * 1.75 * i / 6 + G.rx * 0.3, r * 0.2 * i / 6 + r * 0.04, o.tilt || -0.06); g2.stroke(); } } };
     piece(C, g, { f: brim, fill: p.b, tex: C.t > 0 ? ['thatch', { c1: K.shade(c, -0.12), c2: K.shade(c, 0.06), seed: 5 }, 40] : null, sh: function (g2) { tex(g2); g2.fillStyle = A(p.d, 0.35); ell(g2, cx + G.rx * 0.2, by + r * 0.05, G.rx * 1.2, r * 0.1); g2.fill(); }, ln: p.ln, lw: 1.3 * u, ow: 2.2 * u });
-    var crown = function (g2) { g2.beginPath(); g2.moveTo(cx - G.rx * 0.72, by + r * 0.02); g2.bezierCurveTo(cx - G.rx * 0.78, by - r * 0.3, cx + G.rx * 0.78, by - r * 0.3, cx + G.rx * 0.72, by + r * 0.02); g2.quadraticCurveTo(cx, by + r * 0.06, cx - G.rx * 0.72, by + r * 0.02); g2.closePath(); };
+    var crown = function (g2) { g2.beginPath(); g2.moveTo(cx - G.rx * 0.8, by + r * 0.02); g2.bezierCurveTo(cx - G.rx * 0.9, by - r * 0.42, cx + G.rx * 0.9, by - r * 0.42, cx + G.rx * 0.8, by + r * 0.02); g2.quadraticCurveTo(cx, by + r * 0.07, cx - G.rx * 0.8, by + r * 0.02); g2.closePath(); };
     piece(C, g, { f: crown, fill: p.b, sh: function (g2) { g2.fillStyle = K.lin(g2, cx - G.rx * 0.7, 0, cx + G.rx * 0.7, 0, [A(p.l, 0.3), A(p.b, 0), A(p.s, 0.6)]); g2.fillRect(cx - G.rx, by - r * 0.35, G.rx * 2, r * 0.45);
       g2.fillStyle = o.band || '#c03040'; g2.fillRect(cx - G.rx, by - r * 0.07, G.rx * 2, r * 0.06); }, ln: p.ln, lw: 1.3 * u, ow: 2.2 * u });
   } };
@@ -3125,7 +3148,7 @@
     if (!cf.outfit.c) cf.outfit.c = '#606870';
     cf._eye = merge(EYE[cf.eyes.shape || 'round'] || EYE.round, cf.eyes);
     var hp = hairPal(cf.hair.color || '#3a3030');
-    cf._lashC = cf.eyes.lash || K.mix(hp.ln, '#2a0c14', 0.45);
+    cf._lashC = cf.eyes.lash || K.mix(hp.ln, '#1e0a12', lum(cf.hair.color || '#333') > 0.5 ? 0.7 : 0.45);
     cf._browC = (cf.brows && cf.brows.color) || (lum(cf.hair.color || '#333') > 0.6 ? K.mix(hp.s, hp.ln, 0.35) : K.mix(hp.b, hp.ln, 0.45));
     cf._fhC = cf.facialHair || cf.hair.color || '#3a3434';
     var hs = resolveHair(cf.hair);
@@ -3187,10 +3210,10 @@
     // 5. 前发
     hairLayer(C, H, hp, hd, 'front');
     // 透过刘海的眉毛
-    if (!cf._noFace && C.m >= 1 && hd.front.length > 1) {
+    if (!cf._noFace && C.m >= 1 && hd.front.length > 1 && lum(cf.hair.color || '#333') < 0.55) {
       var Bp = BROW[cf.brows && cf.brows.shape] || BROW[H.sex === 'm' ? 'straight' : 'normal'];
       if (cf.brows && cf.brows.t) Bp = merge(Bp, { t: (Bp.t || 1) * cf.brows.t });
-      for (var s = -1; s <= 1; s += 2) drawBrow(C, g, H, s, Bp, X.brow, cf._browC, 0.32);
+      for (var s = -1; s <= 1; s += 2) drawBrow(C, g, H, s, Bp, X.brow, cf._browC, 0.22);
     }
     // 6. 脸部配件、面具、头饰、手与道具
     var ga = lbegin(C);
@@ -3350,7 +3373,7 @@
       run(g, PW, PH, q, 1, function (C, fallback) { var cf = fallback ? resolveNeutral(id) : resolve(id); drawPortrait(C, cf, fallback ? 'normal' : (EXPR[expr] ? expr : 'normal')); });
     },
     sprite: function (g, id, q) {
-      run(g, SW, SH, q, 1.55, function (C, fallback) { drawSprite(C, fallback ? resolveNeutral(id) : resolve(id)); });
+      run(g, SW, SH, q, 1.55, function (C, fallback) { C.t = 0; drawSprite(C, fallback ? resolveNeutral(id) : resolve(id)); });
     }
   };
   function resolveNeutral(id) { var save = HC.cast[id]; HC.cast['__neutral'] = NEUTRAL; var cf = resolve('__neutral'); delete HC.cast['__neutral']; void save; cf._id = id; return cf; }

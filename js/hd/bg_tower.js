@@ -283,7 +283,7 @@
         var r = ch * (0.7 + rnd() * 0.8);
         g.save(); g.translate(px, py); g.scale(1, 0.62);
         g.fillStyle = K.rad(g, 0, r * 0.25, 0, r, [[0, K.rgba(body, 0.75)], [0.6, K.rgba(body, 0.45)], [1, K.rgba(body, 0)]]);
-        g.fillRect(-r, -r, 2 * r, 2 * r);
+        g.fillRect(-r, -r * 0.8, 2 * r, 2.1 * r);
         if (q.light > 0) {
           g.fillStyle = K.rad(g, -r * 0.1, -r * 0.42, 0, r * 0.75, [[0, K.rgba(hi, 0.3 + lit * 0.45)], [0.6, K.rgba(hi, 0.1 + lit * 0.15)], [1, K.rgba(hi, 0)]]);
           g.fillRect(-r * 0.9, -r * 1.2, r * 1.6, r * 1.6);
@@ -608,7 +608,7 @@
     var dx = 86, dy = 336, dw = 168, dh = R.bot(170) - dy + 4;
     g.fillStyle = K.lin(g, dx - 24, 0, dx + dw + 24, 0, [[0, '#5a5048'], [0.07, '#6e6258'], [0.13, '#3a322c'], [0.87, '#3a322c'], [0.93, '#5a4e44'], [1, '#2a2420']]);
     K.rr(g, dx - 24, dy - 28, dw + 48, dh + 28, 6); g.fill();
-    if (q.tex > 0) { K.rr(g, dx - 24, dy - 28, dw + 48, dh + 28, 6); g.globalCompositeOperation = 'overlay'; K.fillTex(g, q, 'stone', { c1: '#555', c2: '#aaa', mortar: '#333', rows: 8, cols: 2, seed: 61, irregular: 1 }, 220, dx, dy, 0.5); g.globalCompositeOperation = 'source-over'; }
+    if (q.model > 0) { g.strokeStyle = 'rgba(20,16,12,0.5)'; g.lineWidth = 2; for (var jb = 0; jb < 9; jb++) { var jy = dy - 20 + jb * 56; g.beginPath(); g.moveTo(dx - 24, jy); g.lineTo(dx - 4, jy); g.moveTo(dx + dw + 4, jy + 26); g.lineTo(dx + dw + 24, jy + 26); g.stroke(); } }
     g.fillStyle = '#0c0806'; g.fillRect(dx - 4, dy - 4, dw + 8, dh + 4);
     oakDoor(g, q, dx, dy, dw, dh, { arch: 0, straps: [0.08, 0.5, 0.92], planks: 4, strapLen: 0.72 });
     // 坏掉的旧锁板与门环
@@ -633,8 +633,9 @@
     var fpx = 944, fpw = 288, mantY = 396, hearthY = R.bot(1088) - 6;
     (function fireplace() {
       var ox0 = 1004, ox1 = 1172, oy = 482;
-      K.rr(g, fpx + 8, mantY + 24, fpw - 16, hearthY - mantY - 24, 2);
-      K.matFill(g, q, '#6a625a', 'stone', { c1: '#5a544c', c2: '#7e766c', mortar: '#3e3a34', rows: 5, cols: 2, seed: 61, irregular: 1 }, 256, fpx, mantY);
+      g.save(); K.rr(g, fpx + 8, mantY + 24, fpw - 16, hearthY - mantY - 24, 2); g.clip();
+      blockWall(g, q, fpx + 8, mantY + 24, fpw - 16, hearthY - mantY - 24, { c1: '#5e574e', c2: '#82796e', mortar: '#3a3630', bh: 42, bw: 96, seed: 612, mortarW: 2.5 });
+      g.restore();
       K.rr(g, fpx + 8, mantY + 24, fpw - 16, hearthY - mantY - 24, 2);
       g.fillStyle = K.lin(g, fpx, 0, fpx + fpw, 0, [[0, 'rgba(255,230,200,0.10)'], [0.5, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.3)']]); g.fill();
       for (var s = 0; s < 2; s++) {
@@ -913,8 +914,8 @@
       for (var fo = 0; fo < folds; fo++) {
         var fxx = cx - 40 + fo * 80 / (folds - 1 || 1);
         g.fillStyle = K.lin(g, fxx - 8, 0, fxx + 8, 0, ['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']);
-        K.poly(g, [fxx - 3, cyT + 40, fxx + 3, cyT + 40, fxx + 12, cyB, fxx - 12, cyB]); g.fill();
-        g.fillStyle = 'rgba(150,120,170,0.12)'; K.poly(g, [fxx + 6, cyT + 50, fxx + 9, cyT + 50, fxx + 18, cyB - 6, fxx + 13, cyB - 6]); g.fill();
+        K.poly(g, [fxx * 0.7 + cx * 0.3, cyT + 6, fxx + 12, cyB, fxx - 12, cyB]); g.fill();
+        g.fillStyle = 'rgba(150,120,170,0.12)'; K.poly(g, [fxx * 0.7 + cx * 0.3 + 4, cyT + 14, fxx + 18, cyB - 6, fxx + 13, cyB - 6]); g.fill();
       }
       // 丝绒朝灯一侧的柔和反光
       if (q.light > 0) { g.fillStyle = K.rad(g, cx - 40, cyT + 60, 0, 70, [[0, 'rgba(210,150,100,0.3)'], [1, 'rgba(210,150,100,0)']]); g.fillRect(cx - 70, cyT, 140, 140); }
@@ -3060,7 +3061,10 @@
       var fr = K.rng(808);
       g.strokeStyle = 'rgba(190,180,200,0.22)'; g.lineWidth = 2;
       for (i = 0; i < byM(q, 0, 10, 18); i++) { var fx0 = fr() * 1900, fy0 = 884 + fr() * 18; g.beginPath(); g.moveTo(fx0, fy0); g.quadraticCurveTo(fx0 + 40, fy0 - 3, fx0 + 80 + fr() * 60, fy0 + 1); g.stroke(); }
-      if (q.light > 0) for (i = 0; i < 9; i++) { var wx = 420 + fr() * 700, wl = 20 + fr() * 50; g.fillStyle = 'rgba(255,170,80,' + (0.08 + fr() * 0.12).toFixed(2) + ')'; g.fillRect(wx, 906 + fr() * 50, 4, wl); }
+      if (q.light > 0) for (i = 0; i < 9; i++) {
+        var wx = 420 + fr() * 700, wy = 904 + fr() * 30, wa = 0.1 + fr() * 0.14;
+        for (var d = 0; d < 5; d++) { g.fillStyle = 'rgba(255,170,80,' + (wa * (1 - d / 5)).toFixed(3) + ')'; g.fillRect(wx - 3 + (d % 2) * 3, wy + d * 9, 10 - d, 2.5); }
+      }
     }
     if (q.light > 0) { // 礁石边缘的海浪白沫
       g.strokeStyle = 'rgba(200,190,200,0.25)'; g.lineWidth = 2;
