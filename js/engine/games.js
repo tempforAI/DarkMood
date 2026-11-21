@@ -21,7 +21,7 @@
     el('div', 'sp', b);
     var nb = el('button', 'btn small', b, '手账');
     nb.addEventListener('click', function (e) { e.stopPropagation(); DM.Audio.se('select'); DM.Menus.openNotebook(); });
-    el('span', 'hp-l', b, '信念');
+    el('span', 'hp-l', b, DM.GAME.hpName || '信念');
     var hp = el('div', 'hp', b);
     function draw() {
       Core.clear(hp);
@@ -49,7 +49,7 @@
     var text = def.wrong || defaultText;
     if (St.s.hp <= 0) {
       St.s.hp = MAXHP;
-      text = '（……冷静。线索就在手里。深呼吸，把它们重新排一遍。）——信念恢复了。';
+      text = '（……冷静。线索就在手里。深呼吸，把它们重新排一遍。）——' + (DM.GAME.hpName || '信念') + '恢复了。';
     }
     ban.draw();
     if (state.n >= th.hint && def.hint) msg(L, '提示：' + def.hint, true);

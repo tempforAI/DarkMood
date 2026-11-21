@@ -108,6 +108,7 @@
   };
   // 按画风加载美术模块
   Core.loadArt = function (style) {
+    if (style === 'pixel' && !(DM.PX_FILES && DM.PX_FILES.length)) { DM.State.settings.style = style = 'hd'; }
     var list = style === 'pixel' ? DM.PX_FILES : DM.HD_FILES;
     return Core.loadScripts(list || []);
   };

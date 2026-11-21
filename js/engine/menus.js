@@ -166,7 +166,7 @@
   function gfxSettings(bd) {
     var S = St.settings;
     var info = el('div', 'gfx-info', bd, gfxInfo()); info.id = 'gfx-info';
-    opts(bd, '画风', 'style', [['hd', '高清'], ['pixel', '经典像素']], function () { M.applyGfx(true); refresh(); }, '经典像素：最省电，适合很老的设备');
+    if (DM.PX_FILES && DM.PX_FILES.length) opts(bd, '画风', 'style', [['hd', '高清'], ['pixel', '经典像素']], function () { M.applyGfx(true); refresh(); }, '经典像素：最省电，适合很老的设备');
     if (S.style === 'pixel') { el('p', 'set-tip', bd, '经典像素画风使用原版 480×270 像素美术，以下画质选项不生效。'); return; }
     var pr = row(bd, '画质预设', '低＝老设备/省电');
     ['low', 'medium', 'high', 'ultra', 'custom'].forEach(function (name) {
