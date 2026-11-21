@@ -1516,10 +1516,60 @@
     for (var x = -10; x <= 1210; x += 12) pts.push(x, lowCliffTop(x));
     pts.push(1210, 700);
     g.save(); K.poly(g, pts); g.clip();
-    rockCells(g, q, -10, 360, 1220, 345, { seed: 73, cw: 210, ch: 90, sw: 60, sh: 40, dark: '#1a1920', mid: '#46444f', lite: '#9592a2', L: [-0.6, -0.6, 0.6], amb: 0.32, crack: 0.045, tilt: 0.25,
-      wet: function (u, vv) { return sat((vv - 0.72) * 2.5); }, moss: function (u, vv) { return sat(0.35 - vv) * 1.6; } });
-    if (q.tex > 0) { K.poly(g, pts); texFill(g, q, 'rock', ROCK, 256, 0, 0, 0.35, null, null, null, 'overlay'); }
-    haze(g, -10, 360, 1220, 345, SKY.hor, 0.22, 0.05);
+    // 自然的岩坡：倾斜的沉积岩层（层顶受光、层底投影）+ 被草与灌丛覆盖的缓坡 + 冲沟；远处空气透视
+    var rk0 = C('#282731'), rk1 = C('#7e7b88'), veg0 = C('#1c2620'), veg1 = C('#46543e'), hz = C(SKY.hor), rr0 = fres(q, 0.3);
+    field(g, -10, 360, 1220, 345, 1220 * rr0, 345 * rr0, function (u, v, out) {
+      var x = -10 + u * 1220, y = 360 + v * 345, top = lowCliffTop(x), dv = sat((y - top) / (700 - top));
+      var warp = fbm(x * 0.0035, y * 0.005, 3, 701);
+      var sc = y * 0.019 - x * 0.0028 + warp * 1.6, li2 = Math.floor(sc), band = sc - li2;
+      var layerTone = cellHash(li2, 3, 7);
+      // 岩层：顶面（band 小）受光，底部（band 大）有悬垂投影
+      var lum = 0.42 + layerTone * 0.22 + (band < 0.14 ? (0.14 - band) * 3.4 : 0) - (band > 0.8 ? (band - 0.8) * 3.2 : 0);
+      var vfr = fbm(x * 0.012, y * 0.006, 2, 703);
+      lum += (vfr - 0.5) * 0.22 - band * 0.12;
+      var gully = sat((fbm(x * 0.014, y * 0.0022, 3, 705) - 0.6) * 4);
+      lum -= gully * 0.22;
+      lum = sat(lum);
+      var R = rk0[0] + (rk1[0] - rk0[0]) * lum, G = rk0[1] + (rk1[1] - rk0[1]) * lum, B = rk0[2] + (rk1[2] - rk0[2]) * lum;
+      // 植被：坡顶连片，向下只在岩层顶面（平台）上成片
+      var vn2 = fbm(x * 0.006, y * 0.01, 3, 707);
+      var veg = sstep(0.4, 0.5, vn2 + (1 - dv) * 0.6 - 0.27 + (band < 0.22 ? 0.2 * (1 - dv * 0.5) : -0.12)) * (1 - gully);
+      if (veg > 0) {
+        var vt = fbm(x * 0.02, y * 0.03, 2, 709), vl = sat(0.3 + vt * 0.5 + (band < 0.3 ? 0.2 : 0) - dv * 0.2);
+        var vr = veg0[0] + (veg1[0] - veg0[0]) * vl, vg = veg0[1] + (veg1[1] - veg0[1]) * vl, vb = veg0[2] + (veg1[2] - veg0[2]) * vl;
+        R += (vr - R) * veg; G += (vg - G) * veg; B += (vb - B) * veg;
+      }
+      // 坡脚潮湿变暗
+      var wet = sstep(0.75, 1, dv) * 0.4; R *= 1 - wet; G *= 1 - wet; B *= 1 - wet * 0.8;
+      // 空气透视：整体偏蓝偏亮，坡顶更远更淡
+      var hzk = 0.32 + (1 - dv) * 0.12;
+      out[0] = R + (hz[0] - R) * hzk; out[1] = G + (hz[1] - G) * hzk; out[2] = B + (hz[2] - B) * hzk;
+    });
+    if (q.tex > 0) { K.poly(g, pts); texFill(g, q, 'noise', SAND_T, 128, 0, 0, 0.12, null, null, null, 'overlay'); }
+    // 岩层边缘的细线与草丛（矢量，近处清晰）
+    if (q.model >= 1) {
+      var lr = RNG(711);
+      // 沿岩层走向描出层顶的受光细线（断断续续）与其下的暗线
+      var hiL = [], loL = [], li;
+      for (var n2 = Math.floor(400 * 0.019); n2 < 700 * 0.019 + 2; n2++) {
+        var on = false;
+        for (var lx = -10; lx <= 1150; lx += 14) {
+          var ly = (n2 + lx * 0.0028) / 0.019;
+          ly = (n2 + lx * 0.0028 - fbm(lx * 0.0035, ly * 0.005, 3, 701) * 1.6) / 0.019;
+          ly = (n2 + lx * 0.0028 - fbm(lx * 0.0035, ly * 0.005, 3, 701) * 1.6) / 0.019;
+          var ok = ly > lowCliffTop(lx) + 60 && ly < 690 && vn(lx * 0.02, n2 * 3.1) > 0.42;
+          if (ok) { if (!on) { hiL.push('M'); loL.push('M'); } hiL.push(lx, ly + 1); loL.push(lx, ly - 2); }
+          on = ok;
+        }
+      }
+      function strokeList(Lst, col, wd) { g.beginPath(); var mv = false; for (var z = 0; z < Lst.length; z++) { if (Lst[z] === 'M') { mv = true; continue; } if (mv) { g.moveTo(Lst[z], Lst[z + 1]); mv = false; } else g.lineTo(Lst[z], Lst[z + 1]); z++; } strokeP(g, col, wd); }
+      strokeList(loL, 'rgba(14,14,20,0.22)', 2);
+      strokeList(hiL, 'rgba(210,208,222,0.22)', 1.4);
+      var lr = RNG(711);
+      for (li = 0; li < K.byModel(q, 0, 16, 30); li++) { var gx = lr.range(0, 1180), gy = lr.range(lowCliffTop(gx) + 20, 660); grassTufts(g, q, lr, 4, gx, gy, 40, 6, K.rgba('#5a6a50', 0.65), 12); }
+      // 坡脚的碎石
+      for (li = 0; li < K.byModel(q, 0, 10, 18); li++) { var sx = lr.range(240, 1150), sw = lr.range(10, 30); K.ellipse(g, sx, 696 - lr.range(0, 10), sw, sw * 0.45); fillP(g, lr() < 0.5 ? '#3a3a44' : '#55545f'); }
+    }
     // 崖底的潮湿带与海藻线
     g.fillStyle = K.lin(g, 0, 640, 0, 700, ['rgba(10,12,16,0)', 'rgba(10,12,16,0.45)']); g.fillRect(-10, 640, 1220, 60);
     g.restore();

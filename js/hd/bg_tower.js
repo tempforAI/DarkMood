@@ -262,6 +262,7 @@
   // o: { grad, c0 云底色, c1 云体色, c2 受光色, lit:[x,y,r,color] 光源方向的暖色边, seed, n, scale }
   function cloudSky(g, q, x, y, w, h, o) {
     if (o.grad) K.vgrad(g, x, y, w, h, o.grad);
+    if ((root.location && root.location.search || '').indexOf('dbg=noclouds') >= 0) return;
     var rnd = K.rng(o.seed || 5), n = o.n || byM(q, 9, 16, 26), sc = o.scale || 1;
     g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
     // 层云条纹
@@ -1350,8 +1351,7 @@
       var sy = it + (s + 1) * sh, shelfTop = sy - 12;
       // 书
       var maxH = sh - 22;
-      if (q.model > 0) bookRow(g, q, ix0 + 4, shelfTop, ix1 - ix0 - 8, maxH, rnd);
-      else { g.fillStyle = K.lin(g, ix0, 0, ix1, 0, ['#3a1a1a', '#2a2a22', '#3a2a1a']); g.fillRect(ix0 + 4, shelfTop - maxH * 0.85, ix1 - ix0 - 8, maxH * 0.85); }
+      bookRow(g, q, ix0 + 4, shelfTop, ix1 - ix0 - 8, maxH, rnd);
       // 书顶上方的阴影（上一层隔板的遮挡）
       g.fillStyle = K.lin(g, 0, sy - sh, 0, sy - sh + 30, ['rgba(0,0,0,0.65)', 'rgba(0,0,0,0)']); g.fillRect(ix0, sy - sh, ix1 - ix0, 30);
       // 隔板：前沿 + 视线以下看见顶面 / 以上看见底面
@@ -2224,6 +2224,18 @@
       }
     }
     g.fillStyle = K.lin(g, 0, 740, 0, H, past ? ['rgba(0,0,0,0.5)', 'rgba(0,0,0,0.2)'] : ['rgba(0,0,0,0.35)', 'rgba(255,255,255,0.04)', 'rgba(0,0,0,0.3)']); g.fillRect(0, 700, W, 380);
+    // 湿石面：天空的反光带 + 栏杆立柱在地上的倒影
+    if (!past && q.light > 0) {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      g.fillStyle = K.lin(g, 0, 840, 0, 1000, ['rgba(170,175,195,0.16)', 'rgba(170,175,195,0)']); g.fillRect(320, 830, W, 180);
+      g.restore();
+      if (q.model > 0) for (var rp = 330; rp < W + 60; rp += 300 * (0.6 + 0.4 * balK(rp))) {
+        var rb = balBase(rp) + 8, rl = 120 * balK(rp);
+        g.fillStyle = K.lin(g, 0, rb, 0, rb + rl, ['rgba(10,10,14,0.45)', 'rgba(10,10,14,0)']); g.fillRect(rp - 6 * balK(rp), rb, 12 * balK(rp), rl);
+      }
+    }
+    // 石缝里的苔藓
+    if (q.model >= 2) { var mr = K.rng(717); for (var mI = 0; mI < 40; mI++) { var mxp = 340 + mr() * 1560, myp = 790 + mr() * 280; g.fillStyle = past ? 'rgba(20,30,20,0.4)' : 'rgba(60,80,50,0.35)'; K.ellipse(g, mxp, myp, 6 + mr() * 14, 1.5 + mr() * 2); g.fill(); } }
     g.restore();
 
     // ---- 铁环支架 + 缆索（锚点 ring 1600-1728/144-272，cable 960-1720/0-200）----
@@ -2349,7 +2361,7 @@
       }
       if (q.light >= 2) lmShade(L, 0.25, function (x) { x.beginPath(); x.moveTo(0, 790); x.lineTo(330, 740); x.lineTo(700, 1080); x.lineTo(0, 1080); x.closePath(); });
     }
-    applyLM(g, L);
+    if ((root.location && root.location.search || '').indexOf('dbg=nolm') < 0) applyLM(g, L);
     if (!past && q.light >= 2) {
       softShaft(g, [560, 0, 900, 0, 1000, BAL_HY, 600, BAL_HY], '#fff0dc', 0.08, 720, 0, 720, BAL_HY, 5);
       softShaft(g, [1000, 0, 1180, 0, 980, BAL_HY, 860, BAL_HY], '#fff0dc', 0.05, 1080, 0, 920, BAL_HY, 4);
@@ -2825,6 +2837,14 @@
     var rows = [930, 966, 1016];
     for (i = 0; i < rows.length; i++) { g.beginPath(); g.moveTo(0, rows[i]); g.lineTo(W, rows[i]); g.stroke(); }
     if (q.tex > 0) { g.beginPath(); g.rect(0, floorY, W, H - floorY); g.globalCompositeOperation = 'overlay'; K.fillTex(g, q, 'noise', { c1: '#383838', c2: '#c8c8c8', scale: 16, oct: 4, seed: 37, contrast: 1.3 }, 256, 0, 0, 0.5); g.globalCompositeOperation = 'source-over'; }
+    // 散落的稻草与水沟
+    if (q.model > 0) {
+      var sr = K.rng(9030);
+      g.strokeStyle = 'rgba(150,125,70,0.55)'; g.lineWidth = 1.6;
+      for (i = 0; i < byM(q, 0, 30, 60); i++) { var sx2 = sr() * W, sy2 = 912 + sr() * 160, sl2 = 8 + sr() * 18, sa = sr() * PI; g.beginPath(); g.moveTo(sx2, sy2); g.lineTo(sx2 + Math.cos(sa) * sl2, sy2 + Math.sin(sa) * sl2 * 0.3); g.stroke(); }
+      g.fillStyle = 'rgba(8,6,8,0.5)'; K.poly(g, [0, 1040, W, 1040, W, 1056, 0, 1056]); g.fill();
+      if (q.light > 0) { g.fillStyle = K.lin(g, 700, 0, 1220, 0, ['rgba(255,190,110,0)', 'rgba(255,190,110,0.22)', 'rgba(255,190,110,0)']); g.fillRect(700, 1042, 520, 3); }
+    }
     // 栏杆底部的接触阴影 + 地面积水倒映灯光
     g.fillStyle = K.lin(g, 0, floorY, 0, floorY + 40, ['rgba(0,0,0,0.6)', 'rgba(0,0,0,0)']); g.fillRect(0, floorY, W, 40);
     if (q.model > 0) {

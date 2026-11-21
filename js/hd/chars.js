@@ -776,7 +776,7 @@
       it = items[i];
       if (it.tie) continue;
       var col = it.tone === 1 ? hp.m : it.tone === 2 ? hp.s : hp.b;
-      if (it.cap && buzz) col = K.mix(hp.b, H.skin || '#e0c0a0', 0.32);
+      if (it.cap && buzz) col = K.mix(hp.b, H.skin || '#e0c0a0', 0.2);
       itemPath(g, it); fillC(g, col);
       if (it.sliver) {
         g.save(); itemPath(g, it); g.clip(); fillC(g, K.mix(col, hp.s, 0.85));
@@ -795,16 +795,6 @@
         lockEdges(g, it.L, 0.1); strokeW(g, hp.ln, lw * 0.8);
       } else if (!it.cap || C.m > 0) {
         itemPath(g, it); strokeW(g, hp.ln, lw * (it.cap ? 0.8 : 1));
-      }
-      if (it.cap && hs.cap === 'thin') {
-        g.save(); itemPath(g, it); g.clip();
-        var sk = H.sp || skinPal(H.skin), cy0 = G.top + G.ry * 0.45;
-        g.save(); g.translate(cx, cy0); g.scale(1, 0.8);
-        g.fillStyle = K.rad(g, 0, 0, 0, G.rx * 0.95, [[0, sk.b], [0.62, sk.b], [0.8, K.mix(sk.b, col, 0.5)], [1, A(col, 0)]]);
-        g.fillRect(-G.rx * 1.2, -G.rx * 1.2, G.rx * 2.4, G.rx * 2.4); g.restore();
-        if (C.l >= 1) { ell(g, cx - G.rx * 0.25, G.top + G.ry * 0.25, G.rx * 0.2, G.ry * 0.1, -0.3); fillC(g, A('#ffffff', 0.35)); }
-        if (C.m >= 1) { g.strokeStyle = A(col, 0.6); g.lineWidth = 1 * u; for (var tk = 0; tk < 7; tk++) { var tx = cx + (tk - 3) * G.rx * 0.2; g.beginPath(); g.moveTo(tx, G.top + G.ry * 0.25); g.quadraticCurveTo(tx + (tk - 3) * r * 0.02, G.top + G.ry * 0.4, tx + (tk - 3) * r * 0.04, G.top + G.ry * 0.5); g.stroke(); } }
-        g.restore();
       }
       if (it.bun && it.wrap && C.m >= 1) {
         var w = it.wrap;
@@ -854,6 +844,7 @@
     if (C.m >= 1) hairStrands(C, g, H, hp, hd, which);
     // 灰发丝
     if (hs.grey && C.m >= 0) greyStrands(C, g, H, hp, hd, which);
+    if (hs.cap === 'thin') for (i = 0; i < items.length; i++) if (items[i].cap) thinCrown(C, g, H, hp, G, items[i], hp.b, u, r, cx);
     // 轮廓光
     if (C.l >= 2) {
       g.save();
@@ -873,6 +864,18 @@
       piece(C, g, { f: it.f, fill: tp.b, sh: function (g2) { g2.fillStyle = K.lin(g2, cx - r, 0, cx + r, 0, [A(tp.l, 0.6), A(tp.s, 0.6)]); g2.fillRect(0, 0, C.W, C.H); }, ln: tp.ln, lw: lw, ow: ow * 0.7 });
     }
     lend(C);
+  }
+  function thinCrown(C, g, H, hp, G, it, col, u, r, cx) {
+      {
+        g.save(); itemPath(g, it); g.clip();
+        var sk = H.sp || skinPal(H.skin), cy0 = G.top + G.ry * 0.45;
+        g.save(); g.translate(cx, cy0); g.scale(1, 0.8);
+        g.fillStyle = K.rad(g, 0, 0, 0, G.rx * 0.95, [[0, sk.b], [0.62, sk.b], [0.8, K.mix(sk.b, col, 0.5)], [1, A(col, 0)]]);
+        g.fillRect(-G.rx * 1.2, -G.rx * 1.2, G.rx * 2.4, G.rx * 2.4); g.restore();
+        if (C.l >= 1) { ell(g, cx - G.rx * 0.25, G.top + G.ry * 0.25, G.rx * 0.2, G.ry * 0.1, -0.3); fillC(g, A('#ffffff', 0.35)); }
+        if (C.m >= 1) { g.strokeStyle = A(col, 0.6); g.lineWidth = 1 * u; for (var tk = 0; tk < 7; tk++) { var tx = cx + (tk - 3) * G.rx * 0.2; g.beginPath(); g.moveTo(tx, G.top + G.ry * 0.25); g.quadraticCurveTo(tx + (tk - 3) * r * 0.02, G.top + G.ry * 0.4, tx + (tk - 3) * r * 0.04, G.top + G.ry * 0.5); g.stroke(); } }
+        g.restore();
+      }
   }
   // 天使环：沿头部弧度的锯齿高光带（下缘顺着发流向下尖出），亮侧在左
   function hairRing(C, g, H, hp, hd, back) {
@@ -2628,17 +2631,19 @@
   };
   // 手持乌鸦面具（判官的身份揭晓）
   PROP.crow_mask = function (C, g, H, B, o, cf) {
-    var r = B.r, u = B.u * C.lw, sd = o.side || -1, x = B.cx + sd * B.sw * 0.62, y = B.bot - r * 0.34, s;
+    var r = B.r, u = B.u * C.lw, sd = o.side || -1, x = B.cx + sd * B.sw * 0.5, y = B.bot - r * 0.62, s, k = 1.55, ang = -sd * 0.35;
     var mc = pal(o.c || '#16161c');
-    forearm(C, g, B, B.cx + sd * B.sw * 0.98, x + sd * r * 0.02, y + r * 0.16, cf._sleeveC, cf._cuffC);
-    g.save(); g.translate(x, y); g.rotate(sd * 0.5);
+    // 手握住喙尖：喙尖在面具局部坐标 (0.01r, 0.3r)
+    var tx = 0.01 * r * k, ty = 0.27 * r * k, hx = x + Math.cos(ang) * tx - Math.sin(ang) * ty, hy = y + Math.sin(ang) * tx + Math.cos(ang) * ty;
+    forearm(C, g, B, B.cx + sd * B.sw * 0.9, hx - sd * r * 0.02, hy + r * 0.2, cf._sleeveC, cf._cuffC);
+    g.save(); g.translate(x, y); g.rotate(ang); g.scale(k, k); u /= k;
     piece(C, g, { f: function (g2) { sym(g2, 0, [0, -r * 0.16], [[r * 0.12, -r * 0.17, r * 0.2, -r * 0.08, r * 0.2, r * 0.0], [r * 0.18, r * 0.07, r * 0.08, r * 0.09, 0, r * 0.06]]); }, fill: mc.b,
       sh: function (g2) { g2.fillStyle = K.rad(g2, -r * 0.06, -r * 0.08, r * 0.01, r * 0.25, [A(mc.l, 0.6), A(mc.b, 0), A(mc.d, 0.7)]); g2.fillRect(-r * 0.3, -r * 0.3, r * 0.6, r * 0.5); }, ln: '#000000', lw: 1.2 * u, ow: 2 * u });
     for (s = -1; s <= 1; s += 2) { ell(g, s * r * 0.085, -r * 0.05, r * 0.04, r * 0.033, s * 0.25); fillC(g, '#050206'); if (C.l >= 1) { circ(g, s * r * 0.085, -r * 0.05, r * 0.008); fillC(g, A('#ff3050', 0.35)); } }
     piece(C, g, { f: function (g2) { g2.beginPath(); g2.moveTo(-r * 0.05, -r * 0.06); g2.bezierCurveTo(-r * 0.07, r * 0.05, -r * 0.03, r * 0.2, r * 0.01, r * 0.3); g2.bezierCurveTo(r * 0.03, r * 0.2, r * 0.07, r * 0.05, r * 0.05, -r * 0.06); g2.closePath(); }, fill: '#22222a',
       sh: function (g2) { g2.fillStyle = K.lin(g2, -r * 0.06, 0, r * 0.06, 0, [A('#8a90b0', 0.5), A('#22222a', 0), A('#000000', 0.6)]); g2.fillRect(-r * 0.1, -r * 0.1, r * 0.2, r * 0.45); }, ln: '#000000', lw: 1.2 * u, ow: 2 * u });
     g.restore();
-    hand(C, g, H, x + sd * r * 0.02, y + r * 0.16, sd * 0.4, 0.95, 'hold', o.glove || H.sp.b, sd, { skin: !o.glove, glove: !!o.glove });
+    hand(C, g, H, hx - sd * r * 0.01, hy + r * 0.2, ang * 0.5, 0.75, 'hold', o.glove || H.sp.b, sd, { skin: !o.glove, glove: !!o.glove });
   };
   // 思考手势：拳托下巴
   function thinkHand(C, g, H, B, cf) {
