@@ -97,6 +97,12 @@
         outfit: 'butler', outfitColor: '#1a1a1a', inner: '#ffffff', accessory: 'monocle_none,white_gloves' },
       desc: '月蚀馆的老管家，瘦小的老人。迎接客人后随渡船离开。'
     },
+    sayo: {
+      name: '乌丸 小夜', color: '#ff9fb5', title: '判官', age: 19, height: 160,
+      visual: { hair: 'short_ragged', hairColor: '#15151c', skin: '#f6dcc8', eyes: 'round', eyeColor: '#7a3040',
+        outfit: 'black_coat_over_sailor', outfitColor: '#1a1620', inner: '#8a2a3a', accessory: 'white_glove_right' },
+      desc: '园丁乌丸源治的女儿。剪去长发后的汐——宵鸦岛的「判官」。'
+    },
     judge: {
       name: '判官', color: '#ff4060', title: '？？？', age: 0, height: 0,
       visual: { hair: 'hood', hairColor: '#0a0a0a', skin: '#000000', eyes: 'mask', eyeColor: '#ff3050',

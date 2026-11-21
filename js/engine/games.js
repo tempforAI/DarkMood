@@ -258,7 +258,7 @@
       var grid = el('div', 'pick-grid', p), cards = [], over = false;
       def.options.forEach(function (c) {
         var card = el('div', 'pick-card', grid);
-        card.appendChild(Core.canvasFrom(Core.art.portrait(c, 'normal')));
+        card.appendChild(Core.canvasFrom(Core.art.thumb(c, 'normal')));
         el('div', 'nm', card, Core.charName(c));
         card.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -437,7 +437,7 @@
       DM.Audio.se('heartbeat');
       def.options.forEach(function (c) {
         var card = el('div', 'pick-card', grid);
-        card.appendChild(Core.canvasFrom(Core.art.portrait(c, 'normal')));
+        card.appendChild(Core.canvasFrom(Core.art.thumb(c, 'normal')));
         el('div', 'nm', card, Core.charName(c));
         card.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -450,7 +450,7 @@
           DM.Audio.se('gavel');
           var res = el('div', 'vote-result', L);
           el('div', 'r1', res, '投 票 结 果');
-          var cv = Core.canvasFrom(Core.art.portrait(c, 'shock')); res.appendChild(cv);
+          var cv = Core.canvasFrom(Core.art.thumb(c, 'shock')); res.appendChild(cv);
           el('div', 'r2', res, Core.charName(c));
           var r3 = el('div', '', res, '—— 全员一致 ——'); r3.style.cssText = 'margin-top:8px;color:#ff4b67;letter-spacing:6px';
           el('div', 'tapnote', res, '点击继续');

@@ -18,7 +18,7 @@
     update: 'first+text', note: 'first+text', unlock: 'words', lock: 'words',
     explore: 'words', freetime: 'words', game: 'words', trial: 'words', flashback: 'words',
     'return': 'words', chapterend: 'words', end: 'words', bond: 'words', choice: 'words',
-    letter: 'text', cg: 'words'
+    letter: 'text', cg: 'words', ending: 'words', checkpoint: 'words'
   };
   DM.SCRIPT_COMMANDS = CMD;
 

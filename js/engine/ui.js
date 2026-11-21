@@ -25,13 +25,26 @@
     toastEl = el('div', '', root); toastEl.id = 'toast';
     shoutEl = el('div', '', root); shoutEl.id = 'shout';
     cardEl = el('div', 'layer hidden', root);
-    UI.layers.menu = el('div', 'layer hidden', root);
     UI.layers.title = el('div', 'layer hidden', root); UI.layers.title.id = 'title';
+    UI.layers.menu = el('div', 'layer hidden', root);
     flashEl = el('div', '', root); flashEl.id = 'flash';
     fadeEl = el('div', '', root); fadeEl.id = 'fade';
     loadingEl = el('div', 'hidden', root); loadingEl.id = 'loading'; loadingEl.textContent = '读取中';
 
     buildQuick();
+
+    // 移动端：触屏标记、竖屏提示、音频解锁
+    document.body.classList.toggle('touch', !!St.device.touch);
+    document.body.classList.toggle('mobile', !!St.device.mobile);
+    rotateEl = el('div', 'hidden', document.body); rotateEl.id = 'rotate';
+    el('div', 'ic', rotateEl, '⟳');
+    el('div', 'tx', rotateEl, '请将设备横过来游玩');
+    var goOn = el('button', 'btn small', rotateEl, '仍然继续');
+    goOn.addEventListener('click', function (e) { e.stopPropagation(); rotateDismissed = true; UI.onResize(); });
+    var unlock = function () { DM.Audio.init(); };
+    document.addEventListener('touchend', unlock, { passive: true });
+    UI.applyTextSize();
+    UI.onResize();
 
     // 点击推进
     root.addEventListener('click', function (e) {
@@ -55,6 +68,19 @@
     window.addEventListener('blur', function () { UI.ctrlSkip = false; });
   };
   function exploreActive() { return !UI.layers.explore.classList.contains('hidden'); }
+
+  var rotateEl = null, rotateDismissed = false;
+  UI.onResize = function () {
+    if (!rotateEl) return;
+    var vp = Core.viewport();
+    var portrait = St.device.touch && vp.h > vp.w * 1.05;
+    rotateEl.classList.toggle('hidden', !portrait || rotateDismissed);
+  };
+  UI.applyTextSize = function () {
+    var z = St.settings.textSize;
+    document.body.classList.remove('ts0', 'ts1', 'ts2');
+    document.body.classList.add('ts' + (z == null ? 1 : z));
+  };
 
   UI.modalOpen = function () { return !UI.layers.menu.classList.contains('hidden') || !UI.layers.title.classList.contains('hidden'); };
 
@@ -155,6 +181,8 @@
     if (r) r();
   };
   UI.isWaiting = function () { return waiting; };
+  // 空闲（没有在打字、没有卡片动画）——渲染器借此在空闲时预生成高清美术
+  UI.idle = function () { return !typing && !cardResolve; };
 
   // ---------- 选项 ----------
   UI.choice = function (options) {
@@ -212,6 +240,19 @@
     el('div', 'paper', n, text);
     el('div', 'tapnote', n, '点击继续');
     UI.log.push({ kind: 'narr', name: '', text: '【信】' + text });
+    return showCard(n, 0);
+  };
+  // 结局卡：BAD END / HAPPY END / TRUE END
+  UI.endingCard = function (en) {
+    var cls = en.type === 'HE' ? (en.trueEnd ? 'te' : 'he') : 'be';
+    var n = el('div', 'card-full ending ' + cls);
+    el('div', 'kind', n, en.type === 'HE' ? (en.trueEnd ? 'TRUE END' : 'HAPPY END') : 'BAD END');
+    if (en.no) el('div', 'no', n, 'No.' + en.no);
+    el('div', 'nm', n, en.title || '');
+    if (en.desc) el('div', 'ds', n, en.desc);
+    el('div', 'tapnote', n, '点击继续');
+    DM.Audio.se(en.type === 'HE' ? 'bell' : 'heartbeat');
+    UI.log.push({ kind: 'narr', name: '', text: '【' + (en.type === 'HE' ? 'END' : 'BAD END') + '】' + (en.title || '') });
     return showCard(n, 0);
   };
   UI.endCard = function (text) {
