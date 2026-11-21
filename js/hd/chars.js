@@ -35,15 +35,27 @@
  *           size: 1, gap: 1, lash: '#颜色', ...任意 EYE 参数覆盖 },
  *   brows: { shape: 'normal'|'thin'|'thick'|'straight'|'sharp'|'soft'|'bushy'|'short', color, t: 粗细倍率 },
  *   mouth: { w: 1 },  nose: 'small'|'male'|'button'|'long',
- *   marks: ['scar_brow','scar_cheek','scar_lip','burn','mole','stubble','mustache','beard_short','beard_full',
- *           'goatee','metal_tooth','freckles','bandage','eye_bags'],     // 脸部特征（字符串或 {k, c, side}）
+ *   marks: ['scar_brow','scar_cheek','burn','frostbite','mole','stubble','mustache','beard_short','beard_full',
+ *           'goatee','metal_tooth','freckles','bandage','liver_spots','red_nose','soot'],   // 脸部特征（字符串或 {k, c, side}）
  *   outfit: { k: 'coat'|'suit'|'suit_vest'|'labcoat'|'trench'|'tailcoat'|'butler'|'chef'|'smock'|'sailor_cardigan'
  *                |'sailor'|'blazer'|'cardigan'|'sweater'|'turtleneck'|'dress'|'tshirt'|'work'|'kimono'|'haori'|'miko'
- *                |'police'|'parka'|'robe'|'jacket'|'fisher'|'nurse'|'maid'|'coat_over_sailor'|'shirt' …,
+ *                |'police'|'parka'|'robe'|'jacket'|'fisher'|'nurse'|'maid'|'coat_over_sailor'|'shirt'
+ *                |'overcoat'|'peacoat'|'duffle'|'quilted'|'hunting'|'hanten'|'dotera'|'tanzen'|'cape'|'gakuran' …,
+ *             // 选项示例：overcoat/peacoat/duffle/quilted/labcoat 的 inner:'turtle'|'sweater'|'suit'|'cardigan'|'shirt'；
+ *             // kimono 的 apron:'kappogi'|'bib'|'check'、open:1（敞领）；miko 的 haori:'#色'；haori 的 obi:'#色'、mon:1；
+ *             // parka 的 fur:'#色'|false；cape 的 lining；gakuran 的 coat:'#色'
  *             c: 主色, c2: 内搭色, c3: 点缀色（领带/丝带/腰带）, tie: 'tie'|'bow'|'ribbon'|'none', ...预设参数 },
  *   acc: [ 'glasses_round', {k:'top_hat', c:'#222', tilt:-0.2}, {k:'scarf', c:'#a08060'}, ... ],   // 配件（见 ACC 表）
- *   hold: { k: 'notebook'|'book'|'doll'|'cane'|'cards'|'phone'|'clipboard'|'lantern'|'gohei'|'fan'|'crow_mask',
- *           c: 颜色, glove: '#fff'(手套色), side: 1|-1 },          // 手持道具（自带前臂与手）；继承时整体替换
+ *        // 头：top_hat beret cap police_cap straw_hat bandana headscarf knit_hat earmuffs ribbon white_ribbon hairpin flower
+ *        //     camellia kanzashi comb headband maid_headpiece nurse_cap hachimaki pencil_ear
+ *        // 脸：glasses(shape round|rect|oval, glare:[表情], chain) monocle earring cigarette toothpick eyepatch
+ *        // 颈：scarf muffler towel necklace pendant feather_charm mino   身：badge lawyer_badge police_badge watch_chain
+ *        //     sequins paint camera violin_strap nurse_watch cig_pack rifle_sling whistle_cord   背：violin_case rifle ribbon_back
+ *        // 手套：gloves {c}（双手）、glove_right（只有右手；配合 hold.glove 使用）
+ *   hold: { k: 'notebook'|'book'|'doll'|'cane'|'cards'|'phone'|'clipboard'|'lantern'|'gohei'|'fan'|'crow_mask'
+ *              |'slate'|'flask'|'sake'|'briefcase',
+ *           c: 颜色, glove: '#fff'(手套色), knit: 1(毛线手套), missing: 2(该手缺指，手套里显得塌), watch: true|'#色',
+ *           side: 1(观者右=角色左手)|-1 },          // 手持道具（自带前臂与手）；继承时整体替换
  *   mask: 'crow'|'moth'|'fox'|'cloth'|'half' | { k, c },  // 面具：cover full=不画五官（crow/fox）、upper=遮眼（moth）、lower=遮口（cloth）
  *   hood: { c: '#0a0a10' },   // 兜帽（后片在身后，前缘框住脸）
  *   glow: { c: '#ff3050' }, glowBy: { angry: 1 },   // 面具眼洞发光色；按表情的发光强度（默认表 JUDGE_GLOW）
@@ -2254,8 +2266,8 @@
     void sp;
   }, sprite: { legs: 'pants', legC: '#e4e4e4', shoe: '#e8e0d8', coat: 0.3 } };
   OUTFIT.labcoat = { draw: function (C, g, H, B, o) {
-    top(C, g, B, o.c2 || '#506070', { tex: 'knit', nl: { y: B.ny + B.r * 0.06 } });
-    collarTurtle(C, g, H, B, o.c2 || '#506070');
+    if (o.inner) innerTop(C, g, H, B, o.inner, o.c2 || '#506070');
+    else { top(C, g, B, o.c2 || '#506070', { tex: 'knit', nl: { y: B.ny + B.r * 0.06 } }); collarTurtle(C, g, H, B, o.c2 || '#506070'); }
     var J = jacket(C, g, H, B, { c: o.c || '#f4f4f4', tex: 'cotton', lapel: 'notch', vy: 0.62, vx: 0.08, ox: 0.2, buttons: 0, inf: 0.04, drape: 1 });
     // 胸袋与笔
     if (C.m >= 1) {
@@ -2453,6 +2465,7 @@
     // 兜帽（毛边）在颈后
     var r = B.r, u = B.u * C.lw, fc = o.fur || '#d8ccb8', fp = pal(fc), p = pal(o.c);
     piece(C, g, { f: function (g2) { ell(g2, B.cx, B.ny - r * 0.02, B.nw * 2.6, r * 0.18); }, fill: p.s, ln: p.ln, lw: 1.2 * u, ow: 2.2 * u });
+    if (o.fur === false) return;
     var rn = K.rng('fur'), n = K.byModel(C.q, 10, 18, 28);
     piece(C, g, { f: function (g2) {
       g2.beginPath();
@@ -2514,6 +2527,7 @@
   OUTFIT.haori = { draw: function (C, g, H, B, o) {
     var r = B.r, u = B.u * C.lw;
     kimonoBody(C, g, H, B, o.c2 || '#4a4a52', o.c2 || '#4a4a52', o.c4 || '#e8e4dc', { tex: 'cotton', cross: 0.36 });
+    if (o.obi) obi(C, g, B, o.obi, B.ny + r * 1.06, { cord: o.cord || '#c84060' });
     var J = jacket(C, g, H, B, { c: o.c || '#2a2a30', tex: 'tweed', lapel: 'none', vy: 0.02, vx: 0.2, ox: 0.28, buttons: 0, inf: 0.08, drape: 1 });
     // 平直的领条
     for (var s = -1; s <= 1; s += 2) {
@@ -3221,7 +3235,7 @@
     }, ln: '#000000', lw: 1.3 * u, ow: 2.4 * u });
     if (C.l >= 2) { g.save(); g.globalCompositeOperation = 'lighter'; g.beginPath(); g.moveTo(cx - r * 0.05, H.eyeY + r * 0.06); g.quadraticCurveTo(cx - r * 0.06, H.noseY + r * 0.1, cx - r * 0.02, H.C + r * 0.12); strokeW(g, A('#8890c0', 0.3), 2.5 * u); g.restore(); }
   } };
-  MASK.moth = { cover: 'upper', draw: function (C, g, H, B, cf, X, o) {
+  MASK.moth = { cover: 'upper', overHood: true, draw: function (C, g, H, B, cf, X, o) {
     var r = H.r, u = H.u * C.lw, cx = H.cx, c = o.c || '#f4f0e8', p = pal(c), s, i, gl = X.glow === undefined ? 0.4 : X.glow;
     if (o.cover === 'full') {
       sym(g, cx, [0, H.T - r * 0.03], [[H.fw * 0.7, H.T - r * 0.03, H.fw * 1.1, H.T + r * 0.15, H.fw * 1.1, H.eyeY], [H.fw * 1.1, H.C, 0, H.C + r * 0.1]]);
@@ -3357,7 +3371,7 @@
   // 割烹着：带袖的白色罩衫，露出和服领
   function kappogi(C, g, B, c) {
     var r = B.r, cp = pal(c || '#f6f4f0');
-    garment(C, g, B, bodyPath(B, 0.09 * r, { y: B.ny + r * 0.26, v: 1, w: B.nw * 1.55 }), cp.b, { tex: 'cotton', inf: 0.09 * r, drape: 1 });
+    garment(C, g, B, bodyPath(B, 0.09 * r, { y: B.ny + r * 0.42, v: 1, w: B.nw * 2.1 }), cp.b, { tex: 'cotton', inf: 0.09 * r, drape: 1 });
   }
   var _kimonoDraw = OUTFIT.kimono.draw;
   OUTFIT.kimono = { draw: function (C, g, H, B, o) {
@@ -3528,10 +3542,11 @@
     hand(C, g, H, x, y + r * 0.26, 0, 0.82, 'hold', o.glove || cf._gloveC || H.sp.b, sd, hopt(o, cf));
   };
   PROP.briefcase = function (C, g, H, B, o, cf) {
-    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * (B.bw + r * 0.06), y = B.bot - r * 0.06, c = o.c || '#3a2618', p = pal(c);
+    var r = B.r, u = B.u * C.lw, sd = o.side || 1, x = B.cx + sd * (B.bw - r * 0.12), y = B.bot - r * 0.24, c = o.c || '#3a2618', p = pal(c);
+    forearm(C, g, B, B.cx + sd * (B.bw + r * 0.08), x + sd * r * 0.02, y - r * 0.2, cf._sleeveC, cf._cuffC);
     piece(C, g, { f: function (g2) { rrect(g2, x - r * 0.3, y, r * 0.6, r * 0.4, r * 0.03); }, fill: p.b, tex: C.t > 0 ? clothTex(p.b, 'leather') : null, sh: function (g2) { g2.fillStyle = K.lin(g2, 0, y, 0, y + r * 0.2, [A(p.l, 0.4), A(p.b, 0)]); g2.fillRect(x - r * 0.3, y, r * 0.6, r * 0.2); }, ln: p.ln, lw: 1.2 * u, ow: 2 * u });
     g.beginPath(); g.moveTo(x - r * 0.08, y); g.quadraticCurveTo(x, y - r * 0.12, x + r * 0.08, y); strokeW(g, p.ln, r * 0.03); strokeW(g, p.b, r * 0.018);
-    hand(C, g, H, x, y + r * 0.02, PI, 0.8, 'hold', o.glove || cf._gloveC || H.sp.b, -sd, hopt(o, cf));
+    hand(C, g, H, x, y + r * 0.01, PI, 0.75, 'hold', o.glove || cf._gloveC || H.sp.b, -sd, hopt(o, cf));
   };
 
   /* ---- 新的脸部特征 ---- */
@@ -3692,10 +3707,11 @@
       for (var s = -1; s <= 1; s += 2) drawBrow(C, g, H, s, Bp, X.brow, cf._browC, lum(cf.hair.color || '#333') > 0.55 ? 0.3 : 0.22);
     }
     // 6. 脸部配件、面具、头饰、手与道具
-    var ga = lbegin(C);
+    var ga = lbegin(C), mOver = mask && (mask.overHood || (MASK[mo.k || cf.mask] || {}).overHood);
     drawSlot(C, ga, H, B, cf, X, hd, 'face');
-    if (mask) mask.draw(C, ga, H, B, cf, X, mo);
+    if (mask && !mOver) mask.draw(C, ga, H, B, cf, X, mo);
     if (cf.hood) hoodFront(C, ga, H, B, cf.hood);
+    if (mask && mOver) mask.draw(C, ga, H, B, cf, X, mo);
     drawSlot(C, ga, H, B, cf, X, hd, 'head');
     if (hd.bows) for (var i = 0; i < hd.bows.length; i++) ACC.ribbon.draw(C, ga, H, B, hd.bows[i], cf, X, hd);
     if (cf.hold && PROP[cf.hold.k]) PROP[cf.hold.k](C, ga, H, B, cf.hold, cf);
@@ -3784,7 +3800,7 @@
     piece(C, gb, { f: torso, fill: tp.b, tex: tex, sh: function (g2) {
       g2.fillStyle = A(tp.s, 0.6); g2.fillRect(cx + bw * 0.3, shY - r * 0.2, bw * 2, L);
       if (C.l >= 1) { g2.fillStyle = K.lin(g2, 0, shY, 0, hipY, [A(tp.l, 0.15), A(tp.d, 0.25)]); g2.fillRect(cx - bw * 2, neckY, bw * 4, L); }
-      var fr = sp0.front || (/coat|suit|labcoat|trench|jacket|tailcoat|butler|blazer|cardigan|police|haori|work|fisher|white_suit|vest/.test(cf.outfit.k) ? 'v' : /sailor/.test(cf.outfit.k) ? 'sailor' : /kimono|miko/.test(cf.outfit.k) ? 'cross' : /robe/.test(cf.outfit.k) ? 'robe' : 'none');
+      var fr = sp0.front || (/coat|suit|labcoat|trench|jacket|tailcoat|butler|blazer|cardigan|police|haori|hanten|work|fisher|white_suit|vest|duffle|quilted|hunting|gakuran/.test(cf.outfit.k) ? 'v' : /sailor/.test(cf.outfit.k) ? 'sailor' : /kimono|miko|dotera|tanzen|cape/.test(cf.outfit.k) ? 'cross' : /robe/.test(cf.outfit.k) ? 'robe' : 'none');
       var inC = o.c2 || '#e8e8e8';
       if (fr === 'v') { g2.beginPath(); g2.moveTo(cx - S.nw * 1.4, neckY); g2.lineTo(cx, shY + r * 0.38); g2.lineTo(cx + S.nw * 1.4, neckY); g2.closePath(); fillC(g2, /sailor/.test(cf.outfit.k) ? '#f0f0f4' : inC);
         if (/suit|coat|police|vest|blazer/.test(cf.outfit.k) && cf.outfit.k !== 'white_suit') { g2.beginPath(); g2.moveTo(cx - r * 0.025, neckY + r * 0.02); g2.lineTo(cx + r * 0.025, neckY + r * 0.02); g2.lineTo(cx + r * 0.03, shY + r * 0.3); g2.lineTo(cx, shY + r * 0.36); g2.lineTo(cx - r * 0.03, shY + r * 0.3); g2.closePath(); fillC(g2, o.c3 || (/blazer/.test(cf.outfit.k) ? '#b02840' : '#4a2a30')); }
@@ -3814,8 +3830,10 @@
     if (!(mask && mask.cover === 'full' && cf.hood)) drawFaceLayer(C, H, cf, X, hd, sp);
     hairLayer(C, H, hp, hd, 'front');
     var ga = lbegin(C);
-    if (mask) mask.draw(C, ga, H, S, cf, X, isObj(cf.mask) ? cf.mask : {});
+    var mOv = mask && (MASK[(isObj(cf.mask) && cf.mask.k) || cf.mask] || {}).overHood;
+    if (mask && !mOv) mask.draw(C, ga, H, S, cf, X, isObj(cf.mask) ? cf.mask : {});
     if (cf.hood) hoodFront(C, ga, H, S, cf.hood);
+    if (mask && mOv) mask.draw(C, ga, H, S, cf, X, isObj(cf.mask) ? cf.mask : {});
     drawSlot(C, ga, H, S, cf, X, hd, 'head');
     var fa = accList(cf);
     for (var f2 = 0; f2 < fa.length; f2++) if (/glasses|monocle/.test(fa[f2].k) && ACC[fa[f2].k]) ACC[fa[f2].k].draw(C, ga, H, S, fa[f2], cf, X, hd);
