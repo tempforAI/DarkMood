@@ -1191,7 +1191,7 @@
       g.beginPath();
       for (i = 0; i <= 8; i++) { var tq = lowerAt(G, lerp(0.05, 0.8, i / 8)); if (i) g.lineTo(tq[0], tq[1] - Hh * 0.02); else g.moveTo(tq[0], tq[1] - Hh * 0.02); }
       strokeW(g, A('#e8f4ff', 0.85), Hh * 0.08);
-      var tb = lowerAt(G, 0.14), ts = Hh * 0.16;
+      var tb = lowerAt(G, 0.1), ts = Hh * 0.22;
       g.beginPath(); g.moveTo(tb[0], tb[1] - ts * 0.2); g.quadraticCurveTo(tb[0] + ts * 0.9, tb[1] + ts * 0.9, tb[0], tb[1] + ts * 1.5); g.quadraticCurveTo(tb[0] - ts * 0.9, tb[1] + ts * 0.9, tb[0], tb[1] - ts * 0.2); g.closePath();
       g.fillStyle = K.lin(g, 0, tb[1], 0, tb[1] + ts * 1.5, ['rgba(220,238,255,0.7)', 'rgba(170,205,250,0.9)']); g.fill();
       strokeW(g, 'rgba(90,130,200,0.7)', 1 * u);
@@ -1833,8 +1833,17 @@
       fillC(g, A(p.s, (s > 0 ? 0.55 : 0.4) * sa)); g.restore();
       armLine(g, B, s, o.inf); strokeW(g, A(p.ln, 0.55), 1.2 * u);
     }
+    // 第二层（更深的）阴影：远光侧外缘与腋下
+    if (C.l >= 1) {
+      g.beginPath();
+      g.moveTo(cx + sw * 0.72, B.ny - r * 0.1);
+      g.bezierCurveTo(cx + sw * 0.86, shY + r * 0.3, cx + sw * 0.7, bot - r * 0.5, cx + sw * 0.8, bot);
+      g.lineTo(cx + sw * 3, bot); g.lineTo(cx + sw * 3, B.ny - r * 0.2); g.closePath();
+      fillC(g, A(p.d, 0.32 * sa));
+      if (!o.noArms) for (s = -1; s <= 1; s += 2) { g.save(); armLine(g, B, s, o.inf); g.lineTo(cx + s * (B.bw - aw * 1.02 - r * 0.05), bot); g.lineTo(cx + s * (sw - aw * 1.0), shY + r * 0.34); g.closePath(); fillC(g, A(p.d, (s > 0 ? 0.4 : 0.28) * sa)); g.restore(); }
+    }
     // 颈下投影
-    if (!o.noNeckShadow) { ell(g, cx + r * 0.02, B.ny + r * 0.03, B.nw * 1.6, r * 0.09); fillC(g, A(p.s, 0.5 * sa)); }
+    if (!o.noNeckShadow) { ell(g, cx + r * 0.02, B.ny + r * 0.03, B.nw * 1.6, r * 0.09); fillC(g, A(p.s, 0.5 * sa)); if (C.l >= 1) { ell(g, cx + r * 0.02, B.ny + r * 0.015, B.nw * 1.1, r * 0.045); fillC(g, A(p.d, 0.35 * sa)); } }
     if (C.l >= 1) {
       g.fillStyle = K.lin(g, 0, B.ny, 0, bot, [[0, A(p.l, 0.16)], [0.4, A(p.b, 0)], [1, A(p.d, 0.32)]]);
       g.fillRect(cx - sw * 2, B.ny - r * 0.3, sw * 4, bot - B.ny + r * 0.3);
@@ -1855,6 +1864,21 @@
         if (C.m >= 2) fold(g, arx + s * aw * 0.25, shY + r * 0.85, arx + s * aw * 0.3, bot, -s * r * 0.01, r * 0.008, fc);
       }
       if (o.drape) for (i = -2; i <= 2; i++) fold(g, cx + i * sw * 0.18, bot - r * (0.5 + Math.abs(i) * 0.05), cx + i * sw * 0.22, bot, r * 0.01, r * 0.012, fc);
+      if (C.m >= 2) for (s = -1; s <= 1; s += 2) {
+        // 胸前的张力褶、腰部斜褶、前臂处的堆褶
+        fold(g, cx + s * sw * 0.22, B.ny + r * 0.32, cx + s * sw * 0.52, B.ny + r * 0.46, -s * r * 0.012, r * 0.009, A(p.s, 0.6 * sa));
+        fold(g, cx + s * sw * 0.45, bot - r * 0.3, cx + s * sw * 0.2, bot - r * 0.08, s * r * 0.015, r * 0.01, A(p.s, 0.6 * sa));
+        fold(g, cx + s * (B.bw - aw * 0.25), bot - r * 0.32, cx + s * (B.bw - aw * 0.65), bot - r * 0.18, -s * r * 0.01, r * 0.009, A(p.s, 0.65 * sa));
+        if (C.l >= 2) { g.beginPath(); g.moveTo(cx + s * sw * 0.23 - r * 0.006, B.ny + r * 0.31); g.quadraticCurveTo(cx + s * sw * 0.37, B.ny + r * 0.36, cx + s * sw * 0.51, B.ny + r * 0.445); strokeW(g, A(p.l, 0.22 * sa), 1.2 * u); }
+      }
+    }
+    // 肩部轮廓光（左暖右冷）
+    if (C.l >= 2 && !o.noArms) for (s = -1; s <= 1; s += 2) {
+      var ish = (o.inf || 0) ;
+      g.save(); g.translate(0, 2.2 * u);
+      P(g, ['M', B.nw * 1.15, B.ny - r * 0.04, 'C', B.nw * 1.15 + r * 0.06, B.ny, (sw + ish) * 0.52, shY - r * 0.04, (sw + ish) * 0.86, shY, 'C', (sw + ish) * 0.97, shY + r * 0.005, sw + ish, shY + r * 0.06, sw + ish + r * 0.01, shY + r * 0.16], cx, s);
+      strokeW(g, s < 0 ? A('#fff4e0', 0.38 * sa) : A('#b0c0ff', 0.22 * sa), 3.2 * u);
+      g.restore();
     }
     if (o.sheen && C.l >= 2) {
       g.save(); g.globalCompositeOperation = 'lighter';
@@ -2549,62 +2573,74 @@
 
   /* ====================== 手与道具 ====================== */
   // 手：wx,wy 手腕位置；ang 手指朝向；k 尺寸（相对 r）；pose 'fist'|'hold'|'chin'|'open'；c 皮肤或手套色
+  // 手：四指轮廓（指尖圆弧 + 指缝线 + 指节）+ 独立拇指；局部坐标手腕在原点、手指朝 -y
   function hand(C, g, H, x, y, ang, k, pose, c, sd, o) {
     o = o || {};
     var r = H.r, u = H.u * C.lw, s = r * 0.19 * k, p = pal(c), sp = o.skin ? H.sp : null, ln = sp ? sp.ln : p.ln, sh = sp ? sp.s : p.s, hl = sp ? sp.hl : p.l, i;
-    g.save(); g.translate(x, y); g.rotate(ang); g.scale(sd || 1, 1);
     var open = pose === 'open';
-    // 弯曲的四指（手背一侧可见）
-    var fing = function (g2) {
-      g2.beginPath(); g2.moveTo(-s * 0.64, -s * 0.9);
-      g2.lineTo(s * 0.6, -s * 0.96);
-      g2.bezierCurveTo(s * 0.74, -s * 1.12, s * 0.7, -s * (open ? 2.0 : 1.42), s * 0.5, -s * (open ? 2.1 : 1.52));
-      g2.lineTo(-s * 0.46, -s * (open ? 2.15 : 1.56));
-      g2.bezierCurveTo(-s * 0.7, -s * (open ? 2.0 : 1.45), -s * 0.76, -s * 1.12, -s * 0.64, -s * 0.9);
-      g2.closePath();
-    };
-    piece(C, g, { f: fing, fill: c, sh: function (g2) {
-      g2.fillStyle = K.lin(g2, 0, -s * 1.0, 0, -s * 1.6, [A(sh, 0), A(sh, 0.55)]); g2.fillRect(-s, -s * 2.2, s * 2, s * 1.3);
-      g2.fillStyle = A(sh, 0.5); g2.fillRect(s * 0.32, -s * 2.2, s, s * 1.4);
-    }, ln: ln, lw: 1.1 * u, ow: 1.8 * u });
-    g.strokeStyle = A(ln, 0.75); g.lineWidth = 1.05 * u;
-    for (i = 0; i < 3; i++) {
-      var fx = lerp(-s * 0.32, s * 0.3, i / 2);
-      g.beginPath(); g.moveTo(fx + s * 0.02, -s * 1.02); g.quadraticCurveTo(fx - s * 0.04, -s * 1.3, fx, -s * (open ? 2.08 : 1.52)); g.stroke();
-    }
-    // 手背
-    var back = function (g2) {
+    // 每根手指 [左x, 右x, 指尖y]（食指→小指）；握持时手指弯曲，只看到到第二指节
+    var F = open ? [[-0.6, -0.31, -2.05], [-0.3, 0.0, -2.2], [0.01, 0.3, -2.1], [0.31, 0.56, -1.85]]
+                 : [[-0.62, -0.32, -1.52], [-0.31, 0.0, -1.62], [0.01, 0.31, -1.56], [0.32, 0.58, -1.4]];
+    if (o.missing) for (i = 0; i < o.missing && i < 2; i++) F[3 - i][2] = -1.0;   // 缺指（藏在手套里时由手套补齐）
+    g.save(); g.translate(x, y); g.rotate(ang); g.scale(sd || 1, 1);
+    var notchY = function (i) { return Math.max(F[i][2], F[i + 1][2]) + 0.24; };
+    var body = function (g2) {
       g2.beginPath(); g2.moveTo(-s * 0.46, s * 0.15);
-      g2.bezierCurveTo(-s * 0.6, -s * 0.3, -s * 0.7, -s * 0.7, -s * 0.62, -s * 0.98);
-      g2.quadraticCurveTo(0, -s * 1.14, s * 0.62, -s * 1.02);
-      g2.bezierCurveTo(s * 0.68, -s * 0.65, s * 0.58, -s * 0.25, s * 0.46, s * 0.15);
+      g2.bezierCurveTo(-s * 0.6, -s * 0.3, -s * 0.68, -s * 0.7, F[0][0] * s, -s * 0.95);
+      for (var j = 0; j < 4; j++) {
+        var xl = F[j][0] * s, xr = F[j][1] * s, ty = F[j][2] * s, rr = (xr - xl) / 2;
+        g2.lineTo(xl, ty + rr * 1.1);
+        g2.quadraticCurveTo(xl, ty, (xl + xr) / 2, ty);
+        g2.quadraticCurveTo(xr, ty, xr, ty + rr * 1.1);
+        if (j < 3) g2.lineTo(xr, notchY(j) * s);
+      }
+      g2.lineTo(F[3][1] * s, -s * 0.95);
+      g2.bezierCurveTo(s * 0.66, -s * 0.65, s * 0.58, -s * 0.25, s * 0.46, s * 0.15);
       g2.closePath();
     };
-    piece(C, g, { f: back, fill: c, sh: function (g2) {
-      g2.fillStyle = A(sh, 0.55); g2.fillRect(s * 0.25, -s * 1.3, s, s * 1.6);
-      if (C.l >= 1) { g2.fillStyle = K.rad(g2, -s * 0.2, -s * 0.75, 0, s * 0.6, [A(hl, 0.35), A(hl, 0)]); g2.fillRect(-s, -s * 1.4, s * 2, s * 1.6); }
-      if (C.m >= 1) for (var j = 0; j < 4; j++) { circ(g2, lerp(-s * 0.45, s * 0.42, j / 3), -s * 0.98 + Math.abs(j - 1.5) * s * 0.03, s * 0.09); fillC(g2, A(hl, 0.3)); }
+    piece(C, g, { f: body, fill: c, sh: function (g2) {
+      g2.fillStyle = A(sh, 0.55); g2.fillRect(s * 0.3, -s * 2.4, s, s * 2.7);
+      if (!open) { g2.fillStyle = K.lin(g2, 0, -s * 1.1, 0, -s * 1.65, [A(sh, 0), A(sh, 0.45)]); g2.fillRect(-s, -s * 1.7, s * 2, s * 0.6); }
+      if (C.l >= 1) { g2.fillStyle = K.rad(g2, -s * 0.2, -s * 0.7, 0, s * 0.7, [A(hl, 0.35), A(hl, 0)]); g2.fillRect(-s, -s * 1.5, s * 2, s * 1.7); }
+      // 指节
+      if (C.m >= 1) for (var j = 0; j < 4; j++) { var kx = (F[j][0] + F[j][1]) / 2 * s; ell(g2, kx, -s * 1.0, s * 0.1, s * 0.06); fillC(g2, A(hl, 0.32)); if (C.l >= 1) { ell(g2, kx + s * 0.04, -s * 1.0 + s * 0.08, s * 0.08, s * 0.03); fillC(g2, A(sh, 0.3)); } }
     }, ln: ln, lw: 1.1 * u, ow: 1.8 * u });
-    // 拇指（贴在物体侧面）
-    piece(C, g, { f: function (g2) { g2.beginPath(); g2.moveTo(-s * 0.5, -s * 0.15); g2.bezierCurveTo(-s * 0.9, -s * 0.45, -s * 0.95, -s * 0.95, -s * 0.72, -s * 1.15); g2.bezierCurveTo(-s * 0.55, -s * 1.12, -s * 0.5, -s * 0.8, -s * 0.48, -s * 0.6); g2.closePath(); },
-      fill: c, sh: function (g2) { if (C.l >= 1) { g2.fillStyle = A(hl, 0.25); g2.fillRect(-s, -s * 1.2, s * 0.3, s); } }, ln: ln, lw: 1.1 * u, ow: 1.6 * u });
-    if (o.glove && C.m >= 1) { g.beginPath(); g.moveTo(-s * 0.15, -s * 0.1); g.lineTo(-s * 0.1, -s * 0.8); g.moveTo(s * 0.18, -s * 0.1); g.lineTo(s * 0.14, -s * 0.8); strokeW(g, A(p.s, 0.7), 0.9 * u); }
-    if (o.glove) { g.beginPath(); g.moveTo(-s * 0.48, s * 0.05); g.quadraticCurveTo(0, s * 0.12, s * 0.48, s * 0.05); strokeW(g, A(p.ln, 0.6), 1.2 * u); }
+    // 指缝线（从指缝向下延伸到指节）
+    g.strokeStyle = ln; g.lineWidth = 1.1 * u;
+    for (i = 0; i < 3; i++) { var nx = F[i][1] * s; g.beginPath(); g.moveTo(nx, notchY(i) * s); g.quadraticCurveTo(nx - s * 0.02, -s * 1.08, nx + s * 0.01, -s * 0.92); g.stroke(); }
+    if (!open && C.m >= 1) { g.beginPath(); g.moveTo(F[0][0] * s + s * 0.05, -s * 1.28); g.quadraticCurveTo(0, -s * 1.36, F[3][1] * s - s * 0.05, -s * 1.22); strokeW(g, A(ln, 0.35), 0.9 * u); }
+    // 拇指
+    var th = function (g2) { g2.beginPath(); g2.moveTo(-s * 0.5, -s * 0.12); g2.bezierCurveTo(-s * 0.92, -s * 0.38, -s * 1.02, -s * 0.9, -s * 0.8, -s * 1.12);
+      g2.quadraticCurveTo(-s * 0.68, -s * 1.22, -s * 0.58, -s * 1.08); g2.bezierCurveTo(-s * 0.6, -s * 0.85, -s * 0.5, -s * 0.62, -s * 0.42, -s * 0.48); g2.closePath(); };
+    piece(C, g, { f: th, fill: c, sh: function (g2) { if (C.l >= 1) { g2.fillStyle = A(hl, 0.25); g2.fillRect(-s * 1.1, -s * 1.3, s * 0.3, s * 1.2); } g2.fillStyle = A(sh, 0.4); g2.fillRect(-s * 0.7, -s * 1.3, s * 0.3, s * 1.3); }, ln: ln, lw: 1.1 * u, ow: 1.6 * u });
+    if (C.m >= 1) { g.beginPath(); g.moveTo(-s * 0.86, -s * 0.98); g.quadraticCurveTo(-s * 0.76, -s * 0.94, -s * 0.66, -s * 1.0); strokeW(g, A(ln, 0.45), 0.9 * u); }
+    if (o.glove) { g.beginPath(); g.moveTo(-s * 0.48, s * 0.05); g.quadraticCurveTo(0, s * 0.12, s * 0.48, s * 0.05); strokeW(g, A(p.ln, 0.6), 1.2 * u);
+      if (C.m >= 1) { g.beginPath(); g.moveTo(-s * 0.12, -s * 0.15); g.lineTo(-s * 0.1, -s * 0.75); g.moveTo(s * 0.16, -s * 0.15); g.lineTo(s * 0.14, -s * 0.75); strokeW(g, A(p.s, 0.7), 0.9 * u); } }
+    if (o.knit && C.m >= 1) { g.save(); body(g); g.clip(); g.strokeStyle = A(p.s, 0.6); g.lineWidth = 0.9 * u; for (i = 0; i < 9; i++) { g.beginPath(); g.moveTo(-s * 0.7, -s * (0.1 + i * 0.18)); g.lineTo(s * 0.7, -s * (0.1 + i * 0.18)); g.stroke(); } g.restore(); g.fillStyle = A(p.d, 0.6); g.fillRect(-s * 0.5, -s * 0.05, s, s * 0.18); }
     g.restore();
   }
   // 从画面下缘伸上来的前臂（袖子）
   function forearm(C, g, B, x0, x1, y1, c, cuff) {
     var r = B.r, u = B.u * C.lw, p = pal(c), w0 = r * 0.2, w1 = r * 0.105, y0 = B.bot + 12;
     var dx = x1 - x0, dy = y1 - y0, l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l, ny = dx / l;
+    var bend = r * 0.035 * (dx > 0 ? -1 : 1);
     var f = function (g2) {
-      g2.beginPath(); g2.moveTo(x0 + nx * w0, y0 + ny * w0);
-      g2.bezierCurveTo(lerp(x0, x1, 0.4) + nx * w0 * 1.05, lerp(y0, y1, 0.4) + ny * w0 * 1.05, lerp(x0, x1, 0.8) + nx * w1 * 1.25, lerp(y0, y1, 0.8) + ny * w1 * 1.25, x1 + nx * w1, y1 + ny * w1);
+      g2.beginPath(); g2.moveTo(x0 + nx * w0 * 1.1, y0 + ny * w0 * 1.1);
+      g2.bezierCurveTo(lerp(x0, x1, 0.4) + nx * (w0 + bend), lerp(y0, y1, 0.4) + ny * (w0 + bend), lerp(x0, x1, 0.8) + nx * (w1 * 1.25 + bend * 0.5), lerp(y0, y1, 0.8) + ny * (w1 * 1.25 + bend * 0.5), x1 + nx * w1, y1 + ny * w1);
       g2.quadraticCurveTo(x1 + dx / l * r * 0.02, y1 + dy / l * r * 0.02, x1 - nx * w1, y1 - ny * w1);
-      g2.bezierCurveTo(lerp(x0, x1, 0.8) - nx * w1 * 1.2, lerp(y0, y1, 0.8) - ny * w1 * 1.2, lerp(x0, x1, 0.4) - nx * w0, lerp(y0, y1, 0.4) - ny * w0, x0 - nx * w0, y0 - ny * w0);
+      g2.bezierCurveTo(lerp(x0, x1, 0.8) - nx * (w1 * 1.2 - bend * 0.5), lerp(y0, y1, 0.8) - ny * (w1 * 1.2 - bend * 0.5), lerp(x0, x1, 0.4) - nx * (w0 - bend), lerp(y0, y1, 0.4) - ny * (w0 - bend), x0 - nx * w0 * 1.1, y0 - ny * w0 * 1.1);
       g2.closePath();
     };
+    // 前臂在身体上的柔和投影（只落在已画的身体上）
+    if (C.l >= 1 && C.g) {
+      var mg = C.g; mg.save(); mg.globalCompositeOperation = 'source-atop';
+      for (var sk = 0; sk < 3; sk++) { mg.save(); mg.translate(r * (0.012 + sk * 0.012), r * (0.01 + sk * 0.01)); f(mg); mg.fillStyle = 'rgba(20,10,30,' + (0.12 - sk * 0.03) + ')'; mg.fill(); mg.restore(); }
+      mg.restore();
+    }
     piece(C, g, { f: f, fill: p.b, tex: C.t > 0 ? clothTex(p.b, 'wool') : null, sh: function (g2) {
       g2.fillStyle = K.lin(g2, x1 - nx * w0, y1 - ny * w0, x1 + nx * w0, y1 + ny * w0, [A(p.d, 0.5), A(p.b, 0), A(p.l, 0.18)]); g2.fillRect(Math.min(x0, x1) - r, Math.min(y0, y1) - r * 0.3, Math.abs(dx) + r * 2, Math.abs(dy) + r * 0.6);
+      if (C.l >= 1) { g2.fillStyle = K.lin(g2, 0, y1, 0, y0, [A(p.d, 0), A(p.d, 0.4)]); g2.fillRect(Math.min(x0, x1) - r, y1, Math.abs(dx) + r * 2, y0 - y1 + 20); }
+      if (C.m >= 1) for (var wk = 0; wk < 2; wk++) { var tt = 0.86 - wk * 0.08; fold(g2, lerp(x0, x1, tt) - nx * w1 * 0.9, lerp(y0, y1, tt) - ny * w1 * 0.9, lerp(x0, x1, tt - 0.04) + nx * w1 * 0.5, lerp(y0, y1, tt - 0.04) + ny * w1 * 0.5, r * 0.008, r * 0.008, A(p.s, 0.7)); }
       if (C.m >= 1) { fold(g2, lerp(x0, x1, 0.25) - nx * w0 * 0.3, lerp(y0, y1, 0.25) - ny * w0 * 0.3, lerp(x0, x1, 0.7) - nx * w1 * 0.2, lerp(y0, y1, 0.7) - ny * w1 * 0.2, r * 0.015, r * 0.012, A(p.s, 0.7));
         fold(g2, lerp(x0, x1, 0.55) + nx * w0 * 0.4, lerp(y0, y1, 0.55) + ny * w0 * 0.4, lerp(x0, x1, 0.85) + nx * w1 * 0.3, lerp(y0, y1, 0.85) + ny * w1 * 0.3, -r * 0.01, r * 0.01, A(p.s, 0.6)); }
     }, ln: p.ln, lw: 1.3 * u, ow: 2.2 * u });
@@ -3336,10 +3372,10 @@
     // 5. 前发
     hairLayer(C, H, hp, hd, 'front');
     // 透过刘海的眉毛
-    if (!cf._noFace && C.m >= 1 && hd.front.length > 1 && lum(cf.hair.color || '#333') < 0.55) {
+    if (!cf._noFace && C.m >= 1 && hd.front.length > 1) {
       var Bp = BROW[cf.brows && cf.brows.shape] || BROW[H.sex === 'm' ? 'straight' : 'normal'];
       if (cf.brows && cf.brows.t) Bp = merge(Bp, { t: (Bp.t || 1) * cf.brows.t });
-      for (var s = -1; s <= 1; s += 2) drawBrow(C, g, H, s, Bp, X.brow, cf._browC, 0.22);
+      for (var s = -1; s <= 1; s += 2) drawBrow(C, g, H, s, Bp, X.brow, cf._browC, lum(cf.hair.color || '#333') > 0.55 ? 0.3 : 0.22);
     }
     // 6. 脸部配件、面具、头饰、手与道具
     var ga = lbegin(C);
