@@ -1306,5 +1306,388 @@
   });
 
 
+  /* ================================================================
+   * 共用家具：壁炉、烛台、餐桌、椅子
+   * ================================================================ */
+  // 壁炉（石材 + 炉膛 + 柴火）；火焰在 fireGlow 中画（光照之后）
+  function fireplace(g, q, R, x, y, w, h, o) {
+    o = o || {};
+    var by = y + h, stone = o.stone || '#6a6066', t = o.t || TX.marbleW, k = R.kWall(by + 30);
+    var fx = x + w * 0.2, fw = w * 0.6, fy = y + h * 0.36, fh = by - fy;
+    // 炉床（地面石板）
+    box(g, q, R, x - 30, by, w + 60, 26, R.kWall(by + 34) * 1.0, { col: K.shade(stone, -0.1), t: t, topHi: 0.18 });
+    // 壁炉主体
+    if (q.light >= 1) softRect(g, x + (KX < 0 ? 10 : -10), y + 10, w, h, 14, 0.45);
+    box(g, q, R, x, y + 40, w, h - 40, k, { col: stone, t: t });
+    // 炉膛
+    var archR = fw / 2;
+    g.beginPath(); g.moveTo(fx, by); g.lineTo(fx, fy + archR * 0.5); g.quadraticCurveTo(fx, fy, fx + archR, fy); g.quadraticCurveTo(fx + fw, fy, fx + fw, fy + archR * 0.5); g.lineTo(fx + fw, by); g.closePath();
+    g.fillStyle = '#0c0806'; g.fill();
+    g.save(); g.clip();
+    // 炉膛内壁（砖）
+    var ib = R.p(fx, by, 0.93), ib2 = R.p(fx + fw, fy, 0.93);
+    g.beginPath(); g.rect(ib[0], ib2[1], ib2[0] - ib[0], ib[1] - ib2[1]);
+    texFill(g, q, '#3a1e16', ['brick', { c1: '#2a1410', c2: '#5a2a1e', mortar: '#140a08', seed: 7 }, 90]);
+    rect(g, fx, fy, fw, fh, 'rgba(10,6,4,0.55)');
+    fillP(g, [fx, fy, ib[0], ib2[1], ib[0], ib[1], fx, by], 'rgba(20,10,6,0.7)');
+    fillP(g, [fx + fw, fy, ib2[0], ib2[1], ib2[0], ib[1], fx + fw, by], 'rgba(10,6,4,0.8)');
+    // 柴架与木柴
+    var lg = by - 18;
+    for (var i = 0; i < 3; i++) {
+      var lx = fx + fw * (0.18 + i * 0.22), ly = lg - (i === 1 ? 26 : 8);
+      g.save(); g.translate(lx + 40, ly); g.rotate(i === 1 ? -0.06 : i ? 0.12 : -0.14);
+      g.fillStyle = K.lin(g, 0, -12, 0, 12, ['#3a2618', '#1a0e08', '#0a0604']); K.rr(g, -50, -12, 100, 24, 11); g.fill();
+      ell(g, 50, 0, 6, 11, '#5a3a22'); ell(g, 50, 0, 3, 6, '#2a1608');
+      g.restore();
+    }
+    g.fillStyle = metalGrad(g, fx + 20, 0, fx + 30, 0, '#2a2a30'); g.fillRect(fx + fw * 0.12, lg - 30, 9, 30); g.fillRect(fx + fw * 0.85, lg - 30, 9, 30);
+    g.restore();
+    // 炉口边框 + 拱心
+    g.beginPath(); g.moveTo(fx - 16, by); g.lineTo(fx - 16, fy + archR * 0.5); g.quadraticCurveTo(fx - 16, fy - 16, fx + archR, fy - 16); g.quadraticCurveTo(fx + fw + 16, fy - 16, fx + fw + 16, fy + archR * 0.5); g.lineTo(fx + fw + 16, by);
+    g.lineTo(fx + fw, by); g.lineTo(fx + fw, fy + archR * 0.5); g.quadraticCurveTo(fx + fw, fy, fx + archR, fy); g.quadraticCurveTo(fx, fy, fx, fy + archR * 0.5); g.lineTo(fx, by); g.closePath();
+    texFill(g, q, K.shade(stone, 0.1), t); g.fillStyle = hi(0.1); g.fill();
+    // 壁柱（两侧）
+    if (q.model >= 1) for (var c = 0; c < 2; c++) {
+      var px = c ? x + w - 40 : x + 14;
+      g.beginPath(); g.rect(px, y + 60, 26, h - 70); texFill(g, q, K.shade(stone, 0.12), t);
+      rect(g, px, y + 60, 26, h - 70, cylGrad(g, px, 26, 'rgba(128,128,128,0.0)')); bevel(g, px, y + 60, 26, h - 70, 5, 0.18, 0.35);
+    }
+    // 壁炉台（台面）
+    box(g, q, R, x - 22, y + 18, w + 44, 24, 0.965, { col: K.shade(stone, 0.12), t: t, topHi: 0.25 });
+    bands(g, x - 8, y + 42, w + 16, [[3, lo(0.5)], [6, K.shade(stone, -0.05)], [2, hi(0.2)]]);
+    // 炉膛口的热光（底色）
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.fillStyle = K.rad(g, fx + fw / 2, by - 20, 4, fw * 0.6, ['rgba(255,140,50,0.45)', 'rgba(200,70,20,0.15)', 'rgba(0,0,0,0)']); g.fillRect(fx - 40, fy - 40, fw + 80, fh + 60);
+    g.restore();
+    return { fx: fx, fw: fw, fy: fy, by: by, mantel: y + 18 };
+  }
+  function fireGlow(g, q, F, seed) {
+    var rnd = K.rng(seed || 3), cx = F.fx + F.fw / 2, by = F.by - 30;
+    if (q.light >= 1) K.glow(g, cx, by - 30, F.fw * 0.9, '#ff8a30', 0.35);
+    var n = M(q, 4, 7, 10);
+    for (var i = 0; i < n; i++) {
+      var fx = F.fx + F.fw * (0.18 + 0.64 * rnd()), fh = 30 + rnd() * 70 * (1 - Math.abs(fx - cx) / F.fw), fw = 12 + rnd() * 16;
+      g.beginPath(); g.moveTo(fx - fw, by); g.bezierCurveTo(fx - fw, by - fh * 0.5, fx + fw * 0.2 * (rnd() - 0.5), by - fh * 0.7, fx + (rnd() - 0.5) * 12, by - fh);
+      g.bezierCurveTo(fx + fw * 0.5, by - fh * 0.6, fx + fw, by - fh * 0.4, fx + fw, by); g.closePath();
+      g.fillStyle = K.lin(g, 0, by - fh, 0, by, ['rgba(255,120,30,0)', 'rgba(255,160,60,0.75)', 'rgba(255,230,150,0.95)']);
+      g.save(); g.globalCompositeOperation = 'lighter'; g.fill(); g.restore();
+    }
+    // 余烬
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (var j = 0; j < M(q, 6, 14, 24); j++) circle(g, F.fx + F.fw * (0.15 + rnd() * 0.7), F.by - 12 - rnd() * 14, 1.2 + rnd() * 2.2, 'rgba(255,' + (120 + (rnd() * 100 | 0)) + ',40,0.8)');
+    g.restore();
+  }
+  // 多臂烛台（银/铜）。cx 中心，by 底座底，h 总高（含蜡烛）
+  function candelabra(g, q, cx, by, h, o) {
+    o = o || {};
+    var s = h / 160, col = o.col || '#b0a890', arms = o.arms || 5;
+    var tips = [];
+    g.save(); g.translate(cx, by); g.scale(s, s);
+    if (q.light >= 1) K.contact(g, 0, 0, 34, 6, 0.6);
+    g.beginPath(); g.moveTo(-24, 0); g.bezierCurveTo(-22, -10, -8, -12, -6, -20); g.lineTo(6, -20); g.bezierCurveTo(8, -12, 22, -10, 24, 0); g.closePath();
+    g.fillStyle = metalGrad(g, -24, 0, 24, 0, col); g.fill();
+    g.fillStyle = metalGrad(g, -6, 0, 6, 0, col); g.fillRect(-5, -80, 10, 62);
+    ell(g, 0, -50, 9, 5, K.shade(col, 0.2)); ell(g, 0, -80, 8, 4, K.shade(col, 0.1));
+    var spread = [-56, -30, 0, 30, 56].slice(0, arms);
+    if (arms === 3) spread = [-46, 0, 46];
+    for (var i = 0; i < spread.length; i++) {
+      var ax = spread[i], ay = ax === 0 ? -112 : (Math.abs(ax) > 40 ? -96 : -104);
+      if (ax !== 0) { g.beginPath(); g.moveTo(0, -78); g.bezierCurveTo(ax * 0.3, -60, ax, -66, ax, ay + 8); stroke(g, 4.5, K.shade(col, -0.2)); g.beginPath(); g.moveTo(0, -79); g.bezierCurveTo(ax * 0.3, -61, ax, -67, ax, ay + 7); stroke(g, 1.4, hi(0.4)); }
+      else { g.fillStyle = metalGrad(g, -4, 0, 4, 0, col); g.fillRect(-4, -110, 8, 32); }
+      g.fillStyle = metalGrad(g, ax - 8, 0, ax + 8, 0, col); K.rr(g, ax - 7, ay - 2, 14, 10, 3); g.fill(); ell(g, ax, ay + 8, 10, 3, K.shade(col, -0.1));
+      g.fillStyle = K.lin(g, ax - 4, 0, ax + 4, 0, ['#d0c4a8', '#f8f0e0', '#d8cab0']); g.fillRect(ax - 4, ay - 34, 8, 32);
+      seg(g, ax, ay - 34, ax, ay - 38, 1.2, '#2a1a0a');
+      tips.push([cx + ax * s, by + (ay - 38) * s]);
+    }
+    g.restore();
+    return tips;
+  }
+  function candleFlames(g, q, tips, sz) { for (var i = 0; i < tips.length; i++) K.flame(g, q, tips[i][0], tips[i][1] + 2, sz || 14, { glow: 4.5, a: 0.4 }); }
+  // 餐椅（只露出靠背；放在桌子后侧）
+  function chairBack(g, q, x, y, w, h, o) {
+    o = o || {};
+    var wood = o.wood || '#3a1c10', up = o.up || '#6a1424';
+    if (q.light >= 1) softRect(g, x + 4, y + 8, w, h, 6, 0.35);
+    // 靠背框（顶部弧形）
+    g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y + 18); g.quadraticCurveTo(x + w / 2, y - 14, x + w, y + 18); g.lineTo(x + w, y + h); g.closePath();
+    texFill(g, q, wood, TX.mahog); g.fillStyle = K.lin(g, x, 0, x + w, 0, [hi(0.1), lo(0.1), lo(0.35)]); g.fill();
+    // 软包
+    g.beginPath(); g.moveTo(x + 8, y + h); g.lineTo(x + 8, y + 24); g.quadraticCurveTo(x + w / 2, y + 0, x + w - 8, y + 24); g.lineTo(x + w - 8, y + h); g.closePath();
+    texFill(g, q, up, TX.velvet); g.fillStyle = K.rad(g, x + w * 0.4, y + h * 0.35, 2, w, [hi(0.16), lo(0.35)]); g.fill();
+    if (q.model >= 1) { g.strokeStyle = '#8a6a30'; g.lineWidth = 1.6; g.stroke(); circle(g, x + w / 2, y - 3, 4, '#8a6a30'); }
+  }
+  // 铺桌布的长桌。x,w 正面；ty 桌面前缘；by 桌腿落地；k 桌面背缘缩放
+  function clothTable(g, q, R, x, ty, w, by, k, o) {
+    o = o || {};
+    var drop = o.drop || (by - ty) * 0.42, cloth = o.cloth || '#d6d0c6';
+    var tl = R.p(x, ty, k), tr = R.p(x + w, ty, k);
+    // 桌腿（布下露出）
+    var legs = [x + 30, x + w * 0.33, x + w * 0.66, x + w - 44];
+    if (q.light >= 1) { K.contact(g, x + w / 2, by, w * 0.55, 18, 0.55); }
+    for (var i = 0; i < legs.length; i++) {
+      cyl(g, legs[i], ty + drop - 4, 16, by - ty - drop + 4, '#3a1c10');
+      if (q.model >= 1) { ell(g, legs[i] + 8, ty + drop + (by - ty - drop) * 0.35, 11, 5, '#4a2414'); ell(g, legs[i] + 8, by - 4, 10, 4, '#2a1208'); }
+    }
+    // 桌布顶面
+    K.poly(g, [x - 8, ty, x + w + 8, ty, tr[0] + 6, tr[1], tl[0] - 6, tl[1]]); texFill(g, q, cloth, TX.linen);
+    K.poly(g, [x - 8, ty, x + w + 8, ty, tr[0] + 6, tr[1], tl[0] - 6, tl[1]]); g.fillStyle = K.lin(g, 0, tl[1], 0, ty, [lo(0.12), hi(0.08)]); g.fill();
+    // 端头垂布（透视侧面）
+    if (x > R.vx) fillP(g, [x - 8, ty, tl[0] - 6, tl[1], tl[0] - 6, tl[1] + drop * k, x - 8, ty + drop], K.shade(cloth, -0.3));
+    if (x + w < R.vx) fillP(g, [x + w + 8, ty, tr[0] + 6, tr[1], tr[0] + 6, tr[1] + drop * k, x + w + 8, ty + drop], K.shade(cloth, -0.3));
+    if (x < R.vx && x + w > R.vx) {
+      fillP(g, [x - 8, ty, tl[0] - 6, tl[1], tl[0] - 6, tl[1] + drop * k, x - 8, ty + drop], K.shade(cloth, KX < 0 ? -0.1 : -0.35));
+      fillP(g, [x + w + 8, ty, tr[0] + 6, tr[1], tr[0] + 6, tr[1] + drop * k, x + w + 8, ty + drop], K.shade(cloth, KX < 0 ? -0.35 : -0.1));
+    }
+    // 正面垂布 + 褶皱
+    var n = M(q, 6, 12, 20), rnd = K.rng(o.seed || 41);
+    g.beginPath(); g.moveTo(x - 8, ty);
+    g.lineTo(x + w + 8, ty); g.lineTo(x + w + 8, ty + drop);
+    for (var j = n; j >= 0; j--) { var fx = x - 8 + (w + 16) * j / n; g.lineTo(fx, ty + drop + (j % 2 ? 5 : 0) + rnd() * 3); }
+    g.closePath(); texFill(g, q, cloth, TX.linen);
+    g.save(); g.clip();
+    for (var f = 0; f < n; f++) {
+      var x0 = x - 8 + (w + 16) * f / n, ww = (w + 16) / n;
+      g.fillStyle = K.lin(g, x0, 0, x0 + ww, 0, [lo(0.22), hi(0.1), lo(0.05), lo(0.25)]);
+      fillP(g, [x0 + ww * 0.3, ty + drop * 0.25, x0 + ww * 0.7, ty + drop * 0.25, x0 + ww, ty + drop + 8, x0, ty + drop + 8], g.fillStyle);
+    }
+    g.fillStyle = K.lin(g, 0, ty, 0, ty + drop, [hi(0.12), lo(0.08), lo(0.3)]); g.fillRect(x - 10, ty, w + 20, drop + 10);
+    g.restore();
+    rect(g, x - 8, ty, w + 16, 2.5, hi(0.35));
+    if (q.model >= 2) { // 蕾丝边
+      for (var lI = 0; lI < (w + 16) / 14; lI++) { var lx = x - 8 + lI * 14; g.beginPath(); g.arc(lx + 7, ty + drop - 2, 6, 0, PI); stroke(g, 1.2, 'rgba(255,250,240,0.55)'); }
+    }
+    return { tl: tl, tr: tr };
+  }
+  // 桌面摆设（盘子、酒杯、餐巾）
+  function placeSettings(g, q, R, x, ty, w, k, n) {
+    for (var i = 0; i < n; i++) {
+      var u = (i + 0.5) / n, X = x + w * u;
+      var p = R.p(X, ty, k + (1 - k) * 0.72);
+      ell(g, p[0], p[1], 26, 6, '#efece6'); ell(g, p[0], p[1], 20, 4.5, '#d8d4cc'); ell(g, p[0], p[1] - 0.6, 13, 2.6, '#f4f2ee');
+      if (q.model >= 2) {
+        // 酒杯
+        var gx = p[0] + 30, gy = p[1] - 4;
+        seg(g, gx, gy, gx, gy - 14, 1.4, 'rgba(220,230,240,0.7)'); ell(g, gx, gy, 5, 1.5, 'rgba(220,230,240,0.6)');
+        g.beginPath(); g.moveTo(gx - 6, gy - 28); g.quadraticCurveTo(gx - 6, gy - 14, gx, gy - 14); g.quadraticCurveTo(gx + 6, gy - 14, gx + 6, gy - 28); stroke(g, 1.2, 'rgba(220,230,240,0.6)');
+        ell(g, gx, gy - 20, 4.5, 1.6, 'rgba(120,10,24,0.8)');
+        // 刀叉
+        seg(g, p[0] - 32, p[1] - 3, p[0] - 30, p[1] + 5, 1.6, '#c8c8d0'); seg(g, p[0] + 32, p[1] - 3, p[0] + 34, p[1] + 5, 1.6, '#c8c8d0');
+      }
+    }
+  }
+  // 油画：月下枯枝上的乌鸦
+  function paintCrow(g, q, x, y, w, h) {
+    var rnd = K.rng(9);
+    g.fillStyle = K.lin(g, 0, y, 0, y + h, ['#0e1020', '#1e2234', '#3a3448', '#241a26']); g.fillRect(x, y, w, h);
+    // 月亮 + 光晕
+    var mx = x + w * 0.74, my = y + h * 0.28, mr = h * 0.12;
+    g.fillStyle = K.rad(g, mx, my, mr, mr * 4, ['rgba(220,200,150,0.35)', 'rgba(120,110,120,0.08)', 'rgba(0,0,0,0)']); g.fillRect(x, y, w, h);
+    g.fillStyle = K.rad(g, mx - mr * 0.3, my - mr * 0.3, 1, mr, ['#f6ecd0', '#d8c69a']); circle(g, mx, my, mr, g.fillStyle);
+    ell(g, mx + mr * 0.25, my + mr * 0.1, mr * 0.25, mr * 0.18, 'rgba(160,140,100,0.4)');
+    // 云
+    for (var i = 0; i < M(q, 3, 6, 9); i++) K.blob(g, x + rnd() * w, y + h * (0.15 + rnd() * 0.35), w * (0.1 + rnd() * 0.15), '#0a0c16', 0.5);
+    // 远山与地面
+    fillP(g, [x, y + h, x, y + h * 0.78, x + w * 0.2, y + h * 0.72, x + w * 0.45, y + h * 0.8, x + w * 0.7, y + h * 0.74, x + w, y + h * 0.82, x + w, y + h], '#0a080e');
+    // 枯枝
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(x - 4, y + h * 0.86); g.bezierCurveTo(x + w * 0.2, y + h * 0.78, x + w * 0.3, y + h * 0.66, x + w * 0.5, y + h * 0.62); stroke(g, 9, '#08060a');
+    g.beginPath(); g.moveTo(x + w * 0.32, y + h * 0.68); g.quadraticCurveTo(x + w * 0.36, y + h * 0.5, x + w * 0.3, y + h * 0.38); stroke(g, 4, '#08060a');
+    g.beginPath(); g.moveTo(x + w * 0.45, y + h * 0.63); g.quadraticCurveTo(x + w * 0.6, y + h * 0.58, x + w * 0.66, y + h * 0.48); stroke(g, 3, '#08060a');
+    g.beginPath(); g.moveTo(x + w * 0.2, y + h * 0.78); g.quadraticCurveTo(x + w * 0.14, y + h * 0.62, x + w * 0.18, y + h * 0.5); stroke(g, 3, '#08060a');
+    // 乌鸦
+    crowShape(g, x + w * 0.42, y + h * 0.63, h / 260, 1); g.fillStyle = '#050407'; g.fill();
+    circle(g, x + w * 0.42 + 58 * h / 260, y + h * 0.63 - 143 * h / 260, 1.6, '#c03040');
+    // 远处的飞鸦
+    for (var j = 0; j < M(q, 2, 4, 6); j++) {
+      var bx = x + w * (0.55 + rnd() * 0.35), by = y + h * (0.1 + rnd() * 0.3), bs = 5 + rnd() * 6;
+      g.beginPath(); g.moveTo(bx - bs, by - bs * 0.3); g.quadraticCurveTo(bx - bs * 0.4, by - bs * 0.6, bx, by); g.quadraticCurveTo(bx + bs * 0.4, by - bs * 0.6, bx + bs, by - bs * 0.3); stroke(g, 1.6, '#06050a');
+    }
+    // 月光边缘
+    g.beginPath(); g.moveTo(x + w * 0.36, y + h * 0.67); g.bezierCurveTo(x + w * 0.4, y + h * 0.645, x + w * 0.46, y + h * 0.63, x + w * 0.5, y + h * 0.62); stroke(g, 1.2, 'rgba(220,200,150,0.35)');
+  }
+  // 16mm 放映机（侧面朝左），放在三脚台上
+  function projector(g, q, R, x, y, w, h, by) {
+    var cx = x + w / 2;
+    // 台子
+    if (q.light >= 1) K.contact(g, cx, by, 70, 10, 0.55);
+    var ty = y + h - 4;
+    for (var l = -1; l <= 1; l++) seg(g, cx, ty + 20, cx + l * 46, by, 5, '#2a2a30');
+    box(g, q, R, cx - 56, ty, 112, 16, 0.94, { col: '#3a2416', t: TX.walnutH });
+    cyl(g, cx - 5, ty + 16, 10, 30, '#3a3a42');
+    // 机身
+    var bx = x + w * 0.18, bw = w * 0.62, bh = h * 0.36, byy = ty - bh;
+    box(g, q, R, bx, byy, bw, bh, 0.95, { col: '#2e3034', t: TX.iron, frontLo: 0.4 });
+    rect(g, bx + 8, byy + 10, bw * 0.4, bh * 0.4, '#1a1a1e'); rect(g, bx + 8, byy + 10, bw * 0.4, 2, hi(0.2));
+    // 镜头（朝左）
+    g.fillStyle = metalGrad(g, 0, byy + bh * 0.3, 0, byy + bh * 0.75, '#4a4a52'); g.fillRect(bx - 34, byy + bh * 0.3, 34, bh * 0.45);
+    ell(g, bx - 34, byy + bh * 0.525, 5, bh * 0.25, '#0c0e14'); ell(g, bx - 35, byy + bh * 0.48, 2, bh * 0.08, 'rgba(160,190,230,0.6)');
+    // 片盘臂 + 两个片盘
+    var reels = [[x + w * 0.3, byy - h * 0.34], [x + w * 0.78, byy - h * 0.3]];
+    seg(g, bx + bw * 0.25, byy, reels[0][0], reels[0][1], 5, '#3a3a42'); seg(g, bx + bw * 0.8, byy, reels[1][0], reels[1][1], 5, '#3a3a42');
+    for (var r = 0; r < 2; r++) {
+      var rx = reels[r][0], ry = reels[r][1], rr = h * 0.27;
+      circle(g, rx, ry, rr, '#2a2c30'); g.beginPath(); g.arc(rx, ry, rr, 0, TAU); stroke(g, 2.5, '#5a5c64');
+      if (q.model >= 1) for (var sp = 0; sp < 3; sp++) { var a = sp / 3 * TAU + r; fillP(g, [rx + Math.cos(a) * rr * 0.25, ry + Math.sin(a) * rr * 0.25, rx + Math.cos(a + 0.5) * rr * 0.85, ry + Math.sin(a + 0.5) * rr * 0.85, rx + Math.cos(a - 0.5) * rr * 0.85, ry + Math.sin(a - 0.5) * rr * 0.85], '#0e0e12'); }
+      circle(g, rx, ry, rr * 0.18, '#7a7c84'); circle(g, rx - 2, ry - 2, rr * 0.06, hi(0.6));
+      if (q.light >= 2) { g.beginPath(); g.arc(rx, ry, rr - 3, PI * 1.1, PI * 1.5); stroke(g, 1.5, 'rgba(220,230,250,0.35)'); }
+    }
+    // 胶片路径
+    g.beginPath(); g.moveTo(reels[0][0] + 6, reels[0][1] + h * 0.27); g.lineTo(bx + 10, byy + 6); stroke(g, 1.5, '#5a4a3a');
+    g.beginPath(); g.moveTo(reels[1][0] - 6, reels[1][1] + h * 0.27); g.lineTo(bx + bw - 10, byy + 6); stroke(g, 1.5, '#5a4a3a');
+    return { lens: [bx - 38, byy + bh * 0.52] };
+  }
+  // 留声机（喇叭朝左上）放在矮柜上
+  function gramophone(g, q, R, x, y, w, h, by) {
+    var cab = y + h * 0.42;
+    if (q.light >= 1) K.contact(g, x + w / 2, by, w * 0.6, 10, 0.6);
+    box(g, q, R, x + 6, cab + 22, w - 12, by - cab - 22, R.kWall(by) * 0.99, { col: '#4a2614', t: TX.mahog });
+    if (q.model >= 1) { groove(g, x + 18, cab + 36, w / 2 - 24, by - cab - 52, 3, 0.4); groove(g, x + w / 2 + 6, cab + 36, w / 2 - 24, by - cab - 52, 3, 0.4); }
+    // 唱机箱
+    var bx = x + w * 0.2, bw = w * 0.6;
+    box(g, q, R, bx, cab - 6, bw, 28, 0.94, { col: '#5a2e16', t: TX.mahogH });
+    var tt = R.p(bx + bw / 2, cab - 6, 0.97);
+    ell(g, tt[0], tt[1], bw * 0.36, 4, '#121014'); ell(g, tt[0], tt[1], bw * 0.12, 1.5, '#8a1a20');
+    rect(g, bx + bw - 10, cab, 6, 10, '#8a6a32');
+    // 唱臂 + 喇叭颈
+    g.beginPath(); g.moveTo(bx + bw * 0.82, cab - 6); g.quadraticCurveTo(bx + bw * 0.86, cab - 30, bx + bw * 0.62, cab - 34); stroke(g, 5, '#9a7a3a');
+    // 喇叭（铜）
+    var hx = bx + bw * 0.6, hy = cab - 34, mx = x - 2, my = y - 4, rr = w * 0.3;
+    g.beginPath(); g.moveTo(hx, hy - 3); g.quadraticCurveTo(hx - 20, hy - 6, mx + rr * 0.6, my + rr * 1.2); g.lineTo(mx - rr * 0.2, my + rr * 0.6);
+    g.quadraticCurveTo(hx - 30, hy - 24, hx, hy + 3); g.closePath();
+    g.fillStyle = metalGrad(g, mx, my, hx, hy, '#b08a48'); g.fill();
+    g.save(); g.translate(mx + rr * 0.2, my + rr * 0.9); g.rotate(-0.75);
+    K.ellipse(g, 0, 0, rr * 0.75, rr * 0.38); g.fillStyle = metalGrad(g, -rr, 0, rr, 0, '#c9a25a'); g.fill();
+    K.ellipse(g, 0, 0, rr * 0.6, rr * 0.28); g.fillStyle = K.rad(g, 0, 0, 2, rr * 0.6, ['#1a1008', '#5a3a16', '#a8823e']); g.fill();
+    if (q.model >= 1) for (var p = 0; p < 6; p++) { var a = p / 6 * PI - PI / 2; seg(g, Math.cos(a) * rr * 0.1, Math.sin(a) * rr * 0.05, Math.cos(a) * rr * 0.6, Math.sin(a) * rr * 0.28, 1, 'rgba(0,0,0,0.3)'); }
+    g.restore();
+  }
+  // 拉下式投影幕
+  function pullScreen(g, q, x, y, w, h) {
+    if (q.light >= 1) softRect(g, x + 10, y + 16, w - 20, h - 10, 10, 0.3);
+    g.fillStyle = metalGrad(g, 0, y, 0, y + 18, '#3a3a42'); K.rr(g, x - 10, y, w + 20, 18, 8); g.fill();
+    ell(g, x - 10, y + 9, 5, 9, '#2a2a30'); ell(g, x + w + 10, y + 9, 5, 9, '#2a2a30');
+    var sx = x + 8, sw = w - 16, sy = y + 18, sh = h - 36;
+    g.beginPath(); g.rect(sx, sy, sw, sh); texFill(g, q, '#cfcac4', TX.linen);
+    g.fillStyle = K.lin(g, sx, 0, sx + sw, 0, [lo(0.12), hi(0.06), lo(0.02), lo(0.15)]); g.fillRect(sx, sy, sw, sh);
+    g.fillStyle = K.lin(g, 0, sy, 0, sy + sh, [lo(0.2), lo(0), lo(0.08)]); g.fillRect(sx, sy, sw, sh);
+    if (q.model >= 1) { rect(g, sx, sy, 6, sh, 'rgba(20,20,24,0.6)'); rect(g, sx + sw - 6, sy, 6, sh, 'rgba(20,20,24,0.6)'); }
+    g.fillStyle = metalGrad(g, 0, sy + sh, 0, sy + sh + 10, '#3a3a42'); g.fillRect(sx - 4, sy + sh, sw + 8, 10);
+    seg(g, sx + sw / 2, sy + sh + 10, sx + sw / 2, sy + sh + 34, 1.5, '#8a8a8a'); circle(g, sx + sw / 2, sy + sh + 36, 4, '#c9a25a');
+  }
+
+  /* ================================================================
+   * 餐厅 dining
+   * ================================================================ */
+  function drawDining(g, q) {
+    setKey(-0.45);
+    var R = Room(960, 540, 760, 24, 1400);
+    ceilingStrip(g, q, R, { col: '#22140c', t: TX.walnutH, step: 280 });
+    paperWall(g, q, 0, 24, W, R.base - 24, { c1: '#4c1a22', c2: '#62242c', seed: 57, age: 0.3, line: 'rgba(200,150,90,0.25)' });
+    var cb = cornice(g, q, 0, 24, W, '#3a2214');
+    var wt = 598;
+    wainscot(g, q, [[0, W]], wt, R.base, { t: TX.walnut, col: '#3a2012', pw: 160 });
+    // 壁柱分隔
+    if (q.model >= 1) { pilaster(g, q, 1210, cb, 40, R.base - cb, '#3a2012', TX.walnut); pilaster(g, q, 1612, cb, 40, R.base - cb, '#3a2012', TX.walnut); }
+    // 投影幕
+    pullScreen(g, q, 480, 84, 240, 272);
+    // 乌鸦油画
+    frame(g, q, 800, 120, 320, 216, paintCrow, { fw: 22 });
+    // 窗 + 窗帘
+    windowFront(g, q, R, 1330, 170, 204, 330, { cols: 2, rows: 4, arch: false, seed: 9, horizon: 0.6, cliff: 0.1 });
+    curtain(g, q, 1270, 132, 94, 470, { col: '#5a0e1c', side: 'l', t: TX.velvet, tie: 0.62 });
+    curtain(g, q, 1500, 132, 94, 470, { col: '#5a0e1c', side: 'r', t: TX.velvet, tie: 0.62 });
+    valance(g, q, 1270, 132, 324, '#5a0e1c', { t: TX.velvet });
+    // 壁炉
+    var F = fireplace(g, q, R, 70, 352, 324, 396, { stone: '#5e5660' });
+    // 壁炉台摆设
+    if (q.model >= 1) {
+      var mt = F.mantel;
+      candlestick(g, q, 108, mt, 70); candlestick(g, q, 356, mt, 70);
+      // 座钟
+      box(g, q, R, 200, mt - 58, 64, 58, 0.97, { col: '#2a1408', t: TX.mahog });
+      circle(g, 232, mt - 32, 18, '#e8dcc0'); g.beginPath(); g.arc(232, mt - 32, 18, 0, TAU); stroke(g, 2.5, '#b08a48');
+      seg(g, 232, mt - 32, 240, mt - 40, 1.6, '#1a1008'); seg(g, 232, mt - 32, 230, mt - 46, 1.4, '#1a1008');
+      if (q.model >= 2) { g.fillStyle = K.lin(g, 140, 0, 170, 0, ['#2a3a5a', '#5a7aa0', '#2a3a5a']); K.rr(g, 150, mt - 46, 22, 46, 8); g.fill(); g.fillStyle = K.lin(g, 290, 0, 316, 0, ['#2a3a5a', '#5a7aa0', '#2a3a5a']); K.rr(g, 292, mt - 46, 22, 46, 8); g.fill(); }
+    }
+    // 炉上方：镜子
+    if (q.model >= 1) {
+      frame(g, q, 120, 150, 224, 170, function (g2, q2, x, y, w, h) {
+        g2.fillStyle = K.lin(g2, x, y, x + w, y + h, ['#3a3440', '#2a2630', '#4a4250']); g2.fillRect(x, y, w, h);
+        g2.fillStyle = 'rgba(120,40,50,0.25)'; g2.fillRect(x, y + h * 0.5, w, h * 0.5);
+        if (q2.light >= 1) { g2.save(); g2.globalCompositeOperation = 'lighter'; fillP(g2, [x + w * 0.1, y + h, x + w * 0.3, y + h, x + w * 0.7, y, x + w * 0.5, y], 'rgba(200,210,230,0.1)'); g2.restore(); }
+      }, { fw: 14 });
+    }
+    // 壁灯
+    var sA = [762, 430], sB = [1180, 430];
+    sconce(g, q, sA[0], sA[1], { arms: 2, candle: true, scale: 0.85 });
+    sconce(g, q, sB[0], sB[1], { arms: 2, candle: true, scale: 0.85 });
+    // 地面 + 地毯
+    plankFloor(g, q, R, { pw: 64, seed: 23, far: '#24140a', near: '#4a2e18', t: TX.floorW });
+    if (q.light >= 1) K.ao(g, 0, R.base - 2, W, 40, 30, 0.35, 't');
+    floorSheen(g, q, R, 1432, 200, '#a8b8e0', 0.1);
+    rug(g, q, R, 260, 1660, 1.06, 1.75, { col: '#5a1420', border: '#22080c', gold: '#b08a48' });
+    // 放映机（窗右侧）
+    var pj = projector(g, q, R, 1616, 512, 176, 128, 800);
+    // 桌后的椅背
+    var ty = 690, tk = 0.74, chairs = [520, 700, 1150, 1330];
+    if (q.model >= 1) chairs = [470, 640, 1180, 1350];
+    for (var c = 0; c < chairs.length; c++) chairBack(g, q, chairs[c], 548, 84, 120, {});
+    // 长桌
+    var T = clothTable(g, q, R, 420, ty, 1080, 848, tk, { drop: 66, seed: 43 });
+    if (q.model >= 1) placeSettings(g, q, R, 420, ty, 1080, tk, M(q, 0, 4, 6));
+    // 桌上的烛台
+    var tips = candelabra(g, q, 960, 664, 172, { col: '#b8b0a0' });
+    var tipsL = [], tipsR = [];
+    if (q.model >= 2) { tipsL = candelabra(g, q, 610, 668, 110, { arms: 3, col: '#b8b0a0' }); tipsR = candelabra(g, q, 1310, 668, 110, { arms: 3, col: '#b8b0a0' }); }
+    // 端头椅（侧面）
+    // 留声机
+    gramophone(g, q, R, 1680, 664, 176, 160, 824);
+    void T;
+
+    // ---- 光照 ----
+    var fxc = F.fx + F.fw / 2;
+    var Lm = [
+      { lin: [0, 0, W, 0], stops: [[0, 'rgba(120,60,30,0.25)'], [0.45, 'rgba(60,40,40,0.1)'], [1, 'rgba(60,70,100,0.2)']] },
+      { x: fxc, y: 640, r: 760, ry: 520, c: '#ff9a50', i: 0.6, fall: 0.3 },
+      { x: fxc, y: 800, r: 420, ry: 160, c: '#ffa060', i: 0.4, q: 1 },
+      { x: 960, y: 560, r: 640, ry: 420, c: '#ffcf90', i: 0.55, fall: 0.3 },
+      { x: 960, y: 700, r: 520, ry: 140, c: '#ffe0b0', i: 0.35, q: 1 },
+      { x: 1432, y: 330, r: 360, ry: 420, c: '#a0b0d8', i: 0.45 },
+      { pts: [1330, 520, 1534, 520, 1700, 1080, 1180, 1080], c: '#8898c8', i: 0.25, fx0: 0, fy0: 520, fx1: 0, fy1: 1080, q: 1 },
+      { x: sA[0], y: sA[1] - 20, r: 200, ry: 300, c: '#ffb870', i: 0.4, q: 1 },
+      { x: sB[0], y: sB[1] - 20, r: 200, ry: 300, c: '#ffb870', i: 0.4, q: 1 },
+      { x: 600, y: 220, r: 200, ry: 180, c: '#ffd8b0', i: 0.15, q: 2 }
+    ];
+    if (q.model >= 2) { Lm.push({ x: 610, y: 600, r: 220, c: '#ffc080', i: 0.25, q: 1 }); Lm.push({ x: 1310, y: 600, r: 220, c: '#ffc080', i: 0.25, q: 1 }); }
+    lightMap(g, q, '#3e3448', Lm);
+    // ---- 自发光 ----
+    fireGlow(g, q, F, 7);
+    shaft(g, q, [1340, 180, 1524, 180, 1760, 1000, 1150, 1000], '#b8c8f0', 0.07, 0, 180, 0, 1000);
+    if (q.light >= 2) K.motes(g, K.rng(41), 50, 1200, 300, 420, 600, '#d0dcff', 0.3);
+    candleFlames(g, q, tips, 15);
+    candleFlames(g, q, tipsL, 12); candleFlames(g, q, tipsR, 12);
+    if (q.model >= 1) { K.flame(g, q, 108, F.mantel - 72, 10, { glow: 4 }); K.flame(g, q, 356, F.mantel - 72, 10, { glow: 4 }); }
+    sconceGlow(g, q, sA[0], sA[1], { arms: 2, candle: true, scale: 0.85 });
+    sconceGlow(g, q, sB[0], sB[1], { arms: 2, candle: true, scale: 0.85 });
+    if (q.light >= 2) {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      K.glow(g, pj.lens[0], pj.lens[1], 18, '#c0d0ff', 0.25);
+      g.restore();
+    }
+    finish(g, q, { vig: 0.55 });
+  }
+  DM.HDBG.def('dining', {
+    draw: function (g, q) { drawDining(g, q); },
+    lights: [
+      LT(232, 650, 260, '#ff9a48', 0.75, 0.5, 'fire'),
+      LT(960, 520, 200, '#ffc070', 0.65, 0.35, 'candle'),
+      LT(1432, 330, 220, '#a8b8e0', 0.45, 0, 'window'),
+      LT(762, 404, 90, '#ffb060', 0.5, 0.35, 'candle'), LT(1180, 404, 90, '#ffb060', 0.5, 0.35, 'candle')
+    ],
+    key: { x: -0.45, color: '#ffc890', amb: '#342a40', rim: 0.5 },
+    outdoor: false
+  });
+
+
   /*@@ROOMS@@*/
 })(typeof window !== 'undefined' ? window : globalThis);

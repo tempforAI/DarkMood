@@ -356,12 +356,12 @@
   }
   // 草丛 / 杂草
   function grassTufts(g, q, r, n, x, y, w, h, col, len) {
-    g.beginPath();
+    g.beginPath(); len = (len || 18) * 1.3;
     for (var i = 0; i < n; i++) {
       var px = x + r() * w, py = y + r() * h, L = (len || 18) * r.range(0.5, 1.2), m = 3 + (r() * 3 | 0);
       for (var k = 0; k < m; k++) { var a = -PI / 2 + r.range(-0.7, 0.7); g.moveTo(px + k * 1.5, py); g.quadraticCurveTo(px + Math.cos(a) * L * 0.4, py + Math.sin(a) * L * 0.5, px + Math.cos(a) * L, py + Math.sin(a) * L); }
     }
-    g.strokeStyle = col; g.lineWidth = 1.6; g.stroke();
+    g.strokeStyle = col; g.lineWidth = 1.2; g.stroke();
   }
   // 岩块（单个）：o = { lit, dark, wet, moss, seed, light(0..1 方向) }
   function boulder(g, q, x, y, w, h, o) {
@@ -495,7 +495,7 @@
     for (var j = -1; j <= 1; j++) for (var i = -1; i <= 1; i++) {
       var cx = ix + i, cy = iy + j, fx = cx + 0.15 + cellHash(cx, cy, s) * 0.7, fy = cy + 0.15 + cellHash2(cx, cy, s) * 0.7;
       var dx = px - fx, dy = py - fy, d = dx * dx + dy * dy;
-      if (d < f1) { f2 = f1; f1 = d; id1x = cx; id1y = cy; } else if (d < f2) f2 = d;
+      if (d < f1) { f2 = f1; f1 = d; id1x = cx; id1y = cy; out[3] = dx; out[4] = dy; } else if (d < f2) f2 = d;
     }
     out[0] = Math.sqrt(f2) - Math.sqrt(f1); out[1] = id1x; out[2] = id1y;
   }
@@ -506,21 +506,20 @@
     var L = o.L || [-0.6, -0.6, 0.55], P = o.P, att = o.att || 900, wetf = o.wet, mossf = o.moss, af = o.alpha, spec = q.light >= 2;
     var small = q.model >= 1, detail = q.model >= 2;
     var ll = Math.sqrt(L[0] * L[0] + L[1] * L[1] + L[2] * L[2]), lx = L[0] / ll, ly = L[1] / ll, lz = L[2] / ll;
-    var V1 = [0, 0, 0], V2 = [0, 0, 0];
+    var V1 = [0, 0, 0, 0, 0], V2 = [0, 0, 0, 0, 0];
     var r = fres(q, o.res || 0.42);
     field(g, x, y, w, h, w * r, h * r, function (u, v, out) {
       var px = x + u * w, py = y + v * h;
       var wn = detail ? (fbm(px * 0.01, py * 0.01, 2, seed + 5) - 0.5) : 0;
       voro(px / cw + wn * 0.5, py / ch + wn * 0.3, seed, V1);
       var h1 = cellHash(V1[1], V1[2], seed + 3), h2 = cellHash2(V1[1], V1[2], seed + 9);
-      var eb = sstep(0, crack * 2.5, V1[0]);
-      var nx = (h1 - 0.5) * 1.15 * eb, ny = ((h2 - 0.5) * 0.9 - tilt) * eb - tilt * (1 - eb), nz = 1;
-      var cr = sstep(0, crack, V1[0]);
+      var nx = (h1 - 0.5) * 1.3, ny = (h2 - 0.5) * 1.0 - tilt, nz = 1;
+      // 只有一部分岩块边界是真正的裂缝（按噪声遮罩），其余只表现为块面转折
+      var cm = sstep(0.42, 0.62, fbm(px * 0.004 + 3, py * 0.004, 2, seed + 41));
+      var cr = 1 - (1 - sstep(0, crack, V1[0])) * (0.25 + 0.75 * cm);
       if (small) {
         voro(px / sw, py / sh, seed + 17, V2);
-        var eb2 = sstep(0, crack * 2, V2[0]);
-        nx += (cellHash(V2[1], V2[2], seed + 21) - 0.5) * 0.55 * eb2; ny += (cellHash2(V2[1], V2[2], seed + 23) - 0.5) * 0.45 * eb2;
-        cr *= 0.55 + 0.45 * sstep(0, crack * 0.8, V2[0]);
+        nx += (cellHash(V2[1], V2[2], seed + 21) - 0.5) * 0.5; ny += (cellHash2(V2[1], V2[2], seed + 23) - 0.5) * 0.4;
       }
       var n = detail ? fbm(px * 0.03, py * 0.03, 3, seed + 31) : 0.5;
       nx += (n - 0.5) * 0.5;
@@ -528,7 +527,9 @@
       var a = 1;
       if (P) { var dx = P[0] - px, dy = P[1] - py, dz = P[2], dl = Math.sqrt(dx * dx + dy * dy + dz * dz); lx = dx / dl; ly = dy / dl; lz = dz / dl; a = 1 / (1 + (dl / att) * (dl / att)); }
       var dif = nx * lx + ny * ly + nz * lz; dif = dif < 0 ? 0 : dif;
-      var lum = (amb + (1 - amb) * dif * a) * (0.82 + n * 0.36) * (0.25 + 0.75 * cr);
+      // 岩块内部：上部受光、下部（悬垂处）偏暗，增加块体感
+      var blk = 1 + sat(-V1[4] * 1.4) * 0.12 - sat(V1[4] * 1.6 + 0.1) * 0.32;
+      var lum = (amb + (1 - amb) * dif * a) * (0.82 + n * 0.36) * (0.25 + 0.75 * cr) * blk;
       var R, G, B;
       if (lum < 0.5) { var t = lum * 2; R = dk[0] + (md[0] - dk[0]) * t; G = dk[1] + (md[1] - dk[1]) * t; B = dk[2] + (md[2] - dk[2]) * t; }
       else { var t2 = sat((lum - 0.5) * 2); R = md[0] + (lt[0] - md[0]) * t2; G = md[1] + (lt[1] - md[1]) * t2; B = md[2] + (lt[2] - md[2]) * t2; }

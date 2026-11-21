@@ -1297,4 +1297,343 @@
     key: { x: -0.55, color: '#ffc890', amb: '#2a2834', rim: 0.45 },
     outdoor: false
   });
+  /* =================================================================
+   * 鸦之塔·藏书室 library（2F）
+   * ================================================================= */
+  var LIB = TRoom({ hy: 430, top0: 112, bot0: 782, c: 0.06 });
+  // 平面上的一张纸（四角坐标），内容由 fn 在单位坐标 [0,1]x[0,1] 中绘制
+  function sheet(g, P0, P1, P2, P3, fn) {
+    // 仿射：以 P0 为原点，P1-P0 为 u 轴，P3-P0 为 v 轴（P2 只用于外形）
+    g.save();
+    K.poly(g, [P0[0], P0[1], P1[0], P1[1], P2[0], P2[1], P3[0], P3[1]]); g.clip();
+    g.transform(P1[0] - P0[0], P1[1] - P0[1], P3[0] - P0[0], P3[1] - P0[1], P0[0], P0[1]);
+    fn();
+    g.restore();
+  }
+
+  function bookcase(g, q, R, x0, x1, top, rnd) {
+    var bot = R.bot((x0 + x1) / 2) + 4, post = 22, crown = 40, plinth = 56;
+    var ix0 = x0 + post, ix1 = x1 - post, it = top + crown, ib = bot - plinth;
+    // 背板（暗）
+    g.fillStyle = '#140c08'; g.fillRect(ix0, it, ix1 - ix0, ib - it);
+    if (q.tex > 0) { g.beginPath(); g.rect(ix0, it, ix1 - ix0, ib - it); oakFill(g, q, '#140c08', false, ix0, it, ['#000000', 0.7]); }
+    var ns = byM(q, 5, 6, 6), sh = (ib - it) / ns;
+    for (var s = 0; s < ns; s++) {
+      var sy = it + (s + 1) * sh, shelfTop = sy - 12;
+      // 书
+      var maxH = sh - 30;
+      if (q.model > 0) bookRow(g, q, ix0 + 4, shelfTop, ix1 - ix0 - 8, maxH, rnd);
+      else { g.fillStyle = K.lin(g, ix0, 0, ix1, 0, ['#3a1a1a', '#2a2a22', '#3a2a1a']); g.fillRect(ix0 + 4, shelfTop - maxH * 0.85, ix1 - ix0 - 8, maxH * 0.85); }
+      // 书顶上方的阴影（上一层隔板的遮挡）
+      g.fillStyle = K.lin(g, 0, sy - sh, 0, sy - sh + 30, ['rgba(0,0,0,0.65)', 'rgba(0,0,0,0)']); g.fillRect(ix0, sy - sh, ix1 - ix0, 30);
+      // 隔板：前沿 + 视线以下看见顶面 / 以上看见底面
+      var lip = sy < R.hy ? -5 : 5;
+      g.fillStyle = K.lin(g, 0, shelfTop, 0, sy, ['#6a4428', '#4a2c16', '#2a180a']); g.fillRect(ix0 - 2, shelfTop, ix1 - ix0 + 4, 12);
+      g.fillStyle = lip < 0 ? 'rgba(20,10,4,0.9)' : 'rgba(120,80,48,0.6)'; g.fillRect(ix0, lip < 0 ? sy : shelfTop - 5, ix1 - ix0, 5);
+      g.fillStyle = 'rgba(255,225,180,0.18)'; g.fillRect(ix0 - 2, shelfTop, ix1 - ix0 + 4, 2);
+    }
+    // 侧柱
+    for (var p = 0; p < 2; p++) {
+      var px = p ? ix1 : x0;
+      g.beginPath(); g.rect(px, top, post, bot - top);
+      oakFill(g, q, '#4a2c16', false, px, 0, ['#3a2010', 0.1]);
+      g.fillStyle = K.lin(g, px, 0, px + post, 0, p ? ['rgba(0,0,0,0.35)', 'rgba(255,220,180,0.06)'] : ['rgba(255,220,180,0.12)', 'rgba(0,0,0,0.3)']); g.fillRect(px, top, post, bot - top);
+    }
+    // 顶冠线脚
+    g.fillStyle = K.lin(g, 0, top - 14, 0, top + crown, ['#7a5432', '#4a2c16', '#2a1a0c', '#3a2414']);
+    g.fillRect(x0 - 14, top - 14, x1 - x0 + 28, crown + 14);
+    g.fillStyle = 'rgba(255,225,180,0.25)'; g.fillRect(x0 - 14, top - 14, x1 - x0 + 28, 3);
+    g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(x0 - 10, top + 12, x1 - x0 + 20, 4);
+    if (q.model >= 2) for (var d = x0; d < x1; d += 22) { g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(d, top + 20, 10, 10); }
+    // 底座
+    g.beginPath(); g.rect(x0 - 6, ib, x1 - x0 + 12, plinth);
+    oakFill(g, q, '#3a2414', true, x0, ib, ['#2a1408', 0.2]);
+    g.fillStyle = K.lin(g, 0, ib, 0, bot, ['rgba(255,220,180,0.12)', 'rgba(0,0,0,0.4)']); g.fillRect(x0 - 6, ib, x1 - x0 + 12, plinth);
+    if (q.model > 0) { g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 2; g.strokeRect(x0 + 10, ib + 12, (x1 - x0) / 2 - 20, plinth - 22); g.strokeRect((x0 + x1) / 2 + 10, ib + 12, (x1 - x0) / 2 - 20, plinth - 22); }
+  }
+
+  function drawLibrary(g, q) {
+    var R = LIB, rnd = K.rng(5201);
+    // 天花
+    ceilRegion(g, R); oakFill(g, q, '#3a2414', true, 0, 0, ['#1e0e06', 0.3]);
+    g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 2;
+    for (var cb = -12; cb <= 12; cb++) { var cx0 = 960 + cb * 96, ct = R.top(cx0), kk = (0 - R.hy) / (ct - R.hy); g.beginPath(); g.moveTo(cx0, ct); g.lineTo(960 + (cx0 - 960) * kk, 0); g.stroke(); }
+    ceilRegion(g, R); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
+    // 墙：灰泥 + 护墙板
+    wallRegion(g, R);
+    K.matFill(g, q, '#6a6056', 'plaster', { c1: '#5e544a', c2: '#7a6e62', seed: 21, stain: 0.5 }, 256, 0, 0);
+    wallPath(g, R, 0, W, 112, 146, 24); oakFill(g, q, '#3a2414', true, 0, 0, ['#1e0e06', 0.25]);
+    wallPath(g, R, 0, W, 140, 146, 24); g.fillStyle = 'rgba(255,225,180,0.2)'; g.fill();
+    wallPath(g, R, 0, W, 146, 166, 24); g.fillStyle = K.lin(g, 0, 146, 0, 166, ['rgba(0,0,0,0.5)', 'rgba(0,0,0,0)']); g.fill();
+    var wTop = 560;
+    wallPath(g, R, 0, W, wTop, 792, 24); oakFill(g, q, '#4a2c18', false, 0, 0, ['#2a1408', 0.15]);
+    wallPath(g, R, 0, W, wTop - 14, wTop + 4, 24); oakFill(g, q, '#5a3820', true, 0, 0);
+    wallPath(g, R, 0, W, wTop - 14, wTop - 10, 24); g.fillStyle = 'rgba(255,225,180,0.3)'; g.fill();
+    wallPath(g, R, 0, W, wTop + 4, wTop + 10, 24); g.fillStyle = 'rgba(0,0,0,0.45)'; g.fill();
+    for (var p = 0; p * 150 < W; p++) {
+      var x0 = p * 150 + 18, x1 = (p + 1) * 150 - 18;
+      wallPath(g, R, x0, x1, wTop + 34, 746, 3); g.fillStyle = 'rgba(0,0,0,0.2)'; g.fill();
+      if (q.model > 0) { wallPath(g, R, x0, x1, wTop + 34, wTop + 40, 3); g.fillStyle = 'rgba(0,0,0,0.45)'; g.fill(); wallPath(g, R, x0, x1, 740, 746, 3); g.fillStyle = 'rgba(255,225,180,0.14)'; g.fill(); }
+    }
+    wallPath(g, R, 0, W, 756, 792, 24); g.fillStyle = '#26160a'; g.fill();
+    // 地板 + 地毯
+    woodFloor(g, q, R, { base: '#4a2e18', seed: 52 });
+    if (q.light > 0) {
+      g.save(); floorRegion(g, R); g.clip();
+      for (var i2 = 0; i2 < 24; i2++) { var xa = W * i2 / 24, xb = W * (i2 + 1) / 24; K.poly(g, [xa, R.bot(xa) - 2, xb, R.bot(xb) - 2, xb, R.bot(xb) + 44, xa, R.bot(xa) + 44]); g.fillStyle = K.lin(g, 0, R.bot(xa), 0, R.bot(xa) + 44, ['rgba(0,0,0,0.5)', 'rgba(0,0,0,0)']); g.fill(); }
+      g.restore();
+    }
+    if (q.model > 0) {
+      floorPoly(g, R, [-140, 1.05, 420, 1.05, 470, 1.5, -190, 1.5]); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
+      floorPoly(g, R, [-130, 1.06, 410, 1.06, 460, 1.49, -180, 1.49]);
+      K.matFill(g, q, '#26382e', 'carpet', { c1: '#1e2e26', c2: '#2e4436', c3: 'rgba(201,162,90,0.3)', seed: 71 }, 128, 0, 0);
+      floorPoly(g, R, [-110, 1.08, 390, 1.08, 436, 1.46, -156, 1.46]); g.strokeStyle = 'rgba(201,162,90,0.45)'; g.lineWidth = 3; g.stroke();
+      floorPoly(g, R, [-130, 1.06, 410, 1.06, 460, 1.49, -180, 1.49]); g.fillStyle = 'rgba(0,0,0,0.2)'; g.fill();
+    }
+
+    // ---- 书架（锚点 64-728, 144-768）----
+    bookcase(g, q, R, 70, 392, 150, rnd);
+    bookcase(g, q, R, 400, 722, 150, rnd);
+    // 梯子（靠在右侧书架上）
+    if (q.model > 0) {
+      var lt = [668, 236], lb0 = [604, R.bot(620) + 20], lt2 = [718, 230], lb1 = [664, R.bot(680) + 22];
+      if (q.light > 0) K.contact(g, 636, lb0[1] + 4, 60, 8, 0.5);
+      g.strokeStyle = '#2a1a0c'; g.lineWidth = 12; g.beginPath(); g.moveTo(lt[0], lt[1]); g.lineTo(lb0[0], lb0[1]); g.moveTo(lt2[0], lt2[1]); g.lineTo(lb1[0], lb1[1]); g.stroke();
+      g.strokeStyle = '#6a4428'; g.lineWidth = 7; g.beginPath(); g.moveTo(lt[0] - 2, lt[1]); g.lineTo(lb0[0] - 2, lb0[1]); g.moveTo(lt2[0] - 2, lt2[1]); g.lineTo(lb1[0] - 2, lb1[1]); g.stroke();
+      for (var r = 1; r < 11; r++) {
+        var t = r / 11, ax = lerp(lt[0], lb0[0], t), ay = lerp(lt[1], lb0[1], t), bx = lerp(lt2[0], lb1[0], t), by = lerp(lt2[1], lb1[1], t);
+        g.strokeStyle = '#3a2414'; g.lineWidth = 8; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+        g.strokeStyle = 'rgba(255,220,170,0.25)'; g.lineWidth = 2; g.beginPath(); g.moveTo(ax, ay - 3); g.lineTo(bx, by - 3); g.stroke();
+      }
+      // 顶部挂轨
+      g.fillStyle = brassGrad(g, 0, 214, 0, 226); g.fillRect(80, 216, 640, 8);
+    }
+
+    // ---- 封死的固定窗（锚点 1424-1672, 184-520）：尖拱、菱形铅格、无把手，窗框四周被钉板封住 ----
+    var wx0 = 1450, wx1 = 1646, wy0 = 200, wy1 = 506, wmid = (wx0 + wx1) / 2;
+    function lancet(g2, x0, x1, y0, y1, k) {
+      var mid = (x0 + x1) / 2, sh = (x1 - x0) * (k || 0.9);
+      g2.beginPath(); g2.moveTo(x0, y1); g2.lineTo(x0, y0 + sh);
+      g2.quadraticCurveTo(x0, y0 + sh * 0.25, mid, y0); g2.quadraticCurveTo(x1, y0 + sh * 0.25, x1, y0 + sh); g2.lineTo(x1, y1); g2.closePath();
+    }
+    lancet(g, wx0 - 34, wx1 + 34, wy0 - 34, wy1 + 20);
+    g.fillStyle = K.lin(g, wx0 - 34, 0, wx1 + 34, 0, ['#7a7064', '#5a5248', '#3a342c']); g.fill();
+    if (q.model > 0) {
+      g.strokeStyle = 'rgba(20,16,12,0.5)'; g.lineWidth = 2;
+      for (var v = 0; v < 7; v++) { var yy = wy0 + 60 + v * 64; g.beginPath(); g.moveTo(wx0 - 34, yy); g.lineTo(wx0 - 6, yy); g.moveTo(wx1 + 6, yy + 30); g.lineTo(wx1 + 34, yy + 30); g.stroke(); }
+    }
+    lancet(g, wx0 - 12, wx1 + 12, wy0 - 12, wy1 + 6); g.fillStyle = '#2a2622'; g.fill();
+    lancet(g, wx0, wx1, wy0, wy1);
+    g.save(); g.clip();
+    K.vgrad(g, wx0, wy0, wx1 - wx0, wy1 - wy0, ['#8a90a6', '#aab0c0', '#c0c2ca', '#9a9ca6']);
+    var cr = K.rng(9);
+    for (var ci = 0; ci < byM(q, 3, 8, 12); ci++) K.blob(g, wx0 + cr() * (wx1 - wx0), wy0 + cr() * (wy1 - wy0), 30 + cr() * 50, cr() < 0.5 ? '#767c94' : '#d0d2da', 0.45);
+    // 菱形铅条
+    g.strokeStyle = '#26221e'; g.lineWidth = 3.2;
+    var dstep = 34;
+    for (var dI = -12; dI < 16; dI++) {
+      g.beginPath(); g.moveTo(wx0 + dI * dstep, wy0); g.lineTo(wx0 + dI * dstep + (wy1 - wy0) * 0.62, wy1); g.stroke();
+      g.beginPath(); g.moveTo(wx1 - dI * dstep, wy0); g.lineTo(wx1 - dI * dstep - (wy1 - wy0) * 0.62, wy1); g.stroke();
+    }
+    // 玻璃的不均匀（旧玻璃）
+    if (q.light > 0) {
+      g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(210,220,240,0.10)';
+      K.poly(g, [wx0 + 30, wy0, wx0 + 70, wy0, wx0, wy1, wx0 - 40, wy1]); g.fill();
+      g.globalCompositeOperation = 'source-over';
+    }
+    g.restore();
+    lancet(g, wx0, wx1, wy0, wy1); g.strokeStyle = '#3a2414'; g.lineWidth = 10; g.stroke();
+    // 中梃与横档（固定，无把手）
+    g.fillStyle = '#3a2414'; g.fillRect(wmid - 5, wy0 + 40, 10, wy1 - wy0 - 40); g.fillRect(wx0, 360, wx1 - wx0, 10);
+    // 封窗：四周钉死的木压条 + 钉子
+    g.fillStyle = K.lin(g, 0, wy1 - 6, 0, wy1 + 16, ['#6a4a2c', '#3a2414']); g.fillRect(wx0 - 14, wy1 - 6, wx1 - wx0 + 28, 18);
+    g.fillStyle = K.lin(g, wx0 - 16, 0, wx0 + 4, 0, ['#5a3a20', '#3a2414']); g.fillRect(wx0 - 16, wy0 + 120, 18, wy1 - wy0 - 120);
+    g.fillStyle = K.lin(g, wx1 - 2, 0, wx1 + 16, 0, ['#5a3a20', '#2a180c']); g.fillRect(wx1 - 2, wy0 + 120, 18, wy1 - wy0 - 120);
+    for (var nI = 0; nI < byM(q, 4, 8, 12); nI++) {
+      var side = nI % 3, f = (Math.floor(nI / 3) + 0.5) / Math.ceil(byM(q, 4, 8, 12) / 3);
+      var nx = side === 0 ? wx0 - 7 : side === 1 ? wx1 + 7 : lerp(wx0, wx1, f), ny = side === 2 ? wy1 + 3 : lerp(wy0 + 140, wy1 - 20, f);
+      rivet(g, q, nx, ny, 3.6, true);
+    }
+    // 窗台
+    g.fillStyle = K.lin(g, 0, wy1 + 14, 0, wy1 + 40, ['#a0968a', '#6a6258']);
+    K.poly(g, [wx0 - 50, wy1 + 16, wx1 + 50, wy1 + 16, wx1 + 58, wy1 + 38, wx0 - 58, wy1 + 38]); g.fill();
+    g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(wx0 - 58, wy1 + 38, wx1 - wx0 + 116, 6);
+    if (q.model >= 2) { // 窗台上的旧烛台
+      var chx = wx0 - 20;
+      g.fillStyle = brassGrad(g, chx - 12, 0, chx + 12, 0); K.ellipse(g, chx, wy1 + 16, 12, 4); g.fill(); g.fillRect(chx - 3, wy1 - 26, 6, 42);
+      g.fillStyle = '#e4d8c0'; g.fillRect(chx - 4, wy1 - 50, 8, 24); g.fillStyle = 'rgba(200,190,170,0.6)'; g.fillRect(chx - 5, wy1 - 30, 4, 10);
+    }
+
+    // ---- 渡廊门（锚点 1696-1896, 344-800）：通往本馆二楼 ----
+    (function bridgeDoor() {
+      var dx = 1714, dy = 372, dw = 166, dh = R.bot(1797) - dy + 2;
+      g.fillStyle = K.lin(g, dx - 24, 0, dx + dw + 24, 0, ['#6a4428', '#4a2c16', '#2a180a']);
+      K.rr(g, dx - 22, dy - 30, dw + 44, dh + 30, 3); g.fill();
+      g.fillStyle = 'rgba(255,225,180,0.2)'; g.fillRect(dx - 22, dy - 30, dw + 44, 3);
+      g.fillStyle = '#0c0806'; g.fillRect(dx - 4, dy - 4, dw + 8, dh + 4);
+      // 门板：上部玻璃格（看得见渡廊的微光），下部镶板
+      K.rr(g, dx, dy, dw, dh, 2); oakFill(g, q, '#4a2c18', false, dx, dy, ['#5a3420', 0.1]);
+      K.rr(g, dx, dy, dw, dh, 2); g.fillStyle = K.lin(g, dx, 0, dx + dw, 0, ['rgba(255,225,190,0.08)', 'rgba(0,0,0,0.3)']); g.fill();
+      var gx = dx + 22, gy = dy + 24, gw = dw - 44, gh = 150;
+      g.fillStyle = '#1a1a22'; g.fillRect(gx - 4, gy - 4, gw + 8, gh + 8);
+      g.fillStyle = K.lin(g, 0, gy, 0, gy + gh, ['#3a3c4c', '#5a5a68', '#2a2a34']); g.fillRect(gx, gy, gw, gh);
+      // 渡廊的窗光（远处）
+      g.fillStyle = 'rgba(170,180,210,0.35)'; g.fillRect(gx + gw * 0.55, gy + 20, gw * 0.3, gh - 40);
+      g.strokeStyle = '#3a2414'; g.lineWidth = 6; g.strokeRect(gx, gy, gw, gh);
+      g.beginPath(); g.moveTo(gx + gw / 2, gy); g.lineTo(gx + gw / 2, gy + gh); g.moveTo(gx, gy + gh / 2); g.lineTo(gx + gw, gy + gh / 2); g.stroke();
+      if (q.light > 0) { g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(200,210,240,0.10)'; K.poly(g, [gx + 10, gy, gx + 30, gy, gx, gy + 60, gx, gy + 30]); g.fill(); g.restore(); }
+      var py0 = gy + gh + 30;
+      for (var pI = 0; pI < 2; pI++) {
+        var ppy = py0 + pI * ((dy + dh - 30 - py0) / 2);
+        var pph = (dy + dh - 30 - py0) / 2 - 18;
+        g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(dx + 22, ppy, dw - 44, pph);
+        g.fillStyle = 'rgba(255,225,180,0.1)'; g.fillRect(dx + 22, ppy + pph - 3, dw - 44, 3);
+      }
+      // 黄铜门把与锁眼
+      var hx = dx + 26, hy = dy + dh * 0.54;
+      g.fillStyle = brassGrad(g, hx - 10, 0, hx + 10, 0); K.rr(g, hx - 8, hy - 30, 16, 60, 4); g.fill();
+      rivet(g, q, hx, hy - 8, 7); g.fillStyle = '#100a04'; K.ellipse(g, hx, hy + 14, 2.5, 4); g.fill();
+      if (q.light >= 2) { g.fillStyle = 'rgba(255,250,220,0.7)'; K.ellipse(g, hx - 2, hy - 11, 2, 2.5); g.fill(); }
+      // 门缝透光
+      g.fillStyle = 'rgba(190,200,230,0.35)'; g.fillRect(dx + 2, dy + dh - 3, dw - 4, 3);
+    })();
+
+    // ---- 地球仪（窗下与书桌之间）----
+    if (q.model > 0) {
+      var gx0 = 1450, gyb = R.bot(1450) + 34;
+      if (q.light > 0) K.contact(g, gx0, gyb, 60, 10, 0.55);
+      g.strokeStyle = '#3a2414'; g.lineWidth = 7;
+      g.beginPath(); g.moveTo(gx0 - 38, gyb); g.lineTo(gx0, gyb - 40); g.lineTo(gx0 + 38, gyb); g.moveTo(gx0, gyb - 40); g.lineTo(gx0, gyb - 6); g.stroke();
+      g.fillStyle = '#4a2c16'; g.fillRect(gx0 - 5, gyb - 74, 10, 36);
+      var gcy = gyb - 124;
+      g.beginPath(); g.arc(gx0, gcy, 44, 0, TAU);
+      g.fillStyle = K.rad(g, gx0 - 14, gcy - 16, 4, 50, ['#9a9a70', '#5a6a50', '#2a3428']); g.fill();
+      g.save(); g.clip();
+      g.fillStyle = 'rgba(160,130,70,0.6)';
+      K.path(g, 'M-30 -20 C-20 -34 0 -30 6 -18 C10 -6 -6 0 -12 10 C-16 20 -30 14 -34 0 Z', gx0, gcy, 1); g.fill();
+      K.path(g, 'M10 6 C20 0 34 4 36 16 C30 30 16 34 12 22 Z', gx0, gcy, 1); g.fill();
+      g.restore();
+      g.strokeStyle = brassGrad(g, gx0 - 50, 0, gx0 + 50, 0); g.lineWidth = 4;
+      g.beginPath(); g.arc(gx0, gcy, 50, PI * 0.62, PI * 2.38); g.stroke();
+      if (q.light >= 2) { g.fillStyle = 'rgba(255,255,240,0.35)'; K.ellipse(g, gx0 - 16, gcy - 18, 10, 6, -0.6); g.fill(); }
+    }
+
+    // ---- 书桌（锚点 856-1360, 600-800）+ 图纸（944-1208, 552-624）----
+    (function libDesk() {
+      var fx0 = 862, fx1 = 1354, topF = 618, topB = 588, thick = 24, legY = 812, bx0 = fx0 + 20, bx1 = fx1 - 20;
+      if (q.light > 0) K.contact(g, (fx0 + fx1) / 2, legY, 290, 24, 0.6);
+      // 桌腿（车削）
+      var legs = [fx0 + 22, fx1 - 22];
+      for (var l = 0; l < 2; l++) {
+        var lx = legs[l];
+        g.fillStyle = K.lin(g, lx - 16, 0, lx + 16, 0, ['#2a180a', '#7a5232', '#4a2c16', '#1e1008']);
+        g.beginPath(); g.moveTo(lx - 12, topF + thick); g.lineTo(lx + 12, topF + thick); g.lineTo(lx + 9, topF + 70);
+        g.quadraticCurveTo(lx + 22, topF + 96, lx + 10, topF + 124); g.lineTo(lx + 8, legY - 20); g.lineTo(lx + 14, legY); g.lineTo(lx - 14, legY); g.lineTo(lx - 8, legY - 20);
+        g.lineTo(lx - 10, topF + 124); g.quadraticCurveTo(lx - 22, topF + 96, lx - 9, topF + 70); g.closePath(); g.fill();
+      }
+      // 横撑
+      g.fillStyle = '#2a180a'; g.fillRect(fx0 + 30, legY - 70, fx1 - fx0 - 60, 12);
+      // 裙板
+      g.beginPath(); g.rect(fx0 + 8, topF + thick, fx1 - fx0 - 16, 46); oakFill(g, q, '#4a2c16', true, fx0, topF, ['#3a2010', 0.15]);
+      g.fillStyle = K.lin(g, 0, topF + thick, 0, topF + thick + 46, ['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.5)']); g.fillRect(fx0 + 8, topF + thick, fx1 - fx0 - 16, 46);
+      if (q.model > 0) { g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 2; for (var dI2 = 0; dI2 < 3; dI2++) g.strokeRect(fx0 + 50 + dI2 * 150, topF + thick + 8, 110, 30); for (var dI3 = 0; dI3 < 3; dI3++) rivet(g, q, fx0 + 105 + dI3 * 150, topF + thick + 23, 4); }
+      // 桌面
+      K.poly(g, [bx0, topB, bx1, topB, fx1, topF, fx0, topF]); oakFill(g, q, '#6a4428', true, fx0, topB, ['#7a4a26', 0.1]);
+      K.poly(g, [bx0, topB, bx1, topB, fx1, topF, fx0, topF]); g.fillStyle = K.lin(g, 0, topB, 0, topF, ['rgba(0,0,0,0.15)', 'rgba(255,220,180,0.08)']); g.fill();
+      g.fillStyle = K.lin(g, 0, topF, 0, topF + thick, ['#8a5e38', '#5a3820', '#2e180a']); g.fillRect(fx0, topF, fx1 - fx0, thick);
+      g.fillStyle = 'rgba(255,230,190,0.4)'; g.fillRect(fx0, topF, fx1 - fx0, 2);
+      // 图纸：两张平铺的蓝图 + 卷起的图纸筒
+      function bp(P0, P1, P2, P3, kind) {
+        K.poly(g, [P0[0] + 3, P0[1] + 3, P1[0] + 3, P1[1] + 3, P2[0] + 3, P2[1] + 3, P3[0] + 3, P3[1] + 3]); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
+        K.poly(g, [P0[0], P0[1], P1[0], P1[1], P2[0], P2[1], P3[0], P3[1]]); g.fillStyle = '#2a4c86'; g.fill();
+        sheet(g, P0, P1, P2, P3, function () {
+          g.fillStyle = K.lin(g, 0, 0, 1, 1, ['#3a62a4', '#2a4c86', '#1e3c70']); g.fillRect(0, 0, 1, 1);
+          if (q.model <= 0) return;
+          g.strokeStyle = 'rgba(220,235,255,0.85)'; g.lineWidth = 0.008;
+          g.strokeRect(0.04, 0.06, 0.92, 0.88);
+          if (kind === 0) {
+            // 塔的立面
+            g.strokeRect(0.36, 0.2, 0.22, 0.7); g.beginPath(); g.moveTo(0.33, 0.2); g.lineTo(0.47, 0.08); g.lineTo(0.61, 0.2); g.stroke();
+            g.beginPath(); g.arc(0.47, 0.3, 0.05, 0, TAU); g.stroke();
+            for (var f2 = 0; f2 < 3; f2++) g.strokeRect(0.44, 0.44 + f2 * 0.14, 0.06, 0.08);
+            g.beginPath(); g.moveTo(0.1, 0.9); g.lineTo(0.9, 0.9); g.stroke();
+            if (q.model >= 2) { g.lineWidth = 0.004; for (var dm = 0; dm < 6; dm++) { g.beginPath(); g.moveTo(0.68, 0.2 + dm * 0.14); g.lineTo(0.78, 0.2 + dm * 0.14); g.stroke(); } g.beginPath(); g.moveTo(0.74, 0.2); g.lineTo(0.74, 0.9); g.stroke(); }
+          } else {
+            // 平面图：圆塔与螺旋楼梯
+            g.beginPath(); g.arc(0.38, 0.5, 0.3, 0, TAU); g.stroke();
+            g.beginPath(); g.arc(0.38, 0.5, 0.05, 0, TAU); g.stroke();
+            for (var sp = 0; sp < 12; sp++) { var a = sp / 12 * TAU; g.beginPath(); g.moveTo(0.38 + Math.cos(a) * 0.05, 0.5 + Math.sin(a) * 0.05); g.lineTo(0.38 + Math.cos(a) * 0.16, 0.5 + Math.sin(a) * 0.16); g.stroke(); }
+            g.strokeRect(0.66, 0.2, 0.26, 0.18);
+            if (q.model >= 2) { g.lineWidth = 0.004; for (var tl = 0; tl < 5; tl++) { g.beginPath(); g.moveTo(0.68, 0.48 + tl * 0.08); g.lineTo(0.9, 0.48 + tl * 0.08); g.stroke(); } }
+          }
+        });
+      }
+      bp([960, 600], [1080, 596], [1092, 616], [952, 621], 0);
+      bp([1060, 590], [1190, 592], [1206, 612], [1070, 610], 1);
+      // 卷起的图纸
+      function roll(x0, y0, x1, y1, r, c) {
+        g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = r * 2; g.beginPath(); g.moveTo(x0 + 3, y0 + 5); g.lineTo(x1 + 3, y1 + 5); g.stroke();
+        g.strokeStyle = c; g.lineWidth = r * 2; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+        g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = r * 0.5; g.beginPath(); g.moveTo(x0, y0 - r * 0.45); g.lineTo(x1, y1 - r * 0.45); g.stroke();
+        g.fillStyle = K.shade(c, -0.3); K.ellipse(g, x1, y1, r * 0.5, r, 0); g.fill();
+        g.fillStyle = 'rgba(255,255,255,0.4)'; K.ellipse(g, x1, y1, r * 0.25, r * 0.5, 0); g.fill();
+      }
+      roll(958, 584, 1060, 578, 9, '#3a62a4');
+      roll(970, 570, 1052, 566, 8, '#d8ccb0');
+      if (q.model > 0) {
+        // 丁字尺与圆规
+        g.fillStyle = '#c8a870'; K.poly(g, [1100, 606, 1200, 604, 1201, 609, 1101, 611]); g.fill();
+        g.fillStyle = '#a07a40'; K.poly(g, [1094, 598, 1100, 598, 1102, 616, 1096, 616]); g.fill();
+        g.strokeStyle = '#c8c8d0'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(1140, 596); g.lineTo(1132, 612); g.moveTo(1140, 596); g.lineTo(1152, 611); g.stroke();
+        rivet(g, q, 1140, 595, 3);
+      }
+      // 绿色玻璃台灯（左端）
+      var lx = 912, lyB = topF - 6;
+      if (q.light > 0) K.contact(g, lx, lyB + 2, 36, 6, 0.5);
+      g.fillStyle = brassGrad(g, lx - 26, 0, lx + 26, 0, true); K.ellipse(g, lx, lyB, 26, 7); g.fill();
+      g.fillStyle = brassGrad(g, lx - 4, 0, lx + 4, 0); g.fillRect(lx - 3, lyB - 64, 6, 60);
+      K.path(g, 'M-44 18 C-44 4 -30 -6 0 -6 C30 -6 44 4 44 18 L40 22 L-40 22 Z', lx, lyB - 84, 1);
+      g.fillStyle = K.lin(g, 0, lyB - 90, 0, lyB - 62, ['#4a9a6a', '#1e5a38', '#0e3020']); g.fill();
+      g.fillStyle = 'rgba(255,240,200,0.75)'; K.ellipse(g, lx, lyB - 62, 38, 4); g.fill();
+      if (q.light >= 2) { g.fillStyle = 'rgba(220,255,230,0.45)'; K.ellipse(g, lx - 18, lyB - 80, 12, 3, -0.1); g.fill(); }
+    })();
+
+    // ================= 光照 =================
+    var L = lightMap(q, '#625c6e');
+    lmLight(L, 1548, 360, 700, '#c0cce8', 0.75, 0.9);          // 窗
+    lmLight(L, 912, 620, 460, '#ffd8a0', 0.75, 0.5);           // 台灯
+    lmLight(L, 1797, 560, 300, '#a8b4d8', 0.25, 1.2);          // 门玻璃
+    if (q.light > 0) {
+      lmLight(L, 1450, 860, 520, '#b0bce0', 0.4, 0.35);
+      lmLight(L, 400, 460, 600, '#d8c8b0', 0.2, 0.8);           // 书架上的反射光
+      lmDark(L, 0.18, function (x) { ceilRegion(x, R); });
+      lmDark(L, 0.22, function (x) { x.beginPath(); x.rect(0, 0, 70, H); });
+      lmShade(L, 0.6, function (x) { x.beginPath(); x.rect(890, 660, 440, 150); });
+    }
+    if (q.light >= 2) {
+      // 窗光被窗棂切开落在地上
+      lmShade(L, 0.3, function (x) { for (var k = 0; k < 6; k++) { x.rect(1330 + k * 40, 830 + k * 6, 6, 120); } });
+      lmShade(L, 0.4, function (x) { K.poly(x, [870, 812, 1350, 812, 1260, 900, 760, 900]); });
+    }
+    applyLM(g, L);
+    if (q.light > 0) {
+      K.glow(g, 912, 552, 140, '#ffd090', 0.3);
+      K.glow(g, 1548, 350, 280, '#b0c0e0', 0.15);
+    }
+    if (q.light >= 2) {
+      softShaft(g, [1456, 260, 1640, 260, 1520, 960, 1160, 960], '#c0d0f0', 0.12, 1550, 300, 1340, 960, 6);
+      dust(g, K.rng(91), byM(q, 10, 22, 34), 1220, 320, 380, 600, '#e0e8ff', 0.45);
+    }
+    finish(g, q, q.light > 0 ? 0.5 : 0.35, 0.5);
+  }
+
+  DM.HDBG.def('library', {
+    draw: drawLibrary,
+    lights: [
+      { x: 1548, y: 350, r: 280, color: '#b8c8e8', i: 0.4, flicker: 0, kind: 'window' },
+      { x: 912, y: 540, r: 170, color: '#ffd090', i: 0.55, flicker: 0.05, kind: 'lamp' }
+    ],
+    key: { x: 0.55, color: '#d8e0f4', amb: '#2a2a36', rim: 0.55 },
+    outdoor: false
+  });
 })(typeof window !== 'undefined' ? window : globalThis);
