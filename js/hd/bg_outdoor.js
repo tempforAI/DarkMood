@@ -1614,4 +1614,426 @@
     key: { x: -0.4, color: '#d2d4e2', amb: '#363a50', rim: 0.4 }
   });
 
+
+  /* =================================================================
+   * 中庭 courtyard（+ past：九年前，温室完好、喷泉有水）
+   * ================================================================= */
+  var CY_GAP = [430, 150];
+  // 宅邸两翼的窗位（绘制与光源共用）；lit 为亮灯的窗
+  var WING_FLOORS = [292, 432, 572], WING_WH = [84, 92, 96];
+  function wingWindows(x0, x1, side) {
+    var out = [], step = 136, w = x1 - x0, nwin = Math.floor((w - 60) / step);
+    var litSet = side === 'L' ? { '0-1': 1, '1-3': 1, '2-0': 1 } : { '0-2': 1, '1-0': 1, '0-5': 1 };
+    for (var f = 0; f < 3; f++) for (var k = 0; k < nwin; k++) {
+      var wx = x0 + 60 + k * step + (side === 'R' ? 20 : 0);
+      if (wx + 44 > x1 - 20) continue;
+      out.push({ x: wx, y: WING_FLOORS[f], h: WING_WH[f], lit: !!litSet[f + '-' + k] });
+    }
+    return out;
+  }
+  var CY_LIT = (function () {
+    var a = wingWindows(-30, 770, 'L').concat(wingWindows(1118, 1950, 'R')), o = [];
+    for (var i = 0; i < a.length; i++) if (a[i].lit) o.push([a[i].x + 22, a[i].y + a[i].h * 0.55]);
+    return o;
+  })();
+  var FLAG = { c1: '#34333c', c2: '#5e5c68', mortar: '#1c1b21', rows: 4, cols: 3, seed: 91, irregular: 1, mortarW: 0.02 };
+  var WALL_STONE = { c1: '#2a2932', c2: '#4e4b58', mortar: '#18171d', rows: 8, cols: 4, seed: 93, irregular: 1, mortarW: 0.03 };
+  function drawCourtyard(g, q, v) {
+    var past = v === 'past';
+    sky(g, q, { y: 0, h: 720, seed: past ? 19 : 47, gx: CY_GAP[0] / W, gy: CY_GAP[1] / 720, gw: past ? 0.2 : 0.14, dens: past ? -0.06 : 0 });
+    godRays(g, q, CY_GAP[0], CY_GAP[1] + 50, 700, 8, 59, 0.035, 0.6, 140);
+    crows(g, q, 61, 6, 1250, 40, 500, 150, 1.0, '#25232f');
+    // 缆索（神社 → 塔顶铁环）
+    if (!past || true) {
+      g.beginPath(); g.moveTo(-10, 24); g.quadraticCurveTo(400, 84, 742, 58);
+      strokeP(g, 'rgba(14,12,18,0.92)', 2.6);
+      if (q.light >= 2) { g.beginPath(); g.moveTo(-10, 23); g.quadraticCurveTo(400, 83, 742, 57); strokeP(g, 'rgba(200,200,220,0.18)', 0.8); }
+    }
+    drawWing(g, q, -30, 770, 252, 692, 101, past, 'L');
+    drawWing(g, q, 1118, 1950, 252, 692, 103, past, 'R');
+    drawCyTower(g, q, past);
+    drawCyGround(g, q, past);
+    drawGreenhouse(g, q, past);
+    drawFountain(g, q, past);
+    if (past) drawWheelbarrow(g, q, 664, 912); else drawEasel(g, q, 664, 918);
+    drawBench(g, q, 1352, 912, past);
+    // 前景两侧的灌木（框住画面）
+    var r = RNG(past ? 111 : 113);
+    for (var i = 0; i < K.byModel(q, 3, 5, 7); i++) canopy(g, q, r.range(-40, 120), r.range(980, 1100), r.range(60, 110), r.range(40, 70), '#1e2620', '#334036', r, K.byModel(q, 6, 10, 16));
+    for (i = 0; i < K.byModel(q, 3, 5, 7); i++) canopy(g, q, r.range(1820, 1980), r.range(990, 1110), r.range(60, 110), r.range(40, 70), '#1e2620', '#334036', r, K.byModel(q, 6, 10, 16));
+    if (past) for (i = 0; i < 26; i++) { K.ellipse(g, r.range(0, 140), r.range(960, 1060), 7, 6); fillP(g, r() < 0.5 ? '#7a86c8' : '#a07ac0', 0.8); }
+    K.vignette(g, W, H, q.light >= 1 ? 0.5 : 0.35, 0.45);
+  }
+  // 宅邸侧翼立面（三层，哥特尖拱窗，陡峭石板瓦屋顶，老虎窗与烟囱）
+  function drawWing(g, q, x0, x1, eave, ground, seed, past, side) {
+    var r = RNG(seed), w = x1 - x0;
+    // 屋顶
+    var ridgeY = eave - 128;
+    slateRoof(g, q, [x0, eave + 6, x0 + 30, ridgeY, x1 - 30, ridgeY, x1, eave + 6], x0, ridgeY, x1, eave + 6, '#2b2a36', seed);
+    // 烟囱
+    for (var c = 0; c < 2; c++) {
+      var cx = x0 + w * (c ? 0.72 : 0.22) + r.range(-30, 30);
+      rectP(g, cx, ridgeY - 70, 36, 90); mat(g, q, '#3a3842', 'stone', WALL_STONE, 96, cx, 0);
+      rectP(g, cx, ridgeY - 70, 36, 90); shadeLin(g, cx, 0, cx + 36, 0, [[0, 'rgba(255,255,255,0.12)'], [1, 'rgba(0,0,0,0.4)']]);
+      g.fillStyle = '#26252c'; g.fillRect(cx - 5, ridgeY - 78, 46, 10);
+      g.fillStyle = '#1e1d22'; g.fillRect(cx + 6, ridgeY - 92, 8, 14); g.fillRect(cx + 22, ridgeY - 90, 8, 12);
+    }
+    // 老虎窗
+    var nd = side === 'L' ? 4 : 4;
+    for (var d = 0; d < nd; d++) {
+      var dx = x0 + 90 + d * (w - 180) / (nd - 1) - 28;
+      if (side === 'L' && dx > x1 - 120) continue;
+      K.poly(g, [dx - 6, eave - 40, dx + 28, eave - 104, dx + 62, eave - 40]); fillP(g, '#2e2d38');
+      rectP(g, dx, eave - 46, 56, 52); fillP(g, '#3c3a46');
+      gothicWin(g, q, dx + 14, eave - 66, 28, 56, { frame: '#5e5a66' });
+    }
+    // 墙面
+    rectP(g, x0, eave, w, ground - eave);
+    mat(g, q, '#3a3843', 'stone', WALL_STONE, 192, x0, eave);
+    rectP(g, x0, eave, w, ground - eave);
+    shadeLin(g, 0, eave, 0, ground, [[0, 'rgba(0,0,0,0.35)'], [0.15, 'rgba(0,0,0,0.05)'], [1, 'rgba(0,0,0,0.3)']]);
+    // 檐口与层间腰线
+    g.fillStyle = '#56535f'; g.fillRect(x0, eave - 4, w, 14);
+    if (q.light >= 1) { g.fillStyle = 'rgba(0,0,0,0.4)'; g.fillRect(x0, eave + 10, w, 10); }
+    for (var f = 1; f < 3; f++) { g.fillStyle = '#4c4955'; g.fillRect(x0, WING_FLOORS[f] - 22, w, 8); }
+    // 窗
+    var wins = wingWindows(x0, x1, side);
+    for (var k = 0; k < wins.length; k++) {
+      var wn = wins[k];
+      gothicWin(g, q, wn.x, wn.y, 44, wn.h, { lit: wn.lit ? (past ? '#ffd28a' : '#ffbe6a') : null, frame: '#625e6a', sky: '#86869a' });
+      if (wn.lit && q.model >= 1) { archPath(g, wn.x, wn.y, 44, wn.h); g.save(); g.clip(); g.fillStyle = 'rgba(120,40,40,0.35)'; g.fillRect(wn.x, wn.y, 10, wn.h); g.fillRect(wn.x + 34, wn.y, 10, wn.h); g.restore(); }
+    }
+    // 雨水污渍
+    if (q.model >= 1) {
+      for (var i = 0; i < K.byModel(q, 0, 10, 20); i++) { var sx = x0 + r() * w, sl = r.range(60, 260); g.fillStyle = K.lin(g, 0, eave + 10, 0, eave + 10 + sl, [[0, 'rgba(10,10,14,0.35)'], [1, 'rgba(10,10,14,0)']]); g.fillRect(sx, eave + 10, r.range(10, 30), sl); }
+    }
+    // 常春藤
+    if (q.model >= 1) {
+      var ivx = side === 'L' ? x0 + 40 : x1 - 260, ivw = 220;
+      for (i = 0; i < K.byModel(q, 0, 40, 90); i++) {
+        var iy = ground - Math.pow(r(), 0.7) * (past ? 260 : 380), ix = ivx + r() * ivw * (1 - (ground - iy) / 500);
+        K.ellipse(g, ix, iy, r.range(8, 20), r.range(6, 14)); g.fillStyle = r() < 0.6 ? '#1f2a22' : '#2f3e32'; g.fill();
+      }
+    }
+    // 墙脚灌木
+    for (i = 0; i < K.byModel(q, 6, 10, 16); i++) canopy(g, q, x0 + r() * w, ground - r.range(0, 12), r.range(30, 60), r.range(18, 30), past ? '#243026' : '#202820', past ? '#3e5040' : '#36443a', r, 6);
+    // 空气透视
+    rectP(g, x0, ridgeY - 100, w, ground - ridgeY + 100); fillP(g, K.lin(g, 0, ridgeY, 0, ground, [K.rgba(SKY.hor, 0.12), K.rgba(SKY.hor, 0.04)]));
+    if (q.light >= 1) K.ao(g, x0, ground - 60, w, 60, 50, 0.35, 'b');
+  }
+  function drawCyTower(g, q, past) {
+    var cx = 944, x0 = 772, x1 = 1116, w = x1 - x0, ground = 692, balY = 70;
+    // 屋顶（被画面上缘裁掉）
+    var rp = [x0 - 8, balY - 34, cx, -260, x1 + 8, balY - 34];
+    slateRoof(g, q, rp, x0 - 8, -40, x1 + 8, balY - 34, '#2a2934', 121);
+    K.poly(g, rp); shadeLin(g, x0, 0, x1, 0, [[0, 'rgba(210,210,230,0.12)'], [0.5, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.4)']]);
+    // 塔身
+    rectP(g, x0, balY, w, ground - balY);
+    mat(g, q, '#383641', 'stone', WALL_STONE, 192, x0, balY);
+    rectP(g, x0, balY, w, ground - balY);
+    shadeLin(g, x0, 0, x1, 0, [[0, 'rgba(225,225,245,0.16)'], [0.4, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.45)']]);
+    // 转角隅石
+    for (var y = balY + 20; y < ground; y += 44) {
+      var qw = (y / 44 | 0) % 2 ? 34 : 22;
+      rectP(g, x0, y, qw, 40); fillP(g, '#56535f'); rectP(g, x1 - qw, y, qw, 40); fillP(g, '#44414d');
+    }
+    // 瞭望台与栏杆
+    rectP(g, x0 - 40, balY - 4, w + 80, 22); fillP(g, K.lin(g, 0, balY - 4, 0, balY + 18, ['#7c7986', '#3a3842']));
+    // 托架
+    for (var cb = x0 - 30; cb < x1 + 30; cb += 30) { K.poly(g, [cb, balY + 18, cb + 18, balY + 18, cb + 12, balY + 36, cb + 6, balY + 36]); fillP(g, '#3e3c46'); }
+    if (q.light >= 1) { g.fillStyle = K.lin(g, 0, balY + 18, 0, balY + 60, ['rgba(0,0,0,0.5)', 'rgba(0,0,0,0)']); g.fillRect(x0, balY + 18, w, 42); }
+    g.strokeStyle = past ? '#4a3a2a' : '#1c1a20'; g.lineWidth = past ? 5 : 3.5; g.beginPath();
+    for (var px = x0 - 36; px <= x1 + 36; px += past ? 22 : 16) { g.moveTo(px, balY - 4); g.lineTo(px, balY - 38); }
+    g.moveTo(x0 - 40, balY - 38); g.lineTo(x1 + 40, balY - 38); g.moveTo(x0 - 40, balY - 22); g.lineTo(x1 + 40, balY - 22); g.stroke();
+    // 铁环（缆索终点）
+    g.strokeStyle = '#2a2628'; g.lineWidth = 5; K.ellipse(g, 746, 62, 10, 10); g.stroke();
+    if (q.light >= 2) { g.beginPath(); g.arc(746, 62, 10, PI * 1.1, PI * 1.7); strokeP(g, 'rgba(210,210,230,0.5)', 1.5); }
+    // 钟面
+    var ccy = 200, R = 86;
+    K.ellipse(g, cx, ccy, R + 18, R + 18); fillP(g, K.lin(g, cx - R, ccy - R, cx + R, ccy + R, ['#6a6672', '#3a3842']));
+    K.ellipse(g, cx, ccy, R + 6, R + 6); fillP(g, K.lin(g, cx - R, ccy - R, cx + R, ccy + R, ['#b08a4a', '#6a4c24']));
+    K.ellipse(g, cx, ccy, R, R); fillP(g, K.rad(g, cx - 20, ccy - 24, 4, R * 1.1, ['#e4dcc6', '#cbc1a8', '#9c927a']));
+    if (q.tex > 0) { K.ellipse(g, cx, ccy, R, R); texFill(g, q, 'paper', { c1: '#000000', c2: '#ffffff', seed: 19 }, 128, 0, 0, 0.1, null, null, null, 'overlay'); }
+    g.strokeStyle = '#2a2420'; g.lineWidth = 2; K.ellipse(g, cx, ccy, R - 14, R - 14); g.stroke();
+    for (var k = 0; k < 60; k++) {
+      var a = k * PI / 30, big = k % 5 === 0, r0 = big ? R - 26 : R - 18;
+      K.line(g, cx + Math.cos(a) * r0, ccy + Math.sin(a) * r0, cx + Math.cos(a) * (R - 8), ccy + Math.sin(a) * (R - 8), big ? 4 : 1.2, '#2a2420');
+    }
+    // 指针（9:12 左右）
+    function hand(ang, len, wd) {
+      g.save(); g.translate(cx, ccy); g.rotate(ang);
+      g.beginPath(); g.moveTo(-wd, 10); g.lineTo(-wd * 0.6, -len * 0.7); g.lineTo(0, -len); g.lineTo(wd * 0.6, -len * 0.7); g.lineTo(wd, 10); g.closePath();
+      g.fillStyle = '#1c1714'; g.fill();
+      K.ellipse(g, 0, -len * 0.62, wd * 1.4, wd * 2.2); g.fill();
+      g.restore();
+    }
+    hand(-PI / 2 + 0.25 * 0.0 + (9.2 / 12) * TAU, 50, 5);
+    hand((12 / 60) * TAU, 72, 3.5);
+    K.ellipse(g, cx, ccy, 6, 6); fillP(g, '#8a6a3a');
+    if (q.light >= 1) { K.ellipse(g, cx, ccy, R, R); fillP(g, K.lin(g, cx - R, ccy - R, cx + R * 0.4, ccy + R, ['rgba(255,255,255,0.18)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.25)'])); }
+    if (q.light >= 2) { g.beginPath(); g.arc(cx, ccy, R + 5, PI * 1.05, PI * 1.55); strokeP(g, 'rgba(255,230,180,0.5)', 2); }
+    // 腰线
+    function band(y) { g.fillStyle = '#5a5763'; g.fillRect(x0 - 10, y, w + 20, 14); if (q.light >= 1) { g.fillStyle = 'rgba(0,0,0,0.4)'; g.fillRect(x0, y + 14, w, 9); g.fillStyle = 'rgba(230,230,245,0.18)'; g.fillRect(x0 - 10, y, w + 20, 2); } }
+    band(318); band(526);
+    // 三楼书斋窗
+    gothicWin(g, q, 888, 386, 112, 118, { frame: '#6c6874', sky: '#9696aa', mullion: '#1e1c22' });
+    // 二楼固定窗（细长）
+    gothicWin(g, q, 930, 548, 28, 40, { frame: '#5e5a66', tracery: false });
+    // 一楼入口（尖拱木门）
+    archPath(g, 896, 600, 96, 92); fillP(g, '#55525e');
+    archPath(g, 906, 612, 76, 80); mat(g, q, '#3a2a20', 'wood', { c1: '#24180f', c2: '#4a3220', gap: '#140c08', planks: 4, dir: 'v', seed: 15 }, 96, 906, 600);
+    if (q.model >= 1) { g.fillStyle = '#1a1614'; for (var st = 0; st < 3; st++) for (var sx = 0; sx < 4; sx++) { K.ellipse(g, 916 + sx * 19, 640 + st * 18, 2.2, 2.2); g.fill(); } }
+    // 门边的壁灯
+    g.fillStyle = '#1e1c20'; g.fillRect(1002, 612, 16, 6); K.rr(g, 1008, 618, 14, 22, 3); g.fillStyle = '#ffd08a'; g.fill();
+    if (q.light >= 1) K.glow(g, 1015, 630, 60, '#ffb35c', 0.35);
+    // 污渍与苔
+    if (q.model >= 1) {
+      var r = RNG(123);
+      for (var i = 0; i < K.byModel(q, 0, 8, 14); i++) { var tx = x0 + r() * w, tl = r.range(60, 220), ty = r() < 0.5 ? balY + 30 : 330; g.fillStyle = K.lin(g, 0, ty, 0, ty + tl, [[0, 'rgba(10,10,14,0.35)'], [1, 'rgba(10,10,14,0)']]); g.fillRect(tx, ty, r.range(6, 18), tl); }
+    }
+    if (q.light >= 1) K.ao(g, x0, ground - 50, w, 50, 40, 0.4, 'b');
+  }
+  function drawCyGround(g, q, past) {
+    var y0 = 692, yh = 560, vx = 944;
+    K.poly(g, [0, y0, W, y0, W, H, 0, H]);
+    mat(g, q, '#46454f', 'stone', FLAG, 256, 0, y0, null, 1.2, 0.5);
+    K.poly(g, [0, y0, W, y0, W, H, 0, H]);
+    shadeLin(g, 0, y0, 0, H, [[0, 'rgba(14,14,22,0.45)'], [0.35, 'rgba(14,14,22,0.12)'], [1, 'rgba(14,14,22,0.35)']]);
+    // 透视石板缝
+    g.beginPath();
+    for (var k = 1; k < 14; k++) { var z = 1 - k * 0.068, y = yh + (y0 - yh) / z; if (y > H + 10) break; g.moveTo(0, y); g.lineTo(W, y); }
+    for (var c = -16; c <= 16; c++) { var bx = vx + c * 64; g.moveTo(bx, y0); g.lineTo(vx + (bx - vx) * (H - yh) / (y0 - yh), H); }
+    g.strokeStyle = 'rgba(14,13,18,0.7)'; g.lineWidth = 2.4; g.stroke();
+    // 石缝中的青苔与杂草
+    var r = RNG(past ? 131 : 133);
+    if (q.model >= 1) {
+      g.beginPath();
+      for (k = 0; k < K.byModel(q, 0, 50, 110); k++) {
+        var mx = r() * W, my = y0 + 10 + Math.pow(r(), 1.3) * (H - y0);
+        var mw = (8 + (my - y0) * 0.12) * r.range(0.5, 1.5);
+        g.moveTo(mx + mw, my); g.ellipse ? g.ellipse(mx, my, mw, mw * 0.18, 0, 0, TAU) : g.arc(mx, my, mw, 0, TAU);
+      }
+      g.fillStyle = past ? 'rgba(60,76,48,0.4)' : 'rgba(62,78,46,0.6)'; g.fill();
+      if (!past) grassTufts(g, q, r, K.byModel(q, 0, 30, 60), 0, y0 + 20, W, H - y0 - 20, 'rgba(70,86,56,0.8)', 16);
+    }
+    // 水洼：倒映暗色的楼墙、亮窗与塔
+    var pud = [[980, 770, 150], [560, 968, 200], [1240, 1012, 170], [170, 900, 110]];
+    for (var i = 0; i < pud.length; i++) {
+      var px = pud[i][0], py = pud[i][1], pw = pud[i][2], ph = pw * (0.07 + (py - y0) * 0.0004);
+      K.ellipse(g, px, py, pw * 1.06, ph * 1.3); fillP(g, 'rgba(20,20,28,0.25)');
+      g.save(); K.ellipse(g, px, py, pw, ph); g.clip();
+      g.fillStyle = K.lin(g, 0, py - ph, 0, py + ph, ['#2c2c38', '#3e3e4e', '#5c5c70']); g.fillRect(px - pw, py - ph, pw * 2, ph * 2);
+      if (q.light >= 1) {
+        for (var li = 0; li < CY_LIT.length; li++) {
+          var lx = CY_LIT[li][0];
+          if (Math.abs(lx - px) < pw) { g.fillStyle = K.lin(g, 0, py - ph, 0, py + ph, ['rgba(255,190,110,0.5)', 'rgba(255,190,110,0)']); g.fillRect(lx - 10, py - ph, 20, ph * 2); }
+        }
+        if (Math.abs(px - 944) < pw + 172) { g.fillStyle = 'rgba(14,14,20,0.45)'; g.fillRect(Math.max(px - pw, 772), py - ph, Math.min(px + pw, 1116) - Math.max(px - pw, 772), ph * 2); }
+      }
+      if (q.light >= 2) { g.fillStyle = 'rgba(220,222,240,0.3)'; g.fillRect(px - pw * 0.7, py + ph * 0.45, pw * 1.1, 1.5); g.fillRect(px - pw * 0.3, py - ph * 0.2, pw * 0.5, 1); }
+      g.restore();
+    }
+    // 远处与墙脚的 AO
+    if (q.light >= 1) { g.fillStyle = K.lin(g, 0, y0, 0, y0 + 40, ['rgba(0,0,0,0.45)', 'rgba(0,0,0,0)']); g.fillRect(0, y0, W, 40); }
+  }
+  // 温室（废墟 / 完好）
+  function drawGreenhouse(g, q, past) {
+    var x0 = 1360, x1 = 1872, eave = 566, apexY = 474, base = 744, bot = 800, cx = (x0 + x1) / 2, r = RNG(past ? 141 : 143);
+    if (q.light >= 1) K.contact(g, cx + 20, bot, (x1 - x0) * 0.6, 22, 0.5);
+    var frame = past ? '#d8d6cc' : '#3a3530', frameHi = past ? '#ffffff' : '#6a5a4a';
+    var body = [x0, eave, cx, apexY, x1, eave, x1, base, x0, base];
+    // 内部（植物）
+    K.poly(g, body); fillP(g, K.lin(g, 0, apexY, 0, base, past ? ['#3a4a3c', '#2a3a2e', '#1e2a22'] : ['#24262a', '#1c1d20', '#141516']));
+    g.save(); K.poly(g, body); g.clip();
+    for (var i = 0; i < K.byModel(q, 8, 16, 26); i++) {
+      var px = x0 + r() * (x1 - x0), py = base - r.range(10, 120);
+      if (past) canopy(g, q, px, py, r.range(26, 50), r.range(20, 40), '#2e4a30', '#4e7048', r, 6);
+      else { g.strokeStyle = r() < 0.5 ? 'rgba(90,80,56,0.8)' : 'rgba(60,70,50,0.8)'; g.lineWidth = 1.5; g.beginPath(); for (var st = 0; st < 6; st++) { var sx = px + r.range(-20, 20); g.moveTo(sx, base); g.quadraticCurveTo(sx + r.range(-10, 10), base - 60, sx + r.range(-30, 30), base - r.range(60, 170)); } g.stroke(); }
+    }
+    if (past) for (i = 0; i < 30; i++) { K.ellipse(g, x0 + r() * (x1 - x0), base - r.range(20, 110), 5, 4); fillP(g, r() < 0.5 ? '#d86a7a' : '#e8d070', 0.85); }
+    // 台架与花盆
+    g.fillStyle = past ? '#4a3a2a' : '#2a2420'; g.fillRect(x0 + 10, base - 40, x1 - x0 - 20, 8);
+    for (i = 0; i < 9; i++) { var fx = x0 + 30 + i * 56; K.poly(g, [fx, base - 56, fx + 24, base - 56, fx + 20, base - 40, fx + 4, base - 40]); fillP(g, past ? '#a0583a' : '#5a3a2a'); }
+    g.restore();
+    // 玻璃格
+    var cols = 12, gw = (x1 - x0) / cols, rows = [eave, eave + 90, base];
+    for (var cI = 0; cI < cols; cI++) {
+      for (var rI = 0; rI < 2; rI++) {
+        var gx = x0 + cI * gw, gy = rows[rI], gh = rows[rI + 1] - rows[rI];
+        paneGlass(g, q, gx + 2, gy + 2, gw - 4, gh - 4, past, r, cI + rI * 13);
+      }
+    }
+    // 山墙三角形的玻璃
+    var gcols = 8;
+    for (i = 0; i < gcols; i++) {
+      var ax = x0 + (x1 - x0) * i / gcols, bx2 = x0 + (x1 - x0) * (i + 1) / gcols;
+      var ay = eave - (eave - apexY) * (1 - Math.abs(ax - cx) / (cx - x0)), by = eave - (eave - apexY) * (1 - Math.abs(bx2 - cx) / (cx - x0));
+      g.save(); K.poly(g, [ax + 2, ay + 3, bx2 - 2, by + 3, bx2 - 2, eave - 2, ax + 2, eave - 2]); g.clip();
+      paneGlass(g, q, ax, Math.min(ay, by), bx2 - ax, eave - Math.min(ay, by), past, r, 40 + i);
+      g.restore();
+    }
+    // 铁/木框
+    g.strokeStyle = frame; g.lineWidth = 5; g.lineCap = 'butt';
+    g.beginPath();
+    for (cI = 0; cI <= cols; cI++) { var lx = x0 + cI * gw; g.moveTo(lx, base); g.lineTo(lx, eave - (eave - apexY) * Math.max(0, 1 - Math.abs(lx - cx) / (cx - x0))); }
+    g.moveTo(x0, eave + 90); g.lineTo(x1, eave + 90); g.moveTo(x0, eave); g.lineTo(x1, eave);
+    g.moveTo(x0 - 8, eave + 4); g.lineTo(cx, apexY - 4); g.lineTo(x1 + 8, eave + 4);
+    g.stroke();
+    if (q.light >= 1) { g.strokeStyle = K.rgba(frameHi, 0.35); g.lineWidth = 1.5; g.beginPath(); for (cI = 0; cI <= cols; cI++) { var hx = x0 + cI * gw - 1.5; g.moveTo(hx, base); g.lineTo(hx, eave + 2); } g.stroke(); }
+    g.lineCap = 'round';
+    // 顶上的装饰脊饰
+    K.poly(g, [cx - 6, apexY - 2, cx, apexY - 30, cx + 6, apexY - 2]); fillP(g, frame);
+    // 中央门
+    rectP(g, cx - 38, eave + 60, 76, base - eave - 60); g.strokeStyle = frame; g.lineWidth = 6; g.stroke();
+    // 砖砌基座
+    rectP(g, x0 - 6, base, x1 - x0 + 12, bot - base);
+    mat(g, q, '#5a3a30', 'brick', { c1: '#3e2622', c2: '#6a4236', mortar: '#2a2220', seed: 7 }, 128, x0, base);
+    rectP(g, x0 - 6, base, x1 - x0 + 12, bot - base); shadeLin(g, 0, base, 0, bot, [[0, 'rgba(0,0,0,0.1)'], [1, 'rgba(0,0,0,0.45)']]);
+    g.fillStyle = past ? '#8a8690' : '#5a5862'; g.fillRect(x0 - 10, base - 4, x1 - x0 + 20, 8);
+    if (!past) {
+      // 爬藤与从破窗伸出的杂草，锈迹
+      for (i = 0; i < K.byModel(q, 4, 10, 18); i++) { var vx = x0 + r() * (x1 - x0); canopy(g, q, vx, base - r.range(0, 40), r.range(14, 30), r.range(10, 20), '#26302a', '#3a4a3e', r, 4); }
+      g.strokeStyle = 'rgba(48,60,44,0.85)'; g.lineWidth = 2; g.beginPath();
+      for (i = 0; i < K.byModel(q, 3, 6, 10); i++) { var tx = x0 + r() * (x1 - x0), ty = base; g.moveTo(tx, ty); for (var s2 = 0; s2 < 6; s2++) { tx += r.range(-14, 14); ty -= r.range(14, 30); g.lineTo(tx, ty); } }
+      g.stroke();
+      for (i = 0; i < K.byModel(q, 6, 12, 20); i++) { g.fillStyle = K.rgba('#7a4024', r.range(0.3, 0.6)); g.fillRect(x0 + r() * (x1 - x0), eave + r() * 160, 4, r.range(8, 30)); }
+    } else if (q.light >= 2) {
+      // 玻璃的整体反光
+      g.save(); g.globalCompositeOperation = 'lighter';
+      K.poly(g, body); g.clip();
+      for (i = 0; i < 4; i++) { var sx0 = x0 + 60 + i * 130; K.poly(g, [sx0, base, sx0 + 40, base, sx0 + 140, eave - 60, sx0 + 100, eave - 60]); g.fillStyle = 'rgba(255,255,255,0.07)'; g.fill(); }
+      g.restore();
+      K.glow(g, x0 + 120, eave + 30, 90, '#fff4dc', 0.25);
+    }
+  }
+  function paneGlass(g, q, x, y, w, h, past, r, idx) {
+    var broken = !past && ((idx * 37 + 11) % 5 < 2 || (idx * 13) % 7 === 3);
+    if (broken) {
+      // 残留的碎玻璃尖角
+      if (q.model >= 1) {
+        var n = 1 + (idx % 3);
+        for (var k = 0; k < n; k++) {
+          var ex = k % 2 ? x + w : x, ey = y + r.range(0, h * 0.7);
+          K.poly(g, [ex, ey, ex, ey + r.range(20, 50), ex + (k % 2 ? -1 : 1) * r.range(8, w * 0.7), ey + r.range(5, 30)]);
+          fillP(g, 'rgba(160,165,185,0.35)');
+          strokeP(g, 'rgba(230,230,245,0.4)', 1);
+        }
+      }
+      return;
+    }
+    rectP(g, x, y, w, h);
+    g.fillStyle = K.lin(g, x, y, x + w * 0.3, y + h, past ? ['rgba(200,205,225,0.55)', 'rgba(150,160,180,0.3)', 'rgba(120,130,150,0.22)'] : ['rgba(150,150,165,0.45)', 'rgba(90,90,105,0.35)', 'rgba(60,60,70,0.3)']);
+    g.fill();
+    if (!past) {
+      // 污垢与裂纹
+      rectP(g, x, y, w, h); fillP(g, K.lin(g, 0, y, 0, y + h, ['rgba(60,56,44,0)', 'rgba(60,56,44,0.3)']));
+      if ((idx * 7) % 4 === 1) {
+        var cxp = x + w * r.range(0.3, 0.7), cyp = y + h * r.range(0.3, 0.7);
+        g.beginPath(); for (var c2 = 0; c2 < 5; c2++) { var a = r() * TAU; g.moveTo(cxp, cyp); g.lineTo(cxp + Math.cos(a) * w, cyp + Math.sin(a) * h * 0.6); }
+        strokeP(g, 'rgba(220,220,235,0.45)', 1);
+      }
+    } else if (q.light >= 1) {
+      g.beginPath(); g.moveTo(x + w * 0.2, y + h); g.lineTo(x + w * 0.55, y); g.lineTo(x + w * 0.75, y); g.lineTo(x + w * 0.4, y + h); g.closePath(); fillP(g, 'rgba(255,255,255,0.16)');
+    }
+  }
+  function drawFountain(g, q, past) {
+    var cx = 384, by = 846, rx = 168, ry = 40, wallH = 40;
+    if (q.light >= 1) K.contact(g, cx + 14, by + wallH + 4, rx * 1.15, ry * 0.8, 0.6);
+    // 外池壁
+    g.beginPath(); g.ellipse(cx, by, rx, ry, 0, 0, PI); g.lineTo(cx - rx, by - 0); g.closePath();
+    g.beginPath(); g.moveTo(cx - rx, by); g.ellipse(cx, by, rx, ry, 0, PI, 0, true); g.lineTo(cx + rx, by + wallH); g.ellipse(cx, by + wallH, rx, ry, 0, 0, PI); g.closePath();
+    mat(g, q, '#5c5a64', 'stone', STEP_STONE, 128, 0, by);
+    g.beginPath(); g.moveTo(cx - rx, by); g.ellipse(cx, by, rx, ry, 0, PI, 0, true); g.lineTo(cx + rx, by + wallH); g.ellipse(cx, by + wallH, rx, ry, 0, 0, PI); g.closePath();
+    shadeLin(g, cx - rx, 0, cx + rx, 0, [[0, 'rgba(230,230,245,0.12)'], [0.5, 'rgba(0,0,0,0.1)'], [1, 'rgba(0,0,0,0.5)']]);
+    // 池沿与水面
+    K.ellipse(g, cx, by, rx, ry); fillP(g, '#77747f');
+    K.ellipse(g, cx, by + 2, rx - 14, ry - 8);
+    fillP(g, K.lin(g, 0, by - ry, 0, by + ry, past ? ['#8a8ca0', '#4a5060'] : ['#4a4e52', '#26302a']));
+    if (!past && q.model >= 1) { var r = RNG(151); for (var i = 0; i < 12; i++) { K.ellipse(g, cx + r.range(-130, 130), by + r.range(-20, 24), r.range(4, 12), r.range(2, 4)); fillP(g, r() < 0.5 ? 'rgba(80,90,50,0.7)' : 'rgba(110,80,40,0.7)'); } }
+    if (q.light >= 2) { K.ellipse(g, cx - 40, by - 8, 70, 5); fillP(g, 'rgba(220,220,235,0.2)'); }
+    // 中心柱与上层水盘
+    rectP(g, cx - 16, by - 92, 32, 92); fillP(g, K.lin(g, cx - 16, 0, cx + 16, 0, ['#8a8792', '#5a5862', '#34323a']));
+    g.beginPath(); g.ellipse(cx, by - 92, 74, 16, 0, 0, PI); g.lineTo(cx - 60, by - 112); g.lineTo(cx + 60, by - 112); g.closePath();
+    g.beginPath(); g.moveTo(cx - 74, by - 96); g.quadraticCurveTo(cx, by - 50, cx + 74, by - 96); g.closePath(); fillP(g, K.lin(g, cx - 74, 0, cx + 74, 0, ['#8a8792', '#55525d', '#33313a']));
+    K.ellipse(g, cx, by - 96, 74, 15); fillP(g, '#7a7782');
+    K.ellipse(g, cx, by - 95, 64, 11); fillP(g, past ? '#7a8094' : '#3c4440');
+    // 顶上的乌鸦石像
+    var sx = cx, sy = by - 104;
+    rectP(g, sx - 10, sy - 26, 20, 26); fillP(g, '#5a5862');
+    g.save(); g.translate(sx, sy - 26);
+    K.path(g, 'M-26 0 C-24 -14 -14 -28 2 -32 C8 -40 18 -42 24 -38 L34 -36 L24 -32 C26 -24 22 -14 14 -8 L18 0 Z');
+    fillP(g, K.lin(g, -26, -40, 26, 0, ['#5e5c66', '#2e2c34']));
+    if (q.light >= 1) { K.path(g, 'M-26 0 C-24 -14 -14 -28 2 -32 C8 -40 18 -42 24 -38'); strokeP(g, 'rgba(210,210,230,0.35)', 2); }
+    g.restore();
+    // 青苔与水渍
+    if (!past && q.model >= 1) { g.save(); g.beginPath(); g.moveTo(cx - rx, by); g.ellipse(cx, by, rx, ry, 0, PI, 0, true); g.lineTo(cx + rx, by + wallH); g.ellipse(cx, by + wallH, rx, ry, 0, 0, PI); g.closePath(); g.clip(); for (var m = 0; m < 10; m++) K.blob(g, cx + (m - 5) * 34, by + wallH, 26, '#3a4a30', 0.5); g.restore(); }
+    // 往日：流水
+    if (past) {
+      g.strokeStyle = 'rgba(210,220,235,0.6)'; g.lineWidth = 2;
+      g.beginPath();
+      for (var f = 0; f < 9; f++) { var fx = cx - 60 + f * 15; g.moveTo(fx, by - 92); g.quadraticCurveTo(fx + (fx - cx) * 0.2, by - 60, fx + (fx - cx) * 0.35, by - 4); }
+      g.stroke();
+      g.strokeStyle = 'rgba(220,228,240,0.45)'; g.lineWidth = 1.5;
+      for (var rI = 1; rI < 4; rI++) { K.ellipse(g, cx, by + 2, 70 + rI * 24, 10 + rI * 6); g.stroke(); }
+      if (q.light >= 2) K.glow(g, cx, by - 40, 80, '#dfe8f0', 0.15);
+    }
+  }
+  function drawEasel(g, q, x, y) {
+    if (q.light >= 1) K.contact(g, x + 8, y, 74, 14, 0.6);
+    var wood = '#6a4a2e', dark = '#3a2618';
+    g.lineCap = 'butt';
+    K.line(g, x + 4, y - 200, x + 18, y + 4, 7, dark);              // 后腿
+    K.line(g, x - 6, y - 210, x - 52, y, 8, wood); K.line(g, x + 6, y - 210, x + 52, y, 8, wood);
+    K.line(g, x - 7, y - 211, x - 53, y - 1, 2, 'rgba(255,220,180,0.25)');
+    K.line(g, x - 40, y - 96, x + 40, y - 96, 8, wood);               // 托架
+    // 画布：画中是夜色里的塔与月
+    var cx0 = x - 56, cy0 = y - 196, cw = 112, chh = 96;
+    rectP(g, cx0 - 4, cy0 - 4, cw + 8, chh + 8); fillP(g, '#d8d0bc');
+    rectP(g, cx0, cy0, cw, chh); fillP(g, K.lin(g, 0, cy0, 0, cy0 + chh, ['#2a3050', '#4a4a6a', '#2a2a3a']));
+    K.ellipse(g, cx0 + 82, cy0 + 24, 12, 12); fillP(g, '#e8e0c0');
+    g.fillStyle = '#14141e'; g.fillRect(cx0 + 36, cy0 + 30, 16, 66); K.poly(g, [cx0 + 32, cy0 + 30, cx0 + 44, cy0 + 10, cx0 + 56, cy0 + 30]); g.fill();
+    g.fillRect(cx0, cy0 + 78, cw, 18);
+    if (q.model >= 1) { g.strokeStyle = 'rgba(200,180,140,0.5)'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx0 + 10, cy0 + 70); g.quadraticCurveTo(cx0 + 50, cy0 + 60, cx0 + 100, cy0 + 72); g.stroke(); }
+    K.line(g, x - 2, y - 214, x - 2, cy0 - 4, 6, wood);
+    rectP(g, cx0 - 6, cy0 + chh + 4, cw + 12, 6); fillP(g, dark);
+    // 颜料箱
+    K.rr(g, x + 26, y - 18, 46, 18, 2); fillP(g, '#5a3a22');
+    g.fillStyle = '#c8b070'; g.fillRect(x + 30, y - 22, 6, 4); g.fillStyle = '#a03a3a'; g.fillRect(x + 40, y - 22, 6, 4); g.fillStyle = '#3a5aa0'; g.fillRect(x + 50, y - 22, 6, 4);
+    g.lineCap = 'round';
+  }
+  function drawWheelbarrow(g, q, x, y) {
+    if (q.light >= 1) K.contact(g, x, y, 70, 12, 0.55);
+    K.line(g, x - 50, y - 50, x - 70, y - 20, 5, '#3a2a1a'); K.line(g, x + 20, y - 40, x + 30, y, 5, '#3a2a1a');
+    K.poly(g, [x - 56, y - 86, x + 52, y - 86, x + 40, y - 40, x - 46, y - 40]); fillP(g, K.lin(g, 0, y - 86, 0, y - 40, ['#7a6a5a', '#4a3e34']));
+    K.ellipse(g, x - 60, y - 22, 22, 22); g.strokeStyle = '#2a2018'; g.lineWidth = 6; g.stroke();
+    K.line(g, x + 40, y - 80, x + 90, y - 110, 6, '#5a4028');
+    for (var i = 0; i < 4; i++) { var fx = x - 40 + i * 24; K.poly(g, [fx, y - 110, fx + 20, y - 110, fx + 16, y - 88, fx + 4, y - 88]); fillP(g, '#a0583a'); canopy(g, q, fx + 10, y - 116, 14, 10, '#3a5a34', '#5a8048', RNG(i + 3), 4); K.ellipse(g, fx + 10, y - 122, 4, 4); fillP(g, i % 2 ? '#e07080' : '#f0d070'); }
+  }
+  function drawBench(g, q, x, y, past) {
+    if (q.light >= 1) K.contact(g, x + 10, y + 2, 170, 16, 0.6);
+    var iron = '#1e1c22', wood = past ? '#7a5a3a' : '#4e3e30';
+    // 腿与扶手（铸铁卷花）
+    g.strokeStyle = iron; g.lineWidth = 7;
+    g.beginPath(); g.moveTo(x - 130, y); g.quadraticCurveTo(x - 140, y - 30, x - 128, y - 50); g.moveTo(x + 130, y); g.quadraticCurveTo(x + 140, y - 30, x + 128, y - 50); g.stroke();
+    g.beginPath(); g.moveTo(x - 140, y - 56); g.quadraticCurveTo(x - 154, y - 80, x - 136, y - 92); g.moveTo(x + 140, y - 56); g.quadraticCurveTo(x + 154, y - 80, x + 136, y - 92); g.stroke();
+    g.lineWidth = 4; g.beginPath(); g.arc(x - 146, y - 80, 8, 0, TAU); g.moveTo(x + 154, y - 80); g.arc(x + 146, y - 80, 8, 0, TAU); g.stroke();
+    // 靠背板条
+    for (var i = 0; i < 3; i++) { rectP(g, x - 132, y - 100 + i * 14, 264, 10); fillP(g, K.lin(g, 0, y - 100 + i * 14, 0, y - 90 + i * 14, [K.shade(wood, 0.1), K.shade(wood, -0.3)])); }
+    // 座面板条
+    for (i = 0; i < 2; i++) { rectP(g, x - 140, y - 56 + i * 9, 280, 8); fillP(g, K.lin(g, 0, y - 56 + i * 9, 0, y - 48 + i * 9, [K.shade(wood, 0.15), K.shade(wood, -0.3)])); }
+    if (q.light >= 2 && !past) { g.fillStyle = 'rgba(210,210,230,0.25)'; g.fillRect(x - 120, y - 56, 200, 1.5); }
+    if (!past && q.model >= 1) { K.blob(g, x - 100, y - 54, 16, '#3a4a30', 0.4); }
+  }
+  DM.HDBG.def('courtyard', {
+    outdoor: true,
+    draw: function (g, q, v) { drawCourtyard(g, q, v); },
+    lights: function (v) {
+      var L = [];
+      for (var i = 0; i < CY_LIT.length; i++) L.push({ x: CY_LIT[i][0], y: CY_LIT[i][1] + 10, r: 80, color: v === 'past' ? '#ffd28a' : '#ffbe6a', i: 0.45, flicker: 0.03, kind: 'window' });
+      L.push({ x: 1015, y: 630, r: 70, color: '#ffb35c', i: 0.5, flicker: 0.05, kind: 'lamp' });
+      return L;
+    },
+    key: function (v) { return { x: -0.45, color: v === 'past' ? '#e4dccc' : '#d2d4e2', amb: '#383a50', rim: 0.35 }; }
+  });
+
 })(typeof window !== 'undefined' ? window : globalThis);

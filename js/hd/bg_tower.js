@@ -1676,4 +1676,372 @@
     key: { x: 0.55, color: '#d8e0f4', amb: '#2a2a36', rim: 0.55 },
     outdoor: false
   });
+  /* =================================================================
+   * 鸦之塔·机械室 clockroom（4F）
+   * ================================================================= */
+  var METAL = {
+    brass: { lo: '#4a3210', mid: '#a8803a', hi: '#f6e0a0', edge: '#2a1a06', line: 'rgba(40,24,6,0.8)' },
+    iron: { lo: '#141418', mid: '#4a4c56', hi: '#a2a4b0', edge: '#08080a', line: 'rgba(0,0,0,0.85)' },
+    green: { lo: '#0e1a16', mid: '#2e4a40', hi: '#6a8a7c', edge: '#060a08', line: 'rgba(0,0,0,0.85)' }
+  };
+  // 齿轮外形（带辐条镂空；nonzero 规则下镂空反向绕行）
+  function gearPath(g, cx, cy, r, teeth, th, rot, spokes, pointed) {
+    var step = TAU / teeth, rr = r - th, i;
+    g.beginPath();
+    for (i = 0; i < teeth; i++) {
+      var a = rot + i * step, a1 = a + step * (pointed ? 0.5 : 0.2), a2 = a + step * (pointed ? 0.5 : 0.42), a3 = a + step * (pointed ? 0.62 : 0.62);
+      if (i === 0) g.moveTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+      g.lineTo(cx + Math.cos(a1) * r, cy + Math.sin(a1) * r);
+      if (!pointed) g.lineTo(cx + Math.cos(a2) * r, cy + Math.sin(a2) * r);
+      g.lineTo(cx + Math.cos(a3) * rr, cy + Math.sin(a3) * rr);
+      g.arc(cx, cy, rr, a3, a + step, false);
+    }
+    g.closePath();
+    if (spokes > 0) {
+      var ri = rr - Math.max(6, r * 0.13), rh = Math.max(8, r * 0.26), sw = Math.max(4, r * 0.07);
+      for (var k = 0; k < spokes; k++) {
+        var b0 = rot * 0.5 + k / spokes * TAU, b1 = b0 + TAU / spokes;
+        var d0 = sw / ri, d1 = sw * 1.4 / rh;
+        g.moveTo(cx + Math.cos(b1 - d0) * ri, cy + Math.sin(b1 - d0) * ri);
+        g.arc(cx, cy, ri, b1 - d0, b0 + d0, true);
+        g.lineTo(cx + Math.cos(b0 + d1) * rh, cy + Math.sin(b0 + d1) * rh);
+        g.arc(cx, cy, rh, b0 + d1, b1 - d1, false);
+        g.closePath();
+      }
+    }
+  }
+  function gear(g, q, cx, cy, r, teeth, o) {
+    o = o || {};
+    var m = METAL[o.metal || 'brass'], th = clamp(r * 0.09, 5, 15), rot = o.rot || 0, sp = o.spokes === undefined ? (r > 50 ? 5 : 0) : o.spokes;
+    if (q.model <= 0) teeth = Math.max(8, Math.round(teeth / 2));
+    var dep = Math.max(3, r * 0.06);
+    if (q.light >= 2 && o.shadow !== false) {
+      g.save(); g.translate(o.sx === undefined ? 22 : o.sx, o.sy === undefined ? 16 : o.sy);
+      gearPath(g, cx, cy, r, teeth, th, rot, sp, o.pointed); g.fillStyle = 'rgba(0,0,0,0.32)'; g.fill(); g.restore();
+    }
+    g.save(); g.translate(dep * 0.6, dep);
+    gearPath(g, cx, cy, r, teeth, th, rot, sp, o.pointed); g.fillStyle = m.edge; g.fill(); g.restore();
+    gearPath(g, cx, cy, r, teeth, th, rot, sp, o.pointed);
+    g.fillStyle = K.lin(g, cx - r, cy - r, cx + r * 0.8, cy + r, [[0, m.hi], [0.3, m.mid], [0.7, K.mix(m.mid, m.lo, 0.5)], [1, m.lo]]); g.fill();
+    if (q.model > 0) { g.strokeStyle = m.line; g.lineWidth = 1.4; g.stroke(); }
+    // 车床纹 / 轮缘倒角
+    var rr = r - th, ri = rr - Math.max(6, r * 0.13);
+    if (q.light > 0) {
+      g.lineWidth = 2;
+      g.strokeStyle = 'rgba(255,240,200,0.35)'; g.beginPath(); g.arc(cx, cy, rr - 1.5, PI * 0.95, PI * 1.6); g.stroke();
+      g.strokeStyle = 'rgba(0,0,0,0.4)'; g.beginPath(); g.arc(cx, cy, rr - 1.5, PI * 0.0, PI * 0.6); g.stroke();
+      if (sp > 0) { g.strokeStyle = 'rgba(0,0,0,0.45)'; g.beginPath(); g.arc(cx, cy, ri, PI, PI * 1.7); g.stroke(); g.strokeStyle = 'rgba(255,240,200,0.25)'; g.beginPath(); g.arc(cx, cy, ri, 0, PI * 0.7); g.stroke(); }
+    }
+    if (q.model >= 2 && r > 40) { g.strokeStyle = 'rgba(255,255,255,0.06)'; g.lineWidth = 1; for (var lr = r * 0.32; lr < ri; lr += 7) { g.beginPath(); g.arc(cx, cy, lr, 0, TAU); g.stroke(); } }
+    // 轮毂 + 轴
+    var hr = Math.max(7, r * 0.2);
+    g.beginPath(); g.arc(cx, cy, hr, 0, TAU);
+    g.fillStyle = K.rad(g, cx - hr * 0.4, cy - hr * 0.4, 1, hr * 1.2, [[0, m.hi], [0.5, m.mid], [1, m.lo]]); g.fill();
+    g.strokeStyle = m.line; g.lineWidth = 1.5; g.stroke();
+    g.beginPath(); g.arc(cx, cy, hr * 0.42, 0, TAU); g.fillStyle = K.rad(g, cx - 2, cy - 2, 0, hr * 0.5, ['#e8e8f0', '#6a6a74', '#1a1a1e']); g.fill();
+    if (q.light >= 2) {
+      g.save(); g.globalCompositeOperation = 'lighter';
+      g.strokeStyle = 'rgba(255,245,210,0.45)'; g.lineWidth = Math.max(2, th * 0.35);
+      g.beginPath(); g.arc(cx, cy, r - th * 0.5, PI * 1.12, PI * 1.38); g.stroke();
+      g.fillStyle = 'rgba(255,255,240,0.6)'; g.beginPath(); g.arc(cx - hr * 0.3, cy - hr * 0.35, Math.max(1.5, hr * 0.15), 0, TAU); g.fill();
+      g.restore();
+    }
+  }
+  // 钟（侧剖面轮廓），cx 中心、top 冠顶、h 高
+  function bellShape(g, cx, top, h) {
+    var w = h * 0.52;
+    g.beginPath();
+    g.moveTo(cx - w * 0.42, top + h * 0.1);
+    g.bezierCurveTo(cx - w * 0.5, top + h * 0.02, cx - w * 0.2, top, cx, top);
+    g.bezierCurveTo(cx + w * 0.2, top, cx + w * 0.5, top + h * 0.02, cx + w * 0.42, top + h * 0.1);
+    g.bezierCurveTo(cx + w * 0.56, top + h * 0.4, cx + w * 0.5, top + h * 0.62, cx + w * 0.72, top + h * 0.86);
+    g.bezierCurveTo(cx + w * 0.84, top + h * 0.95, cx + w * 1.0, top + h * 0.96, cx + w * 1.0, top + h);
+    g.lineTo(cx - w * 1.0, top + h);
+    g.bezierCurveTo(cx - w * 1.0, top + h * 0.96, cx - w * 0.84, top + h * 0.95, cx - w * 0.72, top + h * 0.86);
+    g.bezierCurveTo(cx - w * 0.5, top + h * 0.62, cx - w * 0.56, top + h * 0.4, cx - w * 0.42, top + h * 0.1);
+    g.closePath();
+    return w;
+  }
+  function bell(g, q, cx, top, h) {
+    var w = h * 0.52;
+    // 钟口内部（深色椭圆）+ 钟舌
+    K.ellipse(g, cx, top + h, w, h * 0.07); g.fillStyle = '#120c06'; g.fill();
+    g.strokeStyle = '#2a2018'; g.lineWidth = Math.max(3, h * 0.04); g.beginPath(); g.moveTo(cx, top + h * 0.5); g.lineTo(cx + 2, top + h * 1.02); g.stroke();
+    g.beginPath(); g.arc(cx + 2, top + h * 1.04, h * 0.05, 0, TAU); g.fillStyle = '#3a3028'; g.fill();
+    bellShape(g, cx, top, h);
+    g.fillStyle = K.lin(g, cx - w, 0, cx + w, 0, [[0, '#2a1a0a'], [0.18, '#7a5428'], [0.32, '#e8c078'], [0.42, '#a8783a'], [0.7, '#5a3a18'], [1, '#1e1206']]);
+    g.fill();
+    g.save(); bellShape(g, cx, top, h); g.clip();
+    // 铜绿
+    if (q.tex > 0 || q.model > 0) {
+      var rr = K.rng(Math.round(cx));
+      for (var i = 0; i < byM(q, 3, 6, 10); i++) {
+        var vx = cx - w * 0.8 + rr() * w * 1.6, vy = top + h * (0.15 + rr() * 0.4);
+        g.fillStyle = K.lin(g, 0, vy, 0, vy + h * 0.5, ['rgba(80,140,110,0.35)', 'rgba(80,140,110,0)']);
+        g.fillRect(vx, vy, 4 + rr() * 10, h * 0.5);
+      }
+    }
+    // 腰线 / 唇线
+    g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(cx - w, top + h * 0.2, w * 2, h * 0.015); g.fillRect(cx - w, top + h * 0.8, w * 2, h * 0.02);
+    g.fillStyle = 'rgba(255,230,170,0.25)'; g.fillRect(cx - w, top + h * 0.82, w * 2, h * 0.012);
+    g.fillStyle = K.lin(g, 0, top + h * 0.88, 0, top + h, ['rgba(0,0,0,0)', 'rgba(0,0,0,0.35)']); g.fillRect(cx - w, top + h * 0.88, w * 2, h * 0.12);
+    if (q.light >= 2) { g.globalCompositeOperation = 'lighter'; g.fillStyle = K.lin(g, cx - w * 0.5, 0, cx - w * 0.2, 0, ['rgba(255,240,200,0)', 'rgba(255,240,200,0.35)', 'rgba(255,240,200,0)']); g.fillRect(cx - w * 0.6, top + h * 0.1, w * 0.5, h * 0.85); }
+    g.restore();
+    // 冠（吊环）
+    g.fillStyle = K.lin(g, cx - w * 0.3, 0, cx + w * 0.3, 0, ['#3a2810', '#c8a060', '#3a2810']);
+    K.rr(g, cx - w * 0.22, top - h * 0.1, w * 0.44, h * 0.13, 4); g.fill();
+  }
+
+  var CLK = TRoom({ hy: 420, top0: 70, bot0: 792, c: 0.06 });
+  function drawClockroom(g, q) {
+    var R = CLK, rnd = K.rng(6101), i;
+    // ---- 屋顶：圆锥屋顶的椽子朝中心汇聚 ----
+    K.vgrad(g, 0, 0, W, 180, ['#1a120c', '#2a1c12']);
+    for (i = -14; i <= 14; i++) {
+      var bx = 960 + i * 80, by = R.top(bx), ax = 960 + i * 20, ay = -260;
+      var tw = 20 - Math.abs(i) * 0.4;
+      K.poly(g, [bx - tw, by, bx + tw, by, ax + 4, ay, ax - 4, ay]);
+      g.fillStyle = K.lin(g, bx - tw, 0, bx + tw, 0, ['#4a3018', '#2a180a']); g.fill();
+    }
+    if (q.tex > 0) { ceilRegion(g, R); g.globalCompositeOperation = 'overlay'; K.fillTex(g, q, 'wood', OAK_V, OAK_U, 0, 0, 0.6); g.globalCompositeOperation = 'source-over'; }
+    // ---- 墙：石砌 ----
+    wallRegion(g, R); g.fillStyle = '#4a443e'; g.fill();
+    g.save(); wallRegion(g, R); g.clip();
+    blockWall(g, q, 0, 0, W, 820, { c1: '#5a544c', c2: '#827a6e', mortar: '#2a2622', bh: 52, bw: 118, seed: 611, grain: 256 });
+    g.restore();
+    // 檐下木圈梁
+    wallPath(g, R, 0, W, 70, 108, 24); oakFill(g, q, '#3a2414', true, 0, 0, ['#1e0e06', 0.25]);
+    wallPath(g, R, 0, W, 108, 126, 24); g.fillStyle = K.lin(g, 0, 108, 0, 126, ['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']); g.fill();
+    // 地板
+    woodFloor(g, q, R, { base: '#3e2614', seed: 61, boards: byM(q, 16, 22, 28) });
+    if (q.light > 0) {
+      g.save(); floorRegion(g, R); g.clip();
+      for (var i2 = 0; i2 < 24; i2++) { var xa = W * i2 / 24, xb = W * (i2 + 1) / 24; K.poly(g, [xa, R.bot(xa) - 2, xb, R.bot(xb) - 2, xb, R.bot(xb) + 50, xa, R.bot(xa) + 50]); g.fillStyle = K.lin(g, 0, R.bot(xa), 0, R.bot(xa) + 50, ['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']); g.fill(); }
+      g.restore();
+      // 地上的灰尘
+      floorRegion(g, R); g.fillStyle = 'rgba(120,110,95,0.08)'; g.fill();
+    }
+
+    // ---- 钟面背面（左侧墙上的圆窗，乳白玻璃透光，数字是反的）----
+    var dcx = 210, dcy = 330, dr = 158;
+    (function dialBack() {
+      g.beginPath(); g.arc(dcx, dcy, dr + 30, 0, TAU); g.fillStyle = K.lin(g, dcx - dr, dcy - dr, dcx + dr, dcy + dr, ['#8a8276', '#4a443c']); g.fill();
+      if (q.model > 0) { g.strokeStyle = 'rgba(20,16,12,0.55)'; g.lineWidth = 2.5; for (var v = 0; v < 16; v++) { var a = v / 16 * TAU; g.beginPath(); g.moveTo(dcx + Math.cos(a) * dr, dcy + Math.sin(a) * dr); g.lineTo(dcx + Math.cos(a) * (dr + 30), dcy + Math.sin(a) * (dr + 30)); g.stroke(); } }
+      g.beginPath(); g.arc(dcx, dcy, dr + 4, 0, TAU); g.fillStyle = '#1a1612'; g.fill();
+      g.beginPath(); g.arc(dcx, dcy, dr, 0, TAU);
+      g.fillStyle = K.rad(g, dcx - 30, dcy - 40, 10, dr, [[0, '#fbf6e8'], [0.6, '#e4dcc8'], [1, '#b8ae98']]); g.fill();
+      // 反向的罗马数字（从背后看）
+      g.save(); g.translate(dcx, dcy); g.scale(-1, 1);
+      var nums = ['XII', 'I', 'II', 'III', 'IIII', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+      for (var n = 0; n < 12; n++) {
+        var an = n / 12 * TAU - PI / 2;
+        K.text(g, nums[n], Math.cos(an) * dr * 0.78, Math.sin(an) * dr * 0.78, 24, 'rgba(40,30,24,0.55)', { font: 'Georgia,serif', weight: 'bold' });
+      }
+      g.restore();
+      g.strokeStyle = 'rgba(40,30,24,0.4)'; g.lineWidth = 2; g.beginPath(); g.arc(dcx, dcy, dr * 0.92, 0, TAU); g.stroke(); g.beginPath(); g.arc(dcx, dcy, dr * 0.64, 0, TAU); g.stroke();
+      // 指针的影子（从背面看是剪影）
+      g.strokeStyle = 'rgba(20,14,10,0.75)'; g.lineWidth = 9; g.beginPath(); g.moveTo(dcx, dcy); g.lineTo(dcx + 8, dcy - dr * 0.55); g.stroke();
+      g.lineWidth = 6; g.beginPath(); g.moveTo(dcx, dcy); g.lineTo(dcx - dr * 0.72, dcy + 20); g.stroke();
+      // 铁辐框
+      g.strokeStyle = '#2a2622'; g.lineWidth = 6;
+      for (var s2 = 0; s2 < 6; s2++) { var a2 = s2 / 6 * TAU; g.beginPath(); g.moveTo(dcx + Math.cos(a2) * 24, dcy + Math.sin(a2) * 24); g.lineTo(dcx + Math.cos(a2) * dr, dcy + Math.sin(a2) * dr); g.stroke(); }
+      g.beginPath(); g.arc(dcx, dcy, 26, 0, TAU); g.fillStyle = ironGrad(g, dcx - 26, dcy - 26, dcx + 26, dcy + 26); g.fill();
+    })();
+
+    // ---- 机芯铁架 + 齿轮组（锚点 384-1184, 144-720）----
+    // 后层齿轮
+    gear(g, q, 610, 440, 172, 72, { metal: 'iron', spokes: 6, rot: 0.05 });
+    gear(g, q, 900, 330, 112, 48, { metal: 'brass', spokes: 5, rot: 0.2 });
+    if (q.model > 0) gear(g, q, 1080, 520, 70, 30, { metal: 'brass', spokes: 4, rot: 0.1 });
+    // 铁架（墨绿铸铁）
+    (function frame() {
+      var m = METAL.green;
+      function bar(x, y, w, h) {
+        g.fillStyle = w > h ? K.lin(g, 0, y, 0, y + h, [m.hi, m.mid, m.lo]) : K.lin(g, x, 0, x + w, 0, [m.hi, m.mid, m.lo]);
+        g.fillRect(x, y, w, h);
+        g.fillStyle = 'rgba(0,0,0,0.5)'; if (w > h) g.fillRect(x, y + h, w, 3); else g.fillRect(x + w, y, 3, h);
+      }
+      if (q.light >= 2) { g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(430, 186, 760, 18); g.fillRect(434, 186, 22, 610); g.fillRect(1176, 186, 22, 610); }
+      bar(404, 166, 28, R.bot(418) - 166 + 6); bar(1150, 166, 28, R.bot(1164) - 166 + 6);
+      bar(390, 160, 802, 24); bar(404, 626, 774, 22);
+      bar(790, 184, 20, 442);
+      // 斜撑
+      g.strokeStyle = m.mid; g.lineWidth = 12; g.beginPath(); g.moveTo(432, 620); g.lineTo(780, 190); g.moveTo(1150, 620); g.lineTo(820, 190); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.1)'; g.lineWidth = 3; g.beginPath(); g.moveTo(430, 614); g.lineTo(778, 186); g.stroke();
+      // 脚
+      for (var f = 0; f < 2; f++) { var fx = f ? 1164 : 418, fy = R.bot(fx) + 8; g.fillStyle = K.lin(g, fx - 34, 0, fx + 34, 0, [m.hi, m.mid, m.lo]); K.poly(g, [fx - 22, fy - 40, fx + 22, fy - 40, fx + 38, fy, fx - 38, fy]); g.fill(); }
+      // 螺栓
+      if (q.model > 0) { var bolts = [[418, 172], [1164, 172], [418, 636], [1164, 636], [800, 172], [800, 636]]; for (var b = 0; b < bolts.length; b++) rivet(g, q, bolts[b][0], bolts[b][1], 7); }
+    })();
+    // 传动杆：机芯 → 钟面
+    g.fillStyle = K.lin(g, 0, dcy - 8, 0, dcy + 8, ['#2a2a30', '#b0b0ba', '#3a3a42', '#141418']); g.fillRect(dcx + 26, dcy - 7, 404 - dcx - 26, 14);
+    if (q.model > 0) { gear(g, q, 404, dcy, 30, 14, { metal: 'brass', spokes: 0, shadow: false }); g.fillStyle = ironGrad(g, 300, 0, 330, 0); g.fillRect(304, dcy - 14, 20, 28); }
+
+    // ---- 重锤滚筒（锚点 464-800, 640-800）：缠满钢索 ----
+    (function drum() {
+      var x0 = 478, x1 = 786, cy = 716, r = 56;
+      if (q.light > 0) K.contact(g, (x0 + x1) / 2, 806, 200, 16, 0.6);
+      // 支座
+      g.fillStyle = METAL.green.mid; g.fillRect(x0 - 26, cy - 20, 22, 92); g.fillRect(x1 + 4, cy - 20, 22, 92);
+      g.fillStyle = 'rgba(0,0,0,0.4)'; g.fillRect(x0 - 26, cy + 60, 22, 12); g.fillRect(x1 + 4, cy + 60, 22, 12);
+      // 筒身
+      g.fillStyle = K.lin(g, 0, cy - r, 0, cy + r, [[0, '#2a1c10'], [0.2, '#8a6440'], [0.38, '#c8a070'], [0.6, '#6a4828'], [1, '#1a1008']]);
+      g.fillRect(x0, cy - r, x1 - x0, r * 2);
+      // 钢索圈
+      var turns = byM(q, 14, 26, 38);
+      for (var t = 0; t < turns; t++) {
+        var tx = x0 + 18 + t * (x1 - x0 - 36) / turns;
+        g.strokeStyle = 'rgba(20,20,24,0.85)'; g.lineWidth = Math.max(3, (x1 - x0 - 36) / turns * 0.8);
+        g.beginPath(); g.moveTo(tx, cy - r); g.quadraticCurveTo(tx + 4, cy, tx + 8, cy + r); g.stroke();
+        if (q.light > 0) { g.strokeStyle = 'rgba(220,220,230,0.45)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(tx - 1, cy - r * 0.7); g.quadraticCurveTo(tx + 1, cy - r * 0.35, tx + 2.5, cy - r * 0.1); g.stroke(); }
+      }
+      // 两端法兰
+      for (var e = 0; e < 2; e++) {
+        var ex = e ? x1 : x0;
+        K.ellipse(g, ex, cy, 16, r + 10); g.fillStyle = K.lin(g, 0, cy - r, 0, cy + r, ['#d8b070', '#8a6430', '#2a1a08']); g.fill();
+        g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 2; g.stroke();
+      }
+      // 棘轮（左端）
+      gear(g, q, x0 - 2, cy, 46, 20, { metal: 'brass', spokes: 0, pointed: true, shadow: false });
+      // 钢索从筒底垂入地板的孔
+      g.strokeStyle = '#2a2a30'; g.lineWidth = 4; g.beginPath(); g.moveTo(x1 - 40, cy + r); g.lineTo(x1 - 34, 846); g.stroke();
+      g.strokeStyle = 'rgba(220,220,230,0.4)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(x1 - 41, cy + r); g.lineTo(x1 - 35.5, 846); g.stroke();
+      K.ellipse(g, x1 - 34, 848, 16, 5); g.fillStyle = '#050404'; g.fill();
+      g.strokeStyle = 'rgba(120,110,95,0.6)'; g.lineWidth = 2; g.stroke();
+    })();
+
+    // 前层齿轮
+    gear(g, q, 540, 300, 64, 28, { metal: 'brass', spokes: 4, rot: 0.3 });
+    gear(g, q, 735, 285, 84, 36, { metal: 'brass', spokes: 4, rot: 0.1 });
+    gear(g, q, 1010, 230, 54, 24, { metal: 'brass', spokes: 4, rot: 0.2, pointed: true });
+    gear(g, q, 712, 500, 40, 12, { metal: 'brass', spokes: 0 });
+    gear(g, q, 1040, 410, 92, 40, { metal: 'iron', spokes: 5, rot: 0.25 });
+    if (q.model > 0) { gear(g, q, 900, 520, 46, 18, { metal: 'brass', spokes: 0 }); gear(g, q, 860, 210, 30, 12, { metal: 'iron', spokes: 0 }); }
+    // 擒纵叉 + 摆
+    (function pendulum() {
+      var px = 1110, py0 = 236, py1 = 700;
+      g.strokeStyle = '#2a2a30'; g.lineWidth = 6; g.beginPath(); g.moveTo(1010, 230); g.lineTo(px, py0); g.stroke();
+      g.fillStyle = K.lin(g, px - 5, 0, px + 5, 0, ['#5a5a64', '#d0d0d8', '#3a3a42']); g.fillRect(px - 4, py0, 8, py1 - py0);
+      g.beginPath(); g.arc(px, py1, 40, 0, TAU);
+      g.fillStyle = K.rad(g, px - 14, py1 - 14, 2, 46, [[0, '#fff0c0'], [0.3, '#d8b060'], [0.7, '#7a5420'], [1, '#2a1806']]); g.fill();
+      g.strokeStyle = 'rgba(40,24,6,0.8)'; g.lineWidth = 2; g.stroke();
+      if (q.light >= 2) { g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(255,250,220,0.5)'; K.ellipse(g, px - 14, py1 - 16, 9, 5, -0.6); g.fill(); g.restore(); }
+    })();
+    // 打钟拉杆（机芯 → 钟锤）
+    g.strokeStyle = '#26262c'; g.lineWidth = 4;
+    g.beginPath(); g.moveTo(1010, 170); g.lineTo(1330, 300); g.moveTo(1060, 166); g.lineTo(1500, 352); g.moveTo(1120, 172); g.lineTo(1700, 300); g.stroke();
+    if (q.light > 0) { g.strokeStyle = 'rgba(200,200,210,0.25)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(1010, 168); g.lineTo(1330, 298); g.moveTo(1060, 164); g.lineTo(1500, 350); g.stroke(); }
+
+    // ---- 钟架 + 三口钟（锚点 1264-1776, 64-400）----
+    (function bells() {
+      // 大木梁
+      g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(1240, 98, 580, 16);
+      g.beginPath(); g.rect(1230, 52, 590, 48); oakFill(g, q, '#4a2c16', true, 1230, 52, ['#2a1408', 0.25]);
+      g.fillStyle = K.lin(g, 0, 52, 0, 100, ['rgba(255,220,170,0.18)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.45)']); g.fillRect(1230, 52, 590, 48);
+      // 立柱（梁的支撑，伸到画面上方屋架）
+      for (var c = 0; c < 2; c++) { var cx = c ? 1800 : 1240; g.beginPath(); g.rect(cx - 16, 0, 32, 60); oakFill(g, q, '#3a2414', false, cx, 0, ['#1a0c04', 0.3]); }
+      var B = [[1340, 112, 150], [1524, 108, 238], [1700, 114, 128]];
+      for (var b = 0; b < B.length; b++) {
+        var bx = B[b][0], bt = B[b][1], bh = B[b][2];
+        // 铁吊带
+        g.fillStyle = ironGrad(g, bx - 20, 0, bx + 20, 0); g.fillRect(bx - 18, 84, 36, bt - 84 + 6);
+        rivet(g, q, bx - 10, 92, 4); rivet(g, q, bx + 10, 92, 4);
+        if (q.light >= 2) { g.save(); g.translate(26, 18); bellShape(g, bx, bt, bh); g.fillStyle = 'rgba(0,0,0,0.3)'; g.fill(); g.restore(); }
+        bell(g, q, bx, bt, bh);
+        // 钟锤（外击锤）
+        var hx = bx - bh * 0.62, hy = bt + bh * 0.8;
+        g.strokeStyle = '#2a2a30'; g.lineWidth = 6; g.beginPath(); g.moveTo(hx - 30, bt + bh * 0.3); g.lineTo(hx, hy - 6); g.stroke();
+        g.fillStyle = ironGrad(g, hx - 14, hy - 14, hx + 14, hy + 14); K.rr(g, hx - 12, hy - 14, 24, 28, 5); g.fill();
+        rivet(g, q, hx - 30, bt + bh * 0.3, 5);
+      }
+    })();
+
+    // ---- 通往瞭望台的门（锚点 1616-1856, 352-800）：门闩在这一侧 ----
+    (function balconyDoor() {
+      var dx = 1640, dy = 376, dw = 196, dh = R.bot(1738) - dy + 4;
+      // 门缝透进的天光
+      g.fillStyle = 'rgba(200,210,235,0.9)'; g.fillRect(dx - 3, dy - 3, dw + 6, dh + 3);
+      g.fillStyle = '#2a2420'; K.rr(g, dx - 28, dy - 36, dw + 56, dh + 36, 4); g.fill();
+      g.fillStyle = K.lin(g, dx - 28, 0, dx + dw + 28, 0, ['#8a8276', '#5a524a', '#5a524a', '#2a2622']); K.rr(g, dx - 28, dy - 36, dw + 56, dh + 36, 4); g.fill();
+      g.fillStyle = 'rgba(210,220,245,0.95)'; g.fillRect(dx - 4, dy - 4, dw + 8, dh + 4);
+      oakDoor(g, q, dx, dy, dw, dh, { arch: 70, straps: [0.12, 0.5, 0.86], planks: 5, strapLen: 0.86, hingeRight: true });
+      // 门闩（粗铁闩横插在两个铁扣里）
+      var by = dy + dh * 0.52;
+      g.fillStyle = 'rgba(0,0,0,0.4)'; g.fillRect(dx - 10, by - 6, dw + 30, 26);
+      g.fillStyle = ironGrad(g, 0, by - 10, 0, by + 10); g.fillRect(dx - 20, by - 9, dw + 10, 18);
+      g.fillStyle = 'rgba(255,255,255,0.3)'; g.fillRect(dx - 20, by - 8, dw + 10, 2);
+      for (var k = 0; k < 2; k++) { var kx = k ? dx + 30 : dx + dw - 44; g.fillStyle = ironGrad(g, kx, by - 18, kx + 20, by + 18); K.rr(g, kx, by - 16, 22, 32, 3); g.fill(); rivet(g, q, kx + 11, by - 12, 3); rivet(g, q, kx + 11, by + 12, 3); }
+      g.fillStyle = ironGrad(g, dx - 50, by - 14, dx - 30, by + 14); K.rr(g, dx - 50, by - 15, 26, 30, 3); g.fill();
+      // 闩把手
+      g.strokeStyle = '#3a3a42'; g.lineWidth = 6; g.beginPath(); g.moveTo(dx + dw * 0.45, by); g.lineTo(dx + dw * 0.45, by + 34); g.stroke(); rivet(g, q, dx + dw * 0.45, by + 36, 6);
+      // 地面上的门缝光
+      g.save(); g.globalCompositeOperation = 'lighter';
+      K.poly(g, [dx, dy + dh, dx + dw, dy + dh, dx + dw - 40, dy + dh + 70, dx - 60, dy + dh + 70]);
+      g.fillStyle = K.lin(g, 0, dy + dh, 0, dy + dh + 70, ['rgba(180,195,230,0.35)', 'rgba(180,195,230,0)']); g.fill();
+      g.restore();
+    })();
+
+    // ---- 地板活板门（锚点 824-1064, 816-896）：通往书斋（从下面被钉死）----
+    (function floorHatch() {
+      var X0 = -112, X1 = 84, s0 = R.sAt(822), s1 = R.sAt(892);
+      floorPoly(g, R, [X0 - 10, s0 - 0.01, X1 + 10, s0 - 0.01, X1 + 10, s1 + 0.012, X0 - 10, s1 + 0.012]); g.fillStyle = '#140c06'; g.fill();
+      floorPoly(g, R, [X0, s0, X1, s0, X1, s1, X0, s1]); oakFill(g, q, '#4a2e18', false, 0, 0, ['#2a1408', 0.15]);
+      floorPoly(g, R, [X0, s0, X1, s0, X1, s1, X0, s1]); g.fillStyle = K.lin(g, 0, R.fp(0, s0)[1], 0, R.fp(0, s1)[1], ['rgba(0,0,0,0.35)', 'rgba(255,220,180,0.05)']); g.fill();
+      g.strokeStyle = 'rgba(10,5,2,0.8)'; g.lineWidth = 2.5;
+      for (var p = 1; p < 4; p++) { var Xp = lerp(X0, X1, p / 4), A = R.fp(Xp, s0), B = R.fp(Xp, s1); g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke(); }
+      // 铁条与拉环
+      var bands = [0.22, 0.78];
+      for (var b = 0; b < 2; b++) { var sb = lerp(s0, s1, bands[b]), A2 = R.fp(X0 + 6, sb), B2 = R.fp(X1 - 6, sb); g.fillStyle = ironGrad(g, 0, A2[1] - 4, 0, A2[1] + 4); g.fillRect(A2[0], A2[1] - 3.5, B2[0] - A2[0], 7); rivet(g, q, A2[0] + 8, A2[1], 3); rivet(g, q, B2[0] - 8, B2[1], 3); }
+      var rc = R.fp((X0 + X1) / 2, lerp(s0, s1, 0.5));
+      g.strokeStyle = '#4a4a52'; g.lineWidth = 5; K.ellipse(g, rc[0], rc[1] + 4, 16, 7); g.stroke(); rivet(g, q, rc[0], rc[1] - 3, 5);
+      // 缝里积灰、无人动过
+      if (q.model > 0) { floorPoly(g, R, [X0, s0, X1, s0, X1, s1, X0, s1]); g.strokeStyle = 'rgba(150,140,120,0.35)'; g.lineWidth = 2; g.stroke(); }
+    })();
+
+    // 吊灯（挂在梁下的油灯）
+    var lmp = [1196, 136];
+    (function hangLamp() {
+      g.strokeStyle = '#1a1a1e'; g.lineWidth = 3; g.beginPath(); g.moveTo(lmp[0], 0); g.lineTo(lmp[0], lmp[1] - 30); g.stroke();
+      K.poly(g, [lmp[0] - 16, lmp[1] - 30, lmp[0] + 16, lmp[1] - 30, lmp[0] + 20, lmp[1] + 22, lmp[0] - 20, lmp[1] + 22]); g.fillStyle = 'rgba(255,214,140,0.95)'; g.fill();
+      flameShape(g, lmp[0], lmp[1] + 12, 24, 1);
+      g.strokeStyle = '#18181c'; g.lineWidth = 3.5; K.poly(g, [lmp[0] - 16, lmp[1] - 30, lmp[0] + 16, lmp[1] - 30, lmp[0] + 20, lmp[1] + 22, lmp[0] - 20, lmp[1] + 22]); g.stroke();
+      K.poly(g, [lmp[0] - 22, lmp[1] - 30, lmp[0] + 22, lmp[1] - 30, lmp[0], lmp[1] - 50]); g.fillStyle = '#202024'; g.fill();
+    })();
+
+    // ================= 光照 =================
+    var L = lightMap(q, '#5a5668');
+    lmLight(L, dcx + 40, dcy + 40, 640, '#e8eef8', 0.7, 0.9);         // 钟面透光
+    lmLight(L, lmp[0], lmp[1] + 40, 560, '#ffc888', 0.75, 0.9);       // 吊灯
+    lmLight(L, 1738, 700, 420, '#b8c8e8', 0.45, 0.8);                 // 门缝天光
+    if (q.light > 0) {
+      lmLight(L, 700, 820, 520, '#d0d4e0', 0.25, 0.35);
+      lmDark(L, 0.35, function (x) { x.beginPath(); x.rect(0, 0, W, 70); });
+      lmShade(L, 0.4, function (x) { x.beginPath(); x.rect(440, 640, 360, 170); });
+    }
+    if (q.light >= 2) {
+      lmShade(L, 0.35, function (x) { x.beginPath(); x.arc(660, 470, 190, 0, TAU); });  // 大齿轮挡住钟面光
+      lmShade(L, 0.3, function (x) { K.poly(x, [1250, 120, 1820, 120, 1860, 420, 1240, 420]); });
+    }
+    applyLM(g, L);
+    if (q.light > 0) {
+      K.glow(g, dcx, dcy, 300, '#e0e8f8', 0.2);
+      K.glow(g, lmp[0], lmp[1], 180, '#ffb860', 0.4);
+    }
+    if (q.light >= 2) {
+      softShaft(g, [dcx - 120, dcy - 110, dcx + 120, dcy - 130, 900, 860, 300, 900], '#e0e8f8', 0.1, dcx, dcy, 700, 880, 6);
+      dust(g, K.rng(61), byM(q, 16, 30, 46), 260, 260, 640, 540, '#f0f0ff', 0.4);
+    }
+    finish(g, q, q.light > 0 ? 0.55 : 0.4, 0.45);
+  }
+
+  DM.HDBG.def('clockroom', {
+    draw: drawClockroom,
+    lights: [
+      { x: 210, y: 330, r: 240, color: '#dde6f6', i: 0.35, flicker: 0, kind: 'window' },
+      { x: 1196, y: 146, r: 190, color: '#ffc070', i: 0.65, flicker: 0.3, kind: 'lamp' },
+      { x: 1738, y: 600, r: 160, color: '#b8c8e8', i: 0.25, flicker: 0, kind: 'window' }
+    ],
+    key: { x: -0.45, color: '#e0e4f0', amb: '#2a2834', rim: 0.55 },
+    outdoor: false
+  });
 })(typeof window !== 'undefined' ? window : globalThis);
