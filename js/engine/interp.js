@@ -113,6 +113,7 @@
     if (op.op === 'say' || op.op === 'narr' || op.op === 'think') {
       I.resume = { type: 'op', prog: S.prog, ip: k };
       if (++linesSinceSave >= 25) { linesSinceSave = 0; I.autosave(); }
+      if (linesSinceSave % 12 === 0) prefetchAhead(k + 1);
       if (op.op === 'say') {
         R.speak(op.who, op.expr);
         syncStage();
@@ -123,13 +124,17 @@
     }
     var a = op.args || [], s = sc();
     switch (op.cmd) {
-      case 'bg':
+      case 'bg': {
         UI.showDialog(false);
-        R.setTrial(false); s.trial = false;
-        R.setBg(a[0], a[1]); R.clearStage();
-        s.bg = a[0]; s.variant = a[1] || null; s.stage = [];
         UI.caption(''); s.caption = '';
-        return;
+        s.bg = a[0]; s.variant = a[1] || null; s.stage = [];
+        prefetchAhead(k + 1);
+        var doBg = function () { R.setTrial(false); s.trial = false; R.setBg(a[0], a[1]); R.clearStage(); };
+        if (R.bgReady(a[0], a[1])) { doBg(); return; }
+        // 尚未生成的高清背景：先显示「读取中」，让出一帧再生成，避免界面卡住无反馈
+        UI.loading(true);
+        return Core.frame().then(Core.frame).then(function () { doBg(); UI.loading(false); });
+      }
       case 'show': {
         var m = /^([a-z_0-9]+)(\[([a-z]+)\])?$/.exec(a[0] || '');
         if (m) { R.show(m[1], m[3] || null, a[1] || 'C'); syncStage(); }
@@ -214,8 +219,42 @@
       }
       case 'chapterend': return chapterEnd();
       case 'end': UI.stopSkip(); St.markCleared(); DM.Menus.credits(); return STOP;
+      case 'checkpoint':
+        // 分歧点存档：坏结局后可「回到分歧点」
+        syncStage();
+        St.write('cp', St.snapshot({ type: 'op', prog: S.prog, ip: k + 1 }, { chapter: S.chapter, caption: s.caption, place: '' }));
+        return;
+      case 'ending': {
+        var en = (DM.ENDINGS || {})[a[0]] || { type: 'BE', title: a[0], no: 0 };
+        UI.stopSkip();
+        St.markEnding(a[0]);
+        if (en.type === 'HE') St.markCleared();
+        UI.showDialog(false); UI.caption('');
+        return UI.endingCard(en).then(function () {
+          if (en.type === 'HE') DM.Menus.credits(en);
+          else DM.Menus.badEnd(en);
+          return STOP;
+        });
+      }
     }
   }
+
+  // 预读后续剧本用到的背景与立绘，让高清美术在空闲时提前生成
+  function prefetchAhead(from) {
+    var p = progs[St.s.prog]; if (!p) return;
+    var items = [], end = Math.min(p.ops.length, from + 70), nbg = 0;
+    for (var i = from; i < end; i++) {
+      var o = p.ops[i];
+      if (o.op === 'say' && o.who !== 'ritsu') items.push(['pt', o.who, o.expr || 'normal']);
+      else if (o.op === 'cmd') {
+        if (o.cmd === 'bg' && o.args[0]) { items.push(['bg', o.args[0], o.args[1] || undefined]); if (++nbg >= 2) break; }
+        else if (o.cmd === 'show') { var m = /^([a-z_0-9]+)(\[([a-z]+)\])?$/.exec(o.args[0] || ''); if (m) items.push(['pt', m[1], m[3] || 'normal']); }
+        else if (o.cmd === 'trial' && o.args[0] === 'on') items.push(['bg', DM.GAME.trialBg || 'judgment', undefined]);
+      }
+    }
+    R.prefetch(items);
+  }
+  I.prefetchAhead = prefetchAhead;
 
   function findEvidence(id) {
     for (var ch in DM.chapters) { var e = DM.chapters[ch].evidence; if (e && e[id]) return e[id]; }

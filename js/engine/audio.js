@@ -19,6 +19,21 @@
     comp.connect(master);
     bgmBus = ctx.createGain(); bgmBus.gain.value = vol.bgm * 0.5; bgmBus.connect(comp);
     seBus = ctx.createGain(); seBus.gain.value = vol.se; seBus.connect(comp);
+    // 混响（生成的冲激响应）：让合成音色更有空间感；低画质预设（老设备）关闭以省电
+    try {
+      var lowEnd = DM.State && DM.State.settings.preset === 'low';
+      if (!lowEnd && ctx.createConvolver) {
+        var len = Math.floor(ctx.sampleRate * 2.4), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+        for (var ch = 0; ch < 2; ch++) {
+          var dd = ir.getChannelData(ch), sd = 777 + ch * 31;
+          for (var j = 0; j < len; j++) { sd = (sd * 1103515245 + 12345) & 0x7fffffff; dd[j] = (sd / 0x3fffffff - 1) * Math.pow(1 - j / len, 3.2); }
+        }
+        var conv = ctx.createConvolver(); conv.buffer = ir;
+        var wet = ctx.createGain(); wet.gain.value = 0.22; conv.connect(wet); wet.connect(comp);
+        var send1 = ctx.createGain(); send1.gain.value = 0.55; bgmBus.connect(send1); send1.connect(conv);
+        var send2 = ctx.createGain(); send2.gain.value = 0.35; seBus.connect(send2); send2.connect(conv);
+      }
+    } catch (e) { /* 不支持就算了 */ }
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     var d = noiseBuf.getChannelData(0), s = 1234567;
     for (var i = 0; i < d.length; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; d[i] = s / 0x3fffffff - 1; }
@@ -66,7 +81,8 @@
   // ---------- 音乐 ----------
   var SCALES = {
     minor: [0, 2, 3, 5, 7, 8, 10], hminor: [0, 2, 3, 5, 7, 8, 11], major: [0, 2, 4, 5, 7, 9, 11],
-    dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10], penta: [0, 3, 5, 7, 10, 12, 15]
+    dorian: [0, 2, 3, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10], penta: [0, 3, 5, 7, 10, 12, 15],
+    miyako: [0, 1, 5, 7, 8]
   };
   function deg(scale, root, d) {
     var n = scale.length, o = Math.floor(d / n), i = ((d % n) + n) % n;
@@ -105,7 +121,10 @@
     truth:   { bpm: 128, root: 48, scale: 'minor', prog: [0, 5, 6, 2, 3, 0, 4, 4], style: 'drive', arp: 'fast', drums: 'rock', mel: '0 . 2 . 4 . 7 - - - 6 . 4 . . . | 5 . 4 . 2 . 4 - - - . . . . . . | 6 . 7 . 9 . 7 - - - 6 . 4 . . . | 5 . 6 . 7 . 4 - - - . . . . . . | 9 . 7 . 6 . 7 - - - 4 . 5 . . . | 6 . 5 . 4 . 2 - - - . . . . . . | 4 . 5 . 6 . 7 . 9 . 10 . 11 . 12 . | 11 - - - 10 - - - 9 - - - 7 - - -', melWave: 'square', melOct: 12 },
     judge:   { bpm: 90, root: 42, scale: 'phrygian', prog: [0, 1, 0, 5], style: 'organ', arp: 'bell', drums: null },
     finale:  { bpm: 132, root: 50, scale: 'hminor', prog: [0, 5, 3, 4, 0, 5, 6, 4], style: 'drive', arp: 'fast', drums: 'rock', mel: LULLABY, melWave: 'square', melOct: 12 },
-    ending:  { bpm: 72, root: 60, scale: 'major', prog: [0, 5, 3, 4, 0, 5, 3, 4], style: 'pad', arp: 'box', mel: LULLABY, melWave: 'triangle', melOct: 0, drums: null }
+    ending:  { bpm: 72, root: 60, scale: 'major', prog: [0, 5, 3, 4, 0, 5, 3, 4], style: 'pad', arp: 'box', mel: LULLABY, melWave: 'triangle', melOct: 0, drums: null },
+    snow:    { bpm: 60, root: 54, scale: 'minor', prog: [0, 5, 3, 4, 0, 5, 6, 4], style: 'pad', arp: 'box', mel: '4 - - . 3 . 2 - - - . . . . . . | 0 - - . 2 . 3 - - - . . . . . . | 4 - - . 5 . 7 - - - 6 . 5 . . . | 4 - - - - - - - . . . . . . . .', melWave: 'sine', melOct: 12, drums: null },
+    village: { bpm: 76, root: 52, scale: 'miyako', prog: [0, 0, 3, 2, 0, 0, 3, 4], style: 'sparse', arp: 'pizz', mel: '. . 4 . 3 . 2 . . . 1 . 0 . . . | . . 2 . 3 . 4 . 5 - - - . . . . | . . 7 . 6 . 5 . . . 4 . 3 . . . | . . 2 . 1 . 0 - - - - - . . . .', melWave: 'triangle', melOct: 12, drums: 'tick' },
+    lament:  { bpm: 52, root: 50, scale: 'miyako', prog: [0, 1, 0, 3], style: 'drone', arp: 'bell', mel: '4 - - - 3 - 2 - 1 - - - . . . . | 2 - - - 1 - 0 - - - - - . . . .', melWave: 'sine', melOct: 12, drums: null }
   };
 
   var DRUMS = {
@@ -254,7 +273,11 @@
     shout: function (t) { [0, 3, 7].forEach(function (n) { tone(seBus, 'sawtooth', mtof(57 + n), t, 0.4, 0.07); }); noise(seBus, t, 0.2, 0.3, 'bandpass', 1500, 1); },
     slash: function (t) { noise(seBus, t, 0.28, 0.5, 'bandpass', 1200, 1.5, { sweepTo: 7000 }); tone(seBus, 'square', 220, t + 0.05, 0.3, 0.08, { slideTo: 880 }); },
     clock: function (t) { tone(seBus, 'square', 2200, t, 0.02, 0.08); tone(seBus, 'square', 1800, t + 0.5, 0.02, 0.08); },
-    phone: function (t) { for (var i = 0; i < 6; i++) { tone(seBus, 'square', 1300, t + i * 0.1, 0.05, 0.05); } }
+    phone: function (t) { for (var i = 0; i < 6; i++) { tone(seBus, 'square', 1300, t + i * 0.1, 0.05, 0.05); } },
+    wind: function (t) { noise(seBus, t, 3.2, 0.32, 'bandpass', 500, 0.9, { attack: 1.1, sweepTo: 1400 }); noise(seBus, t + 0.6, 2.4, 0.18, 'bandpass', 900, 2, { attack: 0.8, sweepTo: 400 }); },
+    chime: function (t) { [784, 659, 698, 523].forEach(function (f, i) { tone(seBus, 'sine', f, t + i * 0.55, 1.4, 0.16, { attack: 0.01, release: 1.1 }); tone(seBus, 'sine', f * 2, t + i * 0.55, 0.8, 0.03, { release: 0.6 }); }); },
+    snowstep: function (t) { for (var i = 0; i < 4; i++) { noise(seBus, t + i * 0.34, 0.12, 0.28, 'highpass', 1800, 0.7); noise(seBus, t + i * 0.34 + 0.03, 0.09, 0.2, 'lowpass', 600, 1); } },
+    creak: function (t) { tone(seBus, 'sawtooth', 120, t, 0.7, 0.07, { slideTo: 190 }); tone(seBus, 'square', 240, t + 0.1, 0.5, 0.03, { slideTo: 170 }); }
   };
   A.se = function (id) {
     if (!ctx || !A.ready || !SE[id]) return;
