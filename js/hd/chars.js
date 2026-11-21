@@ -183,9 +183,9 @@
     return {
       l0x: L.x0 + nx * hw, l0y: L.y0 + ny * hw, r0x: L.x0 - nx * hw, r0y: L.y0 - ny * hw,
       l1x: L.x0 + nx * (hw + b * 0.8) + ux * len * 0.36, l1y: L.y0 + ny * (hw + b * 0.8) + uy * len * 0.36,
-      l2x: L.x0 + nx * (b * 0.9 + hw * 0.5) + ux * len * 0.76, l2y: L.y0 + ny * (b * 0.9 + hw * 0.5) + uy * len * 0.76,
+      l2x: L.x0 + nx * (b * 0.9 + hw * 0.62) + ux * len * 0.8, l2y: L.y0 + ny * (b * 0.9 + hw * 0.62) + uy * len * 0.8,
       r1x: L.x0 + nx * (-hw + b * 0.8) + ux * len * 0.36, r1y: L.y0 + ny * (-hw + b * 0.8) + uy * len * 0.36,
-      r2x: L.x0 + nx * (b * 0.9 - hw * 0.5) + ux * len * 0.76, r2y: L.y0 + ny * (b * 0.9 - hw * 0.5) + uy * len * 0.76,
+      r2x: L.x0 + nx * (b * 0.9 - hw * 0.62) + ux * len * 0.8, r2y: L.y0 + ny * (b * 0.9 - hw * 0.62) + uy * len * 0.8,
       tlx: L.x1 + nx * tw, tly: L.y1 + ny * tw, trx: L.x1 - nx * tw, try_: L.y1 - ny * tw,
       nx: nx, ny: ny, ux: ux, uy: uy, len: len
     };
@@ -455,8 +455,8 @@
   BACKS.short = function (o, H, hs, G) {
     var r = H.r, cx = H.cx, b = hs.back, yb = H.jawY + (b.len || 0) * r;
     o.back.push({ tone: 1, f: function (g) {
-      sym(g, cx, [0, G.top - r * 0.01], [
-        [G.rx * 0.56, G.top - r * 0.01, G.rx * 1.03, G.cy - G.ry * 0.56, G.rx * 1.03, G.cy],
+      sym(g, cx, [0, G.top + r * 0.02], [
+        [G.rx * 0.54, G.top + r * 0.02, G.rx * 0.98, G.cy - G.ry * 0.52, G.rx * 0.99, G.cy],
         [G.rx * 1.04, G.cy + r * 0.16, G.rx * 0.92, yb - r * 0.05, G.rx * 0.82, yb],
         [G.rx * 0.5, yb + r * 0.03, 0, yb + r * 0.03]
       ]);
@@ -479,15 +479,15 @@
     var asym = b.asym || 0;
     var sidePts = function (s) {
       var a = [];
-      a.push([cx + s * G.rx * 1.02, G.cy, 1]);
+      a.push([cx + s * G.rx * 0.99, G.cy, 1]);
       a.push([cx + s * (G.rx * 1.06 + wave * 0.6), lerp(G.cy, H.C, 0.55), 1]);
       a.push([cx + s * (lerp(G.rx * 1.06, wb, 0.5) - wave), lerp(H.C, yb, 0.25), 1]);
       if (yb - H.C > r * 0.6) a.push([cx + s * (wb + wave), lerp(H.C, yb, 0.62), 1]);
       return a;
     };
     var L = sidePts(-1), R = sidePts(1);
-    pts.push(cx, G.top - r * 0.01, 1);
-    pts.push(cx - G.rx * 0.8, G.top + G.ry * 0.2, 1);
+    pts.push(cx, G.top + r * 0.02, 1);
+    pts.push(cx - G.rx * 0.76, G.top + G.ry * 0.26, 1);
     for (i = 0; i < L.length; i++) pts.push(L[i][0], L[i][1], L[i][2]);
     for (i = 0; i <= n; i++) {
       t = i / n;
@@ -500,7 +500,7 @@
       }
     }
     for (i = R.length - 1; i >= 0; i--) pts.push(R[i][0], R[i][1], R[i][2]);
-    pts.push(cx + G.rx * 0.8, G.top + G.ry * 0.2, 1);
+    pts.push(cx + G.rx * 0.76, G.top + G.ry * 0.26, 1);
     o.back.push({ tone: 1, mass: 1, f: function (g) { spline(g, pts, true); } });
     o.backY = yb;
   }
@@ -511,13 +511,13 @@
     var b = hs.back, r = H.r, cx = H.cx, yb = H.C + (b.len || 0) * r, wb = H.fw * (b.w || 1.18), asym = b.asym || 0;
     o.back.push({ tone: 1, f: function (g) {
       g.beginPath();
-      g.moveTo(cx, G.top - r * 0.01);
-      g.bezierCurveTo(cx + G.rx * 0.7, G.top - r * 0.01, cx + G.rx * 1.06, G.cy - G.ry * 0.5, cx + G.rx * 1.08, G.cy);
+      g.moveTo(cx, G.top + r * 0.02);
+      g.bezierCurveTo(cx + G.rx * 0.68, G.top + r * 0.02, cx + G.rx * 1.0, G.cy - G.ry * 0.5, cx + G.rx * 1.08, G.cy);
       g.bezierCurveTo(cx + wb * 1.06, G.cy + r * 0.22, cx + wb * 1.04, yb - r * 0.1 + asym * r * 0.12, cx + wb * 0.9, yb + asym * r * 0.12);
       g.quadraticCurveTo(cx + wb * 0.5, yb + r * 0.05, cx, yb + r * 0.02);
       g.quadraticCurveTo(cx - wb * 0.5, yb + r * 0.05, cx - wb * 0.9, yb - asym * r * 0.1);
       g.bezierCurveTo(cx - wb * 1.04, yb - r * 0.1 - asym * r * 0.1, cx - wb * 1.06, G.cy + r * 0.22, cx - G.rx * 1.08, G.cy);
-      g.bezierCurveTo(cx - G.rx * 1.06, G.cy - G.ry * 0.5, cx - G.rx * 0.7, G.top - r * 0.01, cx, G.top - r * 0.01);
+      g.bezierCurveTo(cx - G.rx * 1.0, G.cy - G.ry * 0.5, cx - G.rx * 0.68, G.top + r * 0.02, cx, G.top + r * 0.02);
       g.closePath();
     } });
   };
@@ -544,12 +544,20 @@
       var tx = rx + dir * r * (opt.fan || 0.07) + a * r * 0.02 + rnd.jit(0, r * 0.015 * irr);
       var ty = len + rnd.jit(0, r * 0.03 * irr) - (i % 2) * r * 0.045 * (b.alt === undefined ? 1 : b.alt);
       if (opt.messy && i % 3 === 1) { ty -= r * 0.05; tx += (i % 2 ? 1 : -1) * r * 0.03; }
-      var w = fw * 2.05 / n * (b.wk || 1.38);
-      var bend = -a * r * 0.035 - dir * r * 0.02 + (opt.messy ? rnd.jit(0, r * 0.025) : 0);
-      list.push({ L: lock(rx, ry, tx, ty, w, bend), d: Math.abs(rx - px) + (opt.messy ? rnd() * r * 0.05 : 0) });
+      var w = fw * 2.05 / n * (b.wk || 1.38) * (0.8 + rnd() * 0.45);
+      if (rnd() < 0.22) ty += r * 0.035;
+      var bend = -a * r * 0.035 - dir * r * 0.02 + rnd.jit(0, r * (opt.messy ? 0.03 : 0.016));
+      var Lm = lock(rx, ry, tx, ty, w, bend), dd = Math.abs(rx - px) + (opt.messy ? rnd() * r * 0.05 : 0);
+      list.push({ L: Lm, d: dd });
+      // 分叉的小发束：与主束重叠、尖端错开，让刘海读作「一簇簇」而不是均匀的尖片
+      if (C.m >= 1 && rnd() < (C.m >= 2 ? 0.55 : 0.35)) {
+        var su = rnd() < 0.5 ? 0.55 : -0.55, sp0 = lockAt(Lm, 0.3, su);
+        var stx = tx + su * w * 0.42 + rnd.jit(0, r * 0.01), sty = ty + rnd.jit(0, r * 0.035) - r * 0.01;
+        list.push({ L: lock(sp0[0], sp0[1], stx, sty, w * (0.38 + rnd() * 0.12), bend * 0.7 + su * r * 0.012), d: dd - r * 0.001, sub: 1 });
+      }
     }
     list.sort(function (p, q) { return q.d - p.d; });
-    for (i = 0; i < list.length; i++) o.front.push({ L: list[i].L, bang: 1 });
+    for (i = 0; i < list.length; i++) o.front.push({ L: list[i].L, bang: 1, noShine: list[i].sub });
   }
   BANGS.spiky = function (o, H, hs, G, rnd, C) { fanLocks(o, H, hs, G, rnd, C, {}); };
   BANGS.messy = function (o, H, hs, G, rnd, C) { fanLocks(o, H, hs, G, rnd, C, { messy: 1, irr: 1.3, fan: 0.09 }); };
@@ -570,7 +578,12 @@
     }
     pts.push(xr, lerp(G.top + G.ry * 0.6, cut, 0.5), 1);
     pts.push(cx + fw * 0.85, G.top + G.ry * 0.42, 1);
-    o.front.push({ bang: 1, blunt: 1, f: function (g) { spline(g, pts, true); }, cutY: cut });
+    var ep = pts.slice(6, pts.length - 3);
+    o.front.push({ bang: 1, blunt: 1, f: function (g) { spline(g, pts, true); }, e: function (g) { spline(g, ep, false); }, cutY: cut });
+    if (C.m >= 1) for (i = 1; i < n; i += 2) {
+      var tx = lerp(xl, xr, i / n);
+      o.front.push({ bang: 1, thin: 1, L: lock(tx + r * 0.005, G.top + G.ry * 0.6, tx, cut - r * 0.02, r * 0.02, 0) });
+    }
   };
   BANGS.swept = function (o, H, hs, G, rnd, C) {
     var b = hs.bangs, r = H.r, cx = H.cx, fw = H.fw, ps = (b.part || 0.5) >= 0 ? 1 : -1, px = G.partX;
@@ -644,15 +657,16 @@
     for (var s = -1; s <= 1; s += 2) {
       (function (s) {
         var xi = cx + s * fw * 0.8, xo = cx + s * fw * 1.08;
-        o.front.push({ side: 1, f: function (g) {
+        var sidePath = function (g, open) {
           g.beginPath();
           g.moveTo(cx + s * fw * 0.72, G.cy - r * 0.12);
           g.bezierCurveTo(cx + s * fw * 0.82, G.cy, xi, cut - r * 0.2, xi + s * r * 0.01, cut);
           g.lineTo(lerp(xi, xo, 0.5), cut + r * 0.008);
           g.lineTo(xo, cut - r * 0.005);
           g.bezierCurveTo(xo + s * r * 0.01, cut - r * 0.25, cx + s * G.rx * 1.02, G.cy + r * 0.05, cx + s * G.rx * 0.98, G.cy - r * 0.12);
-          g.closePath();
-        } });
+          if (!open) g.closePath();
+        };
+        o.front.push({ side: 1, f: function (g) { sidePath(g, false); }, e: function (g) { sidePath(g, true); } });
       })(s);
     }
   };
@@ -749,7 +763,7 @@
     }
   }
   function buildHair(C, cf, H) {
-    var hs = resolveHair(cf.hair), o = { back: [], front: [], hs: hs };
+    var hs = resolveHair(cf.hair), o = { back: [], front: [], hs: hs, id: cf._id || '' };
     if (hs.none) return o;
     var rnd = K.rng('hair:' + (cf._id || '') + ':' + (hs.seed || 0));
     var G = capGeom(H, hs);
@@ -786,10 +800,13 @@
       var col = it.tone === 1 ? hp.m : it.tone === 2 ? hp.s : hp.b;
       if (it.cap && buzz) col = K.mix(hp.b, H.skin || '#e0c0a0', 0.2);
       itemPath(g, it); fillC(g, col);
+      var shine = !back && !buzz && hs.cap !== 'thin' && !it.braid && !it.thin && !it.noShine;
+      if (it.cap && !back && !buzz) capClumps(C, g, H, hp, hd, it);
       if (it.sliver) {
         g.save(); itemPath(g, it); g.clip(); fillC(g, K.mix(col, hp.s, 0.85));
         g.translate(it.sliver[0], it.sliver[1]); itemPath(g, it); fillC(g, col); g.restore();
         if (it.sh) { g.save(); itemPath(g, it); g.clip(); it.sh(g, hp); g.restore(); }
+        if (shine && it.L) lockShine(C, g, H, hp, hd, it);
         itemPath(g, it); strokeW(g, hp.ln, lw);
       } else if (it.L && !it.thin) {
         // 发束的冷色阴影边（远离主光的右下侧）
@@ -798,11 +815,13 @@
         g.translate(-it.L.w * (it.braid ? 0.22 : 0.2), -r * 0.012);
         lockPath(g, it.L); fillC(g, col);
         g.restore();
+        if (shine) lockShine(C, g, H, hp, hd, it);
         lockEdges(g, it.L, it.side || it.braid ? 0.05 : 0.32); strokeW(g, hp.ln, lw * (it.braid ? 0.9 : 1));
       } else if (it.L) {
         lockEdges(g, it.L, 0.1); strokeW(g, hp.ln, lw * 0.8);
       } else if (!it.cap || C.m > 0) {
-        itemPath(g, it); strokeW(g, hp.ln, lw * (it.cap ? 0.8 : 1));
+        if (it.e) it.e(g); else itemPath(g, it);
+        strokeW(g, hp.ln, lw * (it.cap ? 0.8 : 1));
       }
       if (it.bun && it.wrap && C.m >= 1) {
         var w = it.wrap;
@@ -841,8 +860,6 @@
       g.fillStyle = K.rad(g, 0, 0, 0, H.fw * 1.5, [[0, A(hp.d, C.l >= 1 ? 0.45 : 0.3)], [0.7, A(hp.d, C.l >= 1 ? 0.25 : 0.2)], [1, A(hp.d, 0)]]);
       g.fillRect(-H.fw * 1.6, -H.fw * 1.6, H.fw * 3.2, H.fw * 3.2); g.restore();
     }
-    // 天使环高光
-    if (!buzz && hs.cap !== 'thin' && !back) hairRing(C, g, H, hp, hd, back);
     if (back && C.l >= 1) {
       g.save(); g.globalAlpha = 0.22; g.strokeStyle = hp.h; g.lineWidth = r * 0.012;
       for (i = -3; i <= 3; i++) { if (!i) continue; var bx0 = cx + i * H.fw * 0.42; g.beginPath(); g.moveTo(bx0, H.C - r * 0.1); g.quadraticCurveTo(bx0 + i * r * 0.03, H.C + r * 0.08, bx0 + i * r * 0.05, H.C + r * 0.25); g.stroke(); }
@@ -885,43 +902,85 @@
         g.restore();
       }
   }
-  // 天使环：沿头部弧度的锯齿高光带（下缘顺着发流向下尖出），亮侧在左
-  function hairRing(C, g, H, hp, hd, back) {
-    var r = H.r, cx = H.cx, G = hd.G, hs = hd.hs, i;
-    var yr = back ? H.C - r * 0.02 : (G.top + G.ry * (hs.ringY || 0.33));
-    var rx = G.rx * (back ? 1.12 : 0.96), dip = back ? r * 0.04 : r * 0.13;
-    var n = K.byModel(C.q, 8, 13, 18), rnd = K.rng('ring' + (back ? 1 : 0) + (hd.hs.style || ''));
-    var a0 = (C.l >= 2 ? 0.62 : C.l >= 1 ? 0.5 : 0.4) * (hs.shine || 1) * (back ? 0.6 : 1);
-    var TH0 = -1.28, TH1 = 1.22;
-    function X(th) { return cx + rx * Math.sin(th); }
-    function Y(th) { return yr + dip * (1 - Math.cos(th)); }
-    // 光带分成几段（中间留缝），每段下缘为锯齿
-    var segs = C.m >= 1 ? [[-1.28, -0.62], [-0.52, 0.18], [0.3, 0.72], [0.84, 1.22]] : [[-1.28, -0.1], [0.05, 1.22]];
-    var band = function (g2, k) {
-      g2.beginPath();
-      for (var sg = 0; sg < segs.length; sg++) {
-        var th0 = segs[sg][0], th1 = segs[sg][1], m = Math.max(2, Math.round(n * (th1 - th0) / (TH1 - TH0))), j, th, x, y;
-        var w0 = r * 0.02 * k * (1 + 0.4 * Math.sin(sg * 2.1 + 1));
-        for (j = 0; j <= 6; j++) { th = lerp(th0, th1, j / 6); x = X(th); y = Y(th) - w0 * (1 + 0.5 * Math.sin(j / 6 * PI)); if (j) g2.lineTo(x, y); else g2.moveTo(x, y); }
-        for (j = m; j >= 0; j--) {
-          th = lerp(th0, th1, j / m); x = X(th); y = Y(th);
-          var lit = 1 - (th - TH0) / (TH1 - TH0) * 0.7, sp = r * (0.03 + rnd() * 0.07) * lit * k;
-          g2.lineTo(x, y + w0 * 0.3);
-          if (j > 0) { var thm = lerp(th0, th1, (j - 0.5) / m); g2.lineTo(X(thm) + Math.sin(thm) * r * 0.01, Y(thm) + sp); }
-        }
-        g2.closePath();
-      }
-    };
-    band(g, 1);
-    g.fillStyle = K.lin(g, cx - rx, 0, cx + rx, 0, [[0, A(hp.h, a0)], [0.45, A(hp.h, a0 * 0.75)], [1, A(hp.h, a0 * 0.18)]]);
-    g.fill();
-    if (C.l >= 2 && !back) {
-      // 亮侧的细锐高光
-      g.save(); band(g, 1); g.clip();
-      g.strokeStyle = A('#ffffff', 0.5); g.lineWidth = 1.4 * H.u * C.lw;
-      for (i = 0; i < 5; i++) { var th2 = lerp(TH0 + 0.15, -0.1, i / 4), x2 = X(th2), y2 = Y(th2); g.beginPath(); g.moveTo(x2, y2 - r * 0.025); g.lineTo(x2 + Math.sin(th2) * r * 0.012, y2 + r * 0.035); g.stroke(); }
-      g.restore();
+  // 头顶的发束分组：从分缝附近散开、顺着头型弯到发际线的分界（月牙形阴影），并按发束分段画天使环高光
+  function ringAt(H, hd, x) {
+    var G = hd.G, rx = G.rx * 0.96, sx = clamp((x - H.cx) / rx, -1, 1);
+    return G.top + G.ry * (hd.hs.ringY || 0.34) + H.r * 0.13 * (1 - Math.sqrt(1 - sx * sx));
+  }
+  function capClumps(C, g, H, hp, hd, it) {
+    var G = hd.G, hs = hd.hs, r = H.r, cx = H.cx, u = H.u * C.lw, i, j;
+    var rnd = K.rng('clump:' + (hs.style || '') + ':' + (hd.id || ''));
+    var n = K.byModel(C.q, 4, 7, 10), px = G.partX, rx = G.rx * 0.96;
+    g.save(); itemPath(g, it); g.clip();
+    // 体积：头顶受光、四周渐暗
+    if (C.l >= 1) {
+      g.fillStyle = K.rad(g, cx - G.rx * 0.2, G.top + G.ry * 0.4, r * 0.02, G.rx * 1.35, [[0, A(hp.h, 0.12)], [0.55, A(hp.b, 0)], [1, A(hp.s, 0.2)]]);
+      g.fillRect(cx - G.rx * 1.3, G.top - r * 0.05, G.rx * 2.6, G.ry * 1.6);
     }
+    // 柔和的分缝（无硬线）
+    g.fillStyle = K.rad(g, px, G.top + G.ry * 0.08, 0, r * 0.1, [[0, A(hp.d, 0.42)], [0.6, A(hp.d, 0.15)], [1, A(hp.d, 0)]]);
+    g.fillRect(px - r * 0.12, G.top - r * 0.06, r * 0.24, r * 0.26);
+    var bx = [];
+    for (i = 0; i < n; i++) {
+      var ph = lerp(-1.32, 1.32, (i + 0.5) / n) + rnd.jit(0, 0.07), sx = Math.sin(ph), ax = Math.abs(sx);
+      var x0 = px + sx * G.rx * (0.12 + rnd() * 0.12), y0 = G.top + G.ry * (0.05 + ax * 0.12 + rnd() * 0.04);
+      var x1 = cx + sx * G.rx * 0.99, y1 = lerp(G.hl + r * 0.03, G.sideY + r * 0.02, Math.pow(ax, 1.4));
+      var qx = cx + sx * G.rx * (0.8 + 0.1 * ax), qy = lerp(y0, y1, 0.28);
+      var w = r * (0.007 + rnd() * 0.007);
+      g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo(qx + sx * w * 1.5, qy, x1, y1); g.quadraticCurveTo(qx - sx * w * 0.4, qy, x0, y0); g.closePath();
+      fillC(g, A(hp.s, C.l >= 1 ? 0.62 : 0.5));
+      if (C.l >= 1 && sx < 0.35) {
+        g.beginPath(); g.moveTo(x0 - r * 0.01, y0 + r * 0.01); g.quadraticCurveTo(qx - sx * r * 0.02 - r * 0.012, qy, x1 - sx * r * 0.02 - r * 0.012, y1 - r * 0.02);
+        strokeW(g, A(hp.h, 0.16), r * 0.012);
+      }
+      var hit = x1;
+      for (j = 1; j <= 24; j++) { var t = j / 24, m = 1 - t, yy = m * m * y0 + 2 * m * t * qy + t * t * y1, xx = m * m * x0 + 2 * m * t * qx + t * t * x1; if (yy >= ringAt(H, hd, xx)) { hit = xx; break; } }
+      bx.push(hit);
+    }
+    if (hs.cap !== 'thin' && !hs.noRing) {
+      bx.sort(function (p, q) { return p - q; });
+      var edges = [cx - rx].concat(bx).concat([cx + rx]);
+      var a0 = (C.l >= 2 ? 0.62 : C.l >= 1 ? 0.5 : 0.4) * (hs.shine || 1);
+      for (i = 0; i < edges.length - 1; i++) {
+        var xa = edges[i] + r * 0.008, xb = edges[i + 1] - r * 0.008;
+        if (xb - xa < r * 0.03) continue;
+        var lit = clamp(1 - ((xa + xb) / 2 - (cx - rx)) / (2 * rx) * 0.82, 0.12, 1), yo = rnd.jit(0, r * 0.012), w0 = r * (0.015 + 0.012 * lit);
+        var m2 = Math.max(1, Math.round((xb - xa) / (r * 0.045)));
+        g.beginPath();
+        for (j = 0; j <= 6; j++) { var xt = lerp(xa, xb, j / 6); var yt = ringAt(H, hd, xt) + yo - w0 * (0.6 + 0.6 * Math.sin(j / 6 * PI)); if (j) g.lineTo(xt, yt); else g.moveTo(xt, yt); }
+        for (j = m2; j >= 0; j--) {
+          var xz = lerp(xa, xb, j / m2); g.lineTo(xz, ringAt(H, hd, xz) + yo + w0 * 0.2);
+          if (j > 0) { var xm = lerp(xa, xb, (j - 0.5) / m2); g.lineTo(xm + (xm - cx) * 0.02, ringAt(H, hd, xm) + yo + r * (0.025 + rnd() * 0.05) * (0.5 + lit * 0.6)); }
+        }
+        g.closePath(); fillC(g, A(hp.h, a0 * lit));
+        if (C.l >= 2 && lit > 0.55) {
+          var xc = lerp(xa, xb, 0.35), yc = ringAt(H, hd, xc) + yo;
+          g.beginPath(); g.moveTo(xc, yc - w0); g.lineTo(xc + (xc - cx) * 0.03, yc + r * 0.03); strokeW(g, A('#ffffff', 0.45 * lit), 1.4 * u);
+        }
+      }
+    }
+    g.restore();
+  }
+  // 发束上的高光：在天使环高度与发束相交处画一条顺着发束方向的光（裁剪在发束内）
+  function lockShine(C, g, H, hp, hd, it) {
+    var L = it.L, G = hd.G, hs = hd.hs, r = H.r, cx = H.cx, t, p, hit = -1;
+    if (!G || hs.noRing) return;
+    for (t = 0.02; t <= 0.8; t += 0.06) { p = lockAt(L, t, 0); if (p[1] >= ringAt(H, hd, p[0])) { hit = t; break; } }
+    if (hit < 0) return;
+    if (hit <= 0.02) hit = it.side ? 0.1 : 0.15;
+    p = lockAt(L, hit, 0);
+    var rx = G.rx * 0.96, lit = clamp(1 - (p[0] - (cx - rx)) / (2 * rx) * 0.82, 0.12, 1);
+    var a0 = (C.l >= 2 ? 0.6 : C.l >= 1 ? 0.48 : 0.36) * (hs.shine || 1) * lit;
+    var t0 = Math.max(0.01, hit - 0.06), t1 = Math.min(0.95, hit + 0.13 + 0.09 * lit), tm = (t0 + t1) / 2;
+    var a = lockAt(L, t0, 0.1), c = lockAt(L, t1, 0.05), wa = lockAt(L, tm, 1.5), wb = lockAt(L, tm, -1.3);
+    g.save(); lockPath(g, L); g.clip();
+    g.beginPath(); g.moveTo(a[0], a[1]); g.quadraticCurveTo(wa[0], wa[1], c[0], c[1]); g.quadraticCurveTo(wb[0], wb[1], a[0], a[1]); g.closePath();
+    fillC(g, A(hp.h, a0));
+    if (C.l >= 2 && lit > 0.5) {
+      var a2 = lockAt(L, t0 + 0.02, 0.3), c2 = lockAt(L, tm + 0.02, 0.3);
+      g.beginPath(); g.moveTo(a2[0], a2[1]); g.lineTo(c2[0], c2[1]); strokeW(g, A('#ffffff', 0.4 * lit), 1.3 * H.u * C.lw);
+    }
+    g.restore();
   }
   function hairStrands(C, g, H, hp, hd, which) {
     var items = hd[which], u = H.u * C.lw, i, j, it, r = H.r;
@@ -947,14 +1006,23 @@
     }
     // 发盖与后发：从头顶放射的发丝
     var G = hd.G; if (!G) return;
-    if (which === 'front' && hd.hs.bangs && hd.hs.bangs.k !== 'none' && hd.hs.cap !== 'buzz') {
-      var px = G.partX, py = G.top + r * 0.015;
-      g.lineWidth = 1.2 * u; g.strokeStyle = A(hp.d, 0.45);
-      g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(px - r * 0.03, py + r * 0.06, px - r * 0.07, G.top + G.ry * 0.36); g.stroke();
-      g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(px + r * 0.03, py + r * 0.06, px + r * 0.08, G.top + G.ry * 0.36); g.stroke();
-      g.lineWidth = 0.9 * u;
+    if (which === 'front') {
+      // 发盖上按发束分组的细发丝（起点分散，不汇聚于一点）
+      var cap = null; for (i = 0; i < items.length; i++) if (items[i].cap) cap = items[i];
+      if (!cap || hd.hs.cap === 'buzz' || hd.hs.cap === 'thin') return;
+      var rs = K.rng('capstr' + (hd.hs.style || '')), m = K.byModel(C.q, 0, 10, 22);
+      g.save(); itemPath(g, cap); g.clip();
+      for (i = 0; i < m; i++) {
+        var ph = lerp(-1.25, 1.25, rs()), sx = Math.sin(ph), ax = Math.abs(sx);
+        var xs = G.partX + sx * G.rx * (0.15 + rs() * 0.25), ys = G.top + G.ry * (0.1 + ax * 0.15 + rs() * 0.1);
+        var xe = H.cx + sx * G.rx * (0.92 + rs() * 0.06), ye = lerp(G.hl, G.sideY, Math.pow(ax, 1.4)) - rs() * r * 0.05;
+        g.beginPath(); g.moveTo(xs, ys); g.quadraticCurveTo(H.cx + sx * G.rx * 0.82, lerp(ys, ye, 0.3), xe, ye);
+        g.strokeStyle = A(i % 4 === 3 && C.l >= 2 ? hp.h : hp.s, i % 4 === 3 ? 0.25 : 0.4); g.stroke();
+      }
+      g.restore();
+      return;
     }
-    var n = which === 'front' ? K.byModel(C.q, 0, 8, 16) : K.byModel(C.q, 0, 6, 12);
+    var n = K.byModel(C.q, 0, 6, 12);
     for (i = 0; i < n; i++) {
       var t = (i + 0.5) / n, x0 = H.cx + (t - 0.5) * G.rx * 0.6, y0 = G.top + r * 0.02;
       var x1, y1;
@@ -1052,7 +1120,8 @@
     g.save(); scleraPath(g, G); g.clip();
     // --- 虹膜 ---
     var look = X.look || [0, 0], shake = X.shake ? 1 : 0;
-    var irx = W * 0.335 * (E.iris || 1) * (X.iris || 1), iry = Math.min(irx * (E.irisH || 1.2), Hh * 0.62 * (E.irisH ? 1.1 : 1));
+    var yk = clamp((26 - (H.age || 22)) / 8, 0, 1);
+    var irx = W * 0.335 * (E.iris || 1) * (X.iris || 1) * (1 + 0.1 * yk), iry = Math.min(irx * (E.irisH || 1.2), Hh * 0.62 * (E.irisH ? 1.1 : 1));
     if (X.iris && X.iris < 0.75) iry = irx * 1.15;
     var icx = G.ex + s * W * 0.02 + look[0] * W * 0.2, icy = G.ey + Hh * 0.06 + look[1] * Hh * 0.18;
     var dull = (E.dull || 0) + (X.dull || 0);
@@ -1099,11 +1168,13 @@
     var hl = X.hl === undefined ? 1 : X.hl;
     if (dull > 0.5 && hl > 0.5) hl = 0.55;
     if (hl > 0) {
-      ell(g, icx - irx * 0.38, icy - iry * 0.4, irx * 0.36 * Math.min(1, hl + 0.3), iry * 0.26 * Math.min(1, hl + 0.3), -0.4);
-      fillC(g, A('#ffffff', 0.96 * Math.min(1, hl + 0.2)));
-      if (hl > 0.5) { circ(g, icx + irx * 0.42, icy + iry * 0.36, irx * 0.13); fillC(g, A('#ffffff', 0.9)); }
-      if (C.m >= 1 && hl > 0.7) { circ(g, icx - irx * 0.05, icy + iry * 0.58, irx * 0.06); fillC(g, A('#ffffff', 0.6)); }
-      if (C.l >= 2 && hl > 0.7) K.glow(g, icx - irx * 0.35, icy - iry * 0.35, irx * 0.6, '#ffffff', 0.18);
+      var hk = Math.min(1, hl + 0.3) * (1 + 0.12 * yk);
+      if (C.l >= 2 && hl > 0.7) K.glow(g, icx - irx * 0.35, icy - iry * 0.35, irx * 0.7, '#ffffff', 0.2);
+      ell(g, icx - irx * 0.36, icy - iry * 0.4, irx * 0.4 * hk, iry * 0.29 * hk, -0.4);
+      fillC(g, A('#ffffff', Math.min(1, hl + 0.2)));
+      if (hl > 0.5) { ell(g, icx + irx * 0.4, icy + iry * 0.36, irx * 0.16 * (1 + 0.15 * yk), irx * 0.14 * (1 + 0.15 * yk), 0.3); fillC(g, A('#ffffff', 0.95)); }
+      if (C.m >= 1 && hl > 0.7) { circ(g, icx - irx * 0.12, icy + iry * 0.56, irx * 0.075); fillC(g, A('#ffffff', 0.75)); }
+      if (C.m >= 2 && hl > 0.7 && yk > 0.3) { circ(g, icx + irx * 0.2, icy - iry * 0.55, irx * 0.05); fillC(g, A('#ffffff', 0.7)); }
     }
     if (X.tear) {
       // 含泪：下缘水光
@@ -1115,8 +1186,19 @@
       for (i = 0; i < 3; i++) { circ(g, icx - irx * 0.5 + i * irx * 0.5, icy + iry * 0.62 + (i % 2) * Hh * 0.03, irx * 0.07); fillC(g, A('#ffffff', 0.85)); }
     }
     g.restore();
+    if (X.tear && C.l >= 1) {
+      // 涌出的泪：沿下眼睑的水光线 + 外眼角将落的泪珠
+      g.beginPath();
+      for (i = 0; i <= 8; i++) { var tq = lowerAt(G, lerp(0.05, 0.8, i / 8)); if (i) g.lineTo(tq[0], tq[1] - Hh * 0.02); else g.moveTo(tq[0], tq[1] - Hh * 0.02); }
+      strokeW(g, A('#e8f4ff', 0.85), Hh * 0.08);
+      var tb = lowerAt(G, 0.14), ts = Hh * 0.16;
+      g.beginPath(); g.moveTo(tb[0], tb[1] - ts * 0.2); g.quadraticCurveTo(tb[0] + ts * 0.9, tb[1] + ts * 0.9, tb[0], tb[1] + ts * 1.5); g.quadraticCurveTo(tb[0] - ts * 0.9, tb[1] + ts * 0.9, tb[0], tb[1] - ts * 0.2); g.closePath();
+      g.fillStyle = K.lin(g, 0, tb[1], 0, tb[1] + ts * 1.5, ['rgba(220,238,255,0.7)', 'rgba(170,205,250,0.9)']); g.fill();
+      strokeW(g, 'rgba(90,130,200,0.7)', 1 * u);
+      ell(g, tb[0] - ts * 0.25, tb[1] + ts * 0.7, ts * 0.18, ts * 0.3); fillC(g, '#ffffff');
+    }
     // --- 上睫毛线 ---
-    var N = C.m >= 1 ? 14 : 8, lt = H.r * 0.016 * (E.lash || 1) * (H.sex === 'm' ? 0.85 : 1) * (H.chibi ? 1.3 : 1);
+    var N = C.m >= 1 ? 14 : 8, lt = H.r * 0.016 * (E.lash || 1) * (H.sex === 'm' ? 0.85 : 1) * (H.chibi ? 1.3 : 1) * (1 + 0.2 * yk);
     var top = [], bot = [], p, nx, ny, nl, th, t;
     for (i = 0; i < N; i++) {
       t = i / (N - 1); p = upperAt(G, t);
@@ -1297,7 +1379,7 @@
     strokeW(g, sp.ln, 1.8 * u);
   };
   MOUTH.grit = function (C, g, H, sp, cf) {
-    var u = H.u * C.lw, w = mouthW(H, cf) * 1.05, x = H.cx, y = H.mouthY - H.r * 0.004, h = H.r * 0.038, r = H.r;
+    var u = H.u * C.lw, w = mouthW(H, cf) * 1.22, x = H.cx, y = H.mouthY - H.r * 0.008, h = H.r * 0.05, r = H.r;
     var path = function () {
       g.beginPath(); g.moveTo(x - w * 0.5, y + h * 0.2);
       g.quadraticCurveTo(x, y - h * 0.25, x + w * 0.5, y + h * 0.2);
@@ -1312,9 +1394,12 @@
     g.beginPath(); g.moveTo(x - w * 0.55, y + h * 0.58); g.quadraticCurveTo(x, y + h * 0.7, x + w * 0.55, y + h * 0.58); g.stroke();
     if (C.m >= 1) for (var i = 1; i < 6; i++) { var tx = x - w * 0.5 + w * i / 6; g.beginPath(); g.moveTo(tx, y - h * 0.2); g.lineTo(tx + (i - 3) * r * 0.002, y + h * 1.3); g.stroke(); }
     if (cf._metalTooth) { g.fillStyle = '#a8a8b4'; g.fillRect(x + w * 0.17, y - h * 0.2, w * 0.16, h * 0.78); }
-    g.fillStyle = A(sp.mouth, 0.35); g.fillRect(x - w * 0.6, y + h * 0.55, w * 1.2, h * 0.12);
+    g.fillStyle = A(sp.mouth, 0.45); g.fillRect(x - w * 0.6, y + h * 0.52, w * 1.2, h * 0.14);
+    g.fillStyle = A(sp.mouth, 0.5); g.fillRect(x - w * 0.6, y - h * 0.3, w * 0.12, h * 1.6); g.fillRect(x + w * 0.48, y - h * 0.3, w * 0.12, h * 1.6);
     g.restore();
-    path(); strokeW(g, sp.ln, 1.6 * u);
+    path(); strokeW(g, sp.ln, 1.7 * u);
+    // 咬紧时嘴角下拉
+    for (var gs = -1; gs <= 1; gs += 2) { g.beginPath(); g.moveTo(x + gs * w * 0.5, y + h * 0.2); g.lineTo(x + gs * w * 0.6, y + h * 0.55); strokeW(g, sp.ln, 1.3 * u); }
   };
   MOUTH.o = function (C, g, H, sp, cf) {
     var u = H.u * C.lw, w = mouthW(H, cf) * 0.42, x = H.cx, y = H.mouthY + H.r * 0.012;
@@ -1365,9 +1450,9 @@
   // brow: y 整体位移 i 眉头 o 眉尾（r 的比例，正=向下）asym 不对称；eye: open/inDrop/outDrop/iris/pupil/look/hl/tear/mode/lowUp/dull
   EXPR.normal = { brow: {}, eye: {}, mouth: 'neutral' };
   EXPR.smile = { brow: { y: -0.008, i: -0.004 }, eye: { open: 0.8, lowUp: 0.16 }, mouth: 'smile', blush: 0.3 };
-  EXPR.sad = { brow: { y: -0.004, i: -0.034, o: 0.014 }, eye: { open: 0.8, outDrop: 0.16, look: [0, 0.35], tear: 1 }, mouth: 'sad' };
-  EXPR.angry = { brow: { y: 0.012, i: 0.034, o: -0.014 }, eye: { open: 0.88, inDrop: 0.2, iris: 0.9 }, mouth: 'grit', fx: ['vein'] };
-  EXPR.surprise = { brow: { y: -0.032, i: -0.006 }, eye: { open: 1.16, iris: 0.86 }, mouth: 'o' };
+  EXPR.sad = { brow: { y: -0.004, i: -0.048, o: 0.02 }, eye: { open: 0.7, outDrop: 0.26, look: [0, 0.4], tear: 1, lowUp: 0.06 }, mouth: 'sad', blush: 0.12 };
+  EXPR.angry = { brow: { y: 0.016, i: 0.052, o: -0.026 }, eye: { open: 0.86, inDrop: 0.3, iris: 0.84 }, mouth: 'grit', fx: ['vein', 'furrow'] };
+  EXPR.surprise = { brow: { y: -0.05, i: -0.01 }, eye: { open: 1.24, iris: 0.72 }, mouth: 'o' };
   EXPR.think = { brow: { y: 0, asym: 0.022 }, eye: { open: 0.82, look: [0.6, -0.4] }, mouth: 'side', hand: 'chin' };
   EXPR.shock = { brow: { y: -0.026, i: -0.024, o: 0.006 }, eye: { open: 1.2, iris: 0.62, pupil: 0.55, hl: 0.25, shake: 1 }, mouth: 'shock', fx: ['pale', 'sweat', 'gloom'] };
   EXPR.dark = { brow: { y: 0.006, i: 0.02, o: -0.008 }, eye: { open: 0.76, hl: 0, dull: 1, inDrop: 0.08 }, mouth: 'dark', fx: ['shadow'] };
@@ -1443,6 +1528,12 @@
       marksUnder(C, g, H, cf, sp, X);
       var mk = X.mouth || 'neutral';
       if (cf._beardMouth && (mk === 'neutral' || mk === 'side')) mk = mk;
+      if (!cf._beardMouth && /neutral|smile_closed|sad|side|frown|smirk/.test(mk)) {
+        // 唇色：下唇的淡淡红润
+        var lw0 = mouthW(H, cf) * (mk === 'smile_closed' ? 0.3 : 0.24);
+        ell(g, H.cx + (mk === 'side' ? lw0 * 0.6 : 0), H.mouthY + r * 0.02, lw0, r * 0.009); fillC(g, A(sp.lip, H.sex === 'm' ? 0.22 : 0.45));
+        if (C.l >= 2 && H.sex !== 'm') { ell(g, H.cx - lw0 * 0.3, H.mouthY + r * 0.017, lw0 * 0.3, r * 0.003); fillC(g, A('#ffffff', 0.4)); }
+      }
       (MOUTH[mk] || MOUTH.neutral)(C, g, H, sp, cf);
       var E = cf._eye, ep = eyePal(cf.eyes && cf.eyes.color), lashC = cf._lashC;
       if (!E.none) for (s = -1; s <= 1; s += 2) drawEye(C, g, H, s, E, X.eye || {}, ep, sp, lashC);
@@ -1475,6 +1566,12 @@
   function drawNose(C, g, H, sp, cf) {
     var u = H.u * C.lw, r = H.r, x = H.cx, y = H.noseY, k = cf.nose || (H.sex === 'm' ? 'male' : 'small');
     if (H.chibi) { if (C.m >= 1) { g.beginPath(); g.moveTo(x + r * 0.006, y - r * 0.01); g.lineTo(x, y); strokeW(g, A(sp.ln, 0.5), 1 * u); } return; }
+    // 鼻梁的柔和阴影与鼻底阴影
+    if (C.l >= 1) {
+      g.fillStyle = K.lin(g, x, 0, x + r * 0.04, 0, [A(sp.s, 0.38), A(sp.s, 0)]);
+      g.beginPath(); g.moveTo(x + r * 0.004, H.eyeY + r * 0.02); g.quadraticCurveTo(x + r * 0.012, y - r * 0.05, x + r * 0.02, y); g.lineTo(x + r * 0.045, y); g.quadraticCurveTo(x + r * 0.035, y - r * 0.06, x + r * 0.02, H.eyeY + r * 0.02); g.closePath(); g.fill();
+    }
+    ell(g, x + r * 0.004, y + r * 0.014, r * 0.022, r * 0.007); fillC(g, A(sp.s, 0.45));
     // 鼻侧阴影
     g.beginPath(); g.moveTo(x + r * 0.006, y - r * (k === 'male' || k === 'long' ? 0.11 : 0.05));
     g.quadraticCurveTo(x + r * 0.03, y - r * 0.01, x + r * 0.012, y + r * 0.006); g.lineTo(x - r * 0.004, y + r * 0.004); g.closePath();
@@ -1653,6 +1750,9 @@
         circ(g, ex, ey, H.ew * 0.05); fillC(g, 'rgba(255,90,110,0.8)');
         if (C.l >= 1) K.glow(g, ex, ey, H.ew * 0.25, '#ff4060', 0.25);
       }
+    }
+    if (fx.indexOf('furrow') >= 0 && C.m >= 1 && !H.chibi) {
+      for (var fs = -1; fs <= 1; fs += 2) { g.beginPath(); g.moveTo(cx + fs * r * 0.022, H.browY - r * 0.01); g.quadraticCurveTo(cx + fs * r * 0.012, H.browY + r * 0.025, cx + fs * r * 0.018, H.browY + r * 0.045); strokeW(g, A(sp.ln, 0.45), 1.1 * u); }
     }
     if (fx.indexOf('vein') >= 0 && C.m >= 1 && !H.chibi) {
       var vx = cx + H.fw * 0.55, vy = H.T + r * 0.2;
