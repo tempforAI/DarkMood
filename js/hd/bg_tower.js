@@ -42,6 +42,18 @@
     }
     g.restore();
   }
+  // 蛛网（角落）：cx,cy 为角点，dir 为张开方向角，span 张角
+  function cobweb(g, cx, cy, r, a0, a1, a) {
+    var n = 7, rings = 6, i, j;
+    g.save(); g.strokeStyle = 'rgba(220,220,230,' + (a || 0.18) + ')'; g.lineWidth = 1;
+    for (i = 0; i < n; i++) { var an = lerp(a0, a1, i / (n - 1)); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(an) * r, cy + Math.sin(an) * r); g.stroke(); }
+    for (j = 1; j <= rings; j++) {
+      var rr = r * j / rings; g.beginPath();
+      for (i = 0; i < n; i++) { var an2 = lerp(a0, a1, i / (n - 1)), px = cx + Math.cos(an2) * rr, py = cy + Math.sin(an2) * rr; if (i) { var am = lerp(a0, a1, (i - 0.5) / (n - 1)); g.quadraticCurveTo(cx + Math.cos(am) * rr * 0.86, cy + Math.sin(am) * rr * 0.86, px, py); } else g.moveTo(px, py); }
+      g.stroke();
+    }
+    g.restore();
+  }
   function dust(g, rnd, n, x, y, w, h, color, a) {
     g.save(); g.globalCompositeOperation = 'lighter';
     for (var i = 0; i < n; i++) {
@@ -240,7 +252,7 @@
     if (q.tex > 0) {
       g.beginPath(); g.rect(x, y, w, h);
       g.globalCompositeOperation = 'overlay';
-      K.fillTex(g, q, 'rock', { c1: '#303030', c2: '#d0d0d0', seed: o.seed || 37 }, o.grain || 260, 0, 0, 0.55);
+      K.fillTex(g, q, 'noise', { c1: '#383838', c2: '#c8c8c8', scale: 16, oct: 4, seed: 37, contrast: 1.3 }, 256, 0, 0, 0.4);
       g.globalCompositeOperation = 'source-over';
     }
     g.restore();
@@ -1998,6 +2010,7 @@
       if (q.model > 0) { floorPoly(g, R, [X0, s0, X1, s0, X1, s1, X0, s1]); g.strokeStyle = 'rgba(150,140,120,0.35)'; g.lineWidth = 2; g.stroke(); }
     })();
 
+    if (q.model >= 2) { cobweb(g, 0, 126, 150, 0, PI / 2, 0.16); cobweb(g, 432, 184, 70, 0, PI / 2, 0.14); cobweb(g, 1150, 184, 60, PI / 2, PI, 0.14); }
     // 吊灯（挂在梁下的油灯）
     var lmp = [1196, 136];
     (function hangLamp() {
