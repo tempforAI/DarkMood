@@ -18,7 +18,7 @@ var shotsDir = (function () { var i = args.indexOf('--shots'); return i >= 0 ? a
 var maxSteps = (function () { var i = args.indexOf('--max'); return i >= 0 ? +args[i + 1] : 20000; })();
 var all = args.indexOf('--all') >= 0;   // 章节结束后继续下一章
 function opt(name) { var i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; }
-var dropEv = (opt('--drop') || '').split(',').filter(Boolean), beWant = opt('--be'), ftPref = (opt('--ft') || '').split(',').filter(Boolean), skipOpt = (opt('--skip-optional') || '').split(',').filter(Boolean);
+var setBond = (opt('--bond') || '').split(',').filter(Boolean), dropEv = (opt('--drop') || '').split(',').filter(Boolean), beWant = opt('--be'), ftPref = (opt('--ft') || '').split(',').filter(Boolean), skipOpt = (opt('--skip-optional') || '').split(',').filter(Boolean);
 var pixel = args.indexOf('--pixel') >= 0, resOpt = opt('--res');
 
 (async function () {
@@ -34,7 +34,7 @@ var pixel = args.indexOf('--pixel') >= 0, resOpt = opt('--res');
   }, { pixel: pixel, res: resOpt, prefix: fs.existsSync(path.resolve(__dirname, '..', 'js/data/game.js')) ? (/storage:\s*'([^']+)'/.exec(fs.readFileSync(path.resolve(__dirname, '..', 'js/data/game.js'), 'utf8')) || [0, 'darkmood_'])[1] : 'darkmood_' });
   await page.goto(url);
   await page.waitForTimeout(1200);
-  await page.evaluate(function (o) { DM.State.settings.textSpeed = 3; DM.State.settings.shake = false; window.__AP = o; }, { be: beWant, ft: ftPref, skip: skipOpt, drop: dropEv });
+  await page.evaluate(function (o) { DM.State.settings.textSpeed = 3; DM.State.settings.shake = false; window.__AP = o; }, { be: beWant, ft: ftPref, skip: skipOpt, drop: dropEv, bond: setBond });
   if (shotsDir) fs.mkdirSync(shotsDir, { recursive: true });
 
   var t0 = Date.now(), steps = 0, shot = 0, stuck = 0, lastSig = '', chaptersSeen = [chapter], ended = false;
@@ -76,6 +76,7 @@ function step() {
   var sigBase = St.s ? (St.s.prog + ':' + St.s.ip) : 'none';
   var res = function (act, extra) { var o = { act: act, extra: extra, chapter: St.s && St.s.chapter, sig: sigBase + ':' + act + ':' + (extra || '') }; return o; };
   var AP = window.__AP || {};
+  if (AP.bond && AP.bond.length && St.s) AP.bond.forEach(function (b) { var kv = b.split('='); if ((St.s.bonds[kv[0]] || 0) < +kv[1]) St.s.bonds[kv[0]] = +kv[1]; });
   if (AP.drop && AP.drop.length && St.s) St.s.ev = St.s.ev.filter(function (e) { return AP.drop.indexOf(e) < 0; });
 
   if (document.querySelector('.credits')) return res('credits');
