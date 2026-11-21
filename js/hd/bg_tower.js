@@ -262,7 +262,6 @@
   // o: { grad, c0 云底色, c1 云体色, c2 受光色, lit:[x,y,r,color] 光源方向的暖色边, seed, n, scale }
   function cloudSky(g, q, x, y, w, h, o) {
     if (o.grad) K.vgrad(g, x, y, w, h, o.grad);
-    if ((root.location && root.location.search || '').indexOf('dbg=noclouds') >= 0) return;
     var rnd = K.rng(o.seed || 5), n = o.n || byM(q, 9, 16, 26), sc = o.scale || 1;
     g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
     // 层云条纹
@@ -2113,7 +2112,7 @@
     } else {
       cloudSky(g, q, 0, 0, W, BAL_HY + 10, { grad: ['#3a3e52', '#5a5e72', '#7c7e8e', '#9a98a2'], c0: '#2e3244', c1: '#4a4e62', c2: '#a4a6b6', seed: 17, lit: [720, 500, 520, '#d8ccbc'] });
       // 云隙透出的亮带（地平线附近）
-      if (q.light > 0) { g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = K.rad(g, 720, BAL_HY - 30, 10, 520, [[0, 'rgba(255,240,215,0.35)'], [0.5, 'rgba(220,210,200,0.1)'], [1, 'rgba(200,200,210,0)']]); g.fillRect(0, 200, W, 380); g.restore(); }
+      if (q.light > 0) { g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = K.rad(g, 720, BAL_HY - 30, 10, 520, [[0, 'rgba(255,240,215,0.35)'], [0.5, 'rgba(220,210,200,0.1)'], [1, 'rgba(200,200,210,0)']]); g.fillRect(0, 0, W, BAL_HY + 30); g.restore(); }
       if (q.model >= 2) { flyingCrow(g, 1200, 300, 0.9, '#1a1a22', 0.6); flyingCrow(g, 1260, 270, 0.6, '#22222a', -0.4, true); flyingCrow(g, 1120, 250, 0.45, '#2a2a32', 0.2); }
     }
     // ---- 海 ----
@@ -2227,7 +2226,7 @@
     // 湿石面：天空的反光带 + 栏杆立柱在地上的倒影
     if (!past && q.light > 0) {
       g.save(); g.globalCompositeOperation = 'lighter';
-      g.fillStyle = K.lin(g, 0, 840, 0, 1000, ['rgba(170,175,195,0.16)', 'rgba(170,175,195,0)']); g.fillRect(320, 830, W, 180);
+      g.translate(1180, 880); g.scale(1, 0.14); g.fillStyle = K.rad(g, 0, 0, 0, 900, [[0, 'rgba(170,175,195,0.16)'], [0.6, 'rgba(170,175,195,0.06)'], [1, 'rgba(170,175,195,0)']]); g.fillRect(-900, -900, 1800, 1800);
       g.restore();
       if (q.model > 0) for (var rp = 330; rp < W + 60; rp += 300 * (0.6 + 0.4 * balK(rp))) {
         var rb = balBase(rp) + 8, rl = 120 * balK(rp);
@@ -2325,11 +2324,11 @@
         g.fillStyle = K.lin(g, xw - ww / 2, 0, xw + ww / 2, 0, wood); K.poly(g, [xw - ww / 2 + lean, t0, xw + ww / 2 + lean, t0, xw + ww / 2, b0, xw - ww / 2, b0]); g.fill();
         if (q.model > 0) { g.fillStyle = 'rgba(70,90,60,0.35)'; g.fillRect(xw - ww / 2, b0 - 20 * kk, ww, 20 * kk); }
       }
-      function rail(xa, xb, off, th) {
+      var rail = function (xa, xb, off, th) {
         g.beginPath(); for (var r = 0; r <= 12; r++) { var xr = lerp(xa, xb, r / 12); if (r) g.lineTo(xr, balTop(xr) + off * balK(xr)); else g.moveTo(xr, balTop(xr) + off * balK(xr)); }
         for (r = 12; r >= 0; r--) { var xr2 = lerp(xa, xb, r / 12); g.lineTo(xr2, balTop(xr2) + (off + th) * balK(xr2)); }
         g.closePath(); g.fillStyle = K.lin(g, 0, 700, 0, 760, ['#4a3a28', '#2a2016', '#120c06']); g.fill();
-      }
+      };
       rail(306, gap0 - 6, 0, 16); rail(gap1 + 8, W, 0, 16);
       rail(306, gap0 - 40, 86, 12); rail(gap1 + 30, W, 86, 12);
       // 断口：参差的木刺
@@ -2361,7 +2360,7 @@
       }
       if (q.light >= 2) lmShade(L, 0.25, function (x) { x.beginPath(); x.moveTo(0, 790); x.lineTo(330, 740); x.lineTo(700, 1080); x.lineTo(0, 1080); x.closePath(); });
     }
-    if ((root.location && root.location.search || '').indexOf('dbg=nolm') < 0) applyLM(g, L);
+    applyLM(g, L);
     if (!past && q.light >= 2) {
       softShaft(g, [560, 0, 900, 0, 1000, BAL_HY, 600, BAL_HY], '#fff0dc', 0.08, 720, 0, 720, BAL_HY, 5);
       softShaft(g, [1000, 0, 1180, 0, 980, BAL_HY, 860, BAL_HY], '#fff0dc', 0.05, 1080, 0, 920, BAL_HY, 4);

@@ -42,16 +42,24 @@
  *                |'police'|'parka'|'robe'|'jacket'|'fisher'|'nurse'|'maid'|'coat_over_sailor'|'shirt' …,
  *             c: 主色, c2: 内搭色, c3: 点缀色（领带/丝带/腰带）, tie: 'tie'|'bow'|'ribbon'|'none', ...预设参数 },
  *   acc: [ 'glasses_round', {k:'top_hat', c:'#222', tilt:-0.2}, {k:'scarf', c:'#a08060'}, ... ],   // 配件（见 ACC 表）
- *   hold: { k: 'notebook'|'doll'|'book'|'cane'|'cards'|'camera'|'phone'|'lantern'|'gohei'|'clipboard'|'fan', c, glove:'#fff', side:1 },
- *   mask: 'crow' | 'moth' | 'fox' | 'cloth' | {k, c, glow},  // 面具（DM.HDChar.parts.mask 可扩展）；crow/moth 时不画五官
- *   hood: { c: '#0a0a10' },   // 兜帽（与 robe/面具搭配）
- *   pose: { think: 'chin' | 'arms' | null },  // think 表情时的手势
- *   expr: { smile: { eye:{mode:'happy'} }, normal: {...} },   // 按表情覆盖 EXPR 表（eye/brow/mouth/blush/fx）
- *   glow: { c: '#ff3050' },   // 面具眼洞发光色（判官）
- *   sprite: { legs:'pants'|'skirt'|'long_skirt'|'shorts'|'dress'|'robe'|'hakama', legC, shoe, sock, coat: 0..1 }
+ *   hold: { k: 'notebook'|'book'|'doll'|'cane'|'cards'|'phone'|'clipboard'|'lantern'|'gohei'|'fan'|'crow_mask',
+ *           c: 颜色, glove: '#fff'(手套色), side: 1|-1 },          // 手持道具（自带前臂与手）；继承时整体替换
+ *   mask: 'crow'|'moth'|'fox'|'cloth'|'half' | { k, c },  // 面具：cover full=不画五官（crow/fox）、upper=遮眼（moth）、lower=遮口（cloth）
+ *   hood: { c: '#0a0a10' },   // 兜帽（后片在身后，前缘框住脸）
+ *   glow: { c: '#ff3050' }, glowBy: { angry: 1 },   // 面具眼洞发光色；按表情的发光强度（默认表 JUDGE_GLOW）
+ *   pose: { think: 'chin' },  // think 表情时拳托下巴（有 hold 道具时不画）
+ *   expr: { smile: { eye: { mode: 'happy' }, mouth: 'grin', blush: 0.3 }, normal: { mouth: 'smile_closed' } },
+ *           // 按表情覆盖 EXPR 表：eye{open,inDrop,outDrop,iris,pupil,look:[x,y],hl,tear,mode:'happy'|'closed',lowUp,dull}
+ *           // brow{y,i,o,asym}  mouth: neutral|smile|smile_closed|grin|smirk|sad|frown|grit|o|side|shock|dark  fx:['pale','sweat','gloom','shadow','vein']
+ *   ears: true|false, facialHair: '#色', headScale: 1, xOff: 0, yOff: 0,   // 细调
+ *   sprite: { legs:'pants'|'skirt'|'long_skirt'|'shorts'|'dress'|'robe'|'hakama', legC, shoe, sock, coat: 0..1, front:'v'|'sailor'|'cross'|'robe'|'none' }
  * });
- * 未注册的 id：若 DM.CHARS[id].visual 存在则据其自动推导，否则画中性的剪影占位，不抛异常。
- * 扩展：DM.HDChar.parts.{hair,bangs,sides,backs,extras,outfit,acc,mask,eyes,brows,face,expr,mouth}
+ * hair 的其它可选键：tieC 发绳色、greyC 白发丝色、shine 高光强度、ringY 高光带高度、noFly 不画飞出的细发、
+ *   extras 中 {k:'twin_tails', len, bow:'#色'}、{k:'braids', len}、{k:'bun', pos:'top'|'back', r}、{k:'low_tail', side}、{k:'ponytail', side, len}。
+ * 未注册的 id：若 DM.CHARS[id].visual 存在则据其自动推导（fromVisual），否则画中性的灰色人物占位，任何异常都回退占位，不抛出。
+ * 扩展：DM.HDChar.parts.{hair,bangs,sides,backs,extras,outfit,acc,mask,prop,legs,eyes,brows,face,expr,mouth}
+ *   例：parts.mask.oni = { cover: 'full', draw: function (C, g, H, B, cf, X, o) {...} }；parts.acc.x = { slot: 'head', draw: fn }
+ *   （slot：back 身后 / neck 颈部 / body 衣服上 / face 脸上 / head 头上）。DM.HDChar.resolve(id) 返回合并后的配置。
  * ====================================================================== */
 (function (root) {
   'use strict';
@@ -568,7 +576,7 @@
     var b = hs.bangs, r = H.r, cx = H.cx, fw = H.fw, ps = (b.part || 0.5) >= 0 ? 1 : -1, px = G.partX;
     var tip = lerp(H.browY, H.eyeY + H.eh * 0.3, b.len === undefined ? 0.5 : b.len), n = pickN(b.n || [2, 3, 4], C), i;
     // 分缝另一侧的短发
-    o.front.push({ bang: 1, L: lock(px + ps * fw * 0.1, G.top + G.ry * 0.3, cx + ps * fw * 0.92, G.hl + r * 0.12, fw * 0.55, -ps * r * 0.06) });
+    o.front.push({ bang: 1, L: lock(px + ps * fw * 0.1, G.top + G.ry * 0.3, cx + ps * fw * 0.98, H.browY + r * 0.03, fw * 0.55, -ps * r * 0.07) });
     // 主刘海：从分缝扫向另一侧
     for (i = n - 1; i >= 0; i--) {
       var t = n === 1 ? 0 : i / (n - 1);
@@ -2072,7 +2080,7 @@
         (function (s) {
           var sw = B.sw, shY = B.shY, aw = B.aw;
           garment(C, g, B, function (g2) { P(g2, ['M', sw * 0.8, shY - r * 0.01, 'C', sw * 0.97, shY + r * 0.005, sw + r * 0.01, shY + r * 0.06, sw + r * 0.03, shY + r * 0.2,
-            'L', sw + r * 0.05, shY + r * 0.4, 'C', sw - aw * 0.3, shY + r * 0.44, sw - aw * 0.7, shY + r * 0.42, sw - aw * 0.95, shY + r * 0.38, 'L', sw - aw * 0.9, shY + r * 0.25, 'Z'], B.cx, s); }, c, { tex: o.tex || 'shirt', noFolds: 1, ow: 2.4 * u });
+            'L', sw + r * 0.05, shY + r * 0.4, 'C', sw - aw * 0.3, shY + r * 0.44, sw - aw * 0.7, shY + r * 0.42, sw - aw * 0.9, shY + r * 0.36, 'L', sw - aw * 0.88, shY + r * 0.24, 'Z'], B.cx, s); }, c, { tex: o.tex || 'shirt', noFolds: 1, ow: 2.4 * u });
         })(s);
       }
     }
