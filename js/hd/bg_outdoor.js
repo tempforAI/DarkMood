@@ -277,19 +277,27 @@
         g.moveTo(lx, ly); g.quadraticCurveTo(lm, ly - lt * 1.5, lx + ll, ly); g.quadraticCurveTo(lm, ly - lt * 0.35, lx, ly);
       }
       g.fillStyle = K.rgba(crest, 0.14 + 0.3 * sc); g.fill();
-      // 白浪
+      // 白浪：由若干不规则泡沫团组成（不是整块白色）
       if (caps.length) {
         g.beginPath();
         for (k = 0; k < caps.length; k += 4) {
           var cxp = caps[k], cyp = caps[k + 1], cl = caps[k + 2], ct = caps[k + 3];
-          g.moveTo(cxp - cl / 2, cyp + ct * 0.3);
-          g.quadraticCurveTo(cxp - cl * 0.2, cyp - ct * 1.4, cxp + cl * 0.1, cyp - ct * 0.6);
-          g.quadraticCurveTo(cxp + cl * 0.3, cyp - ct * 1.1, cxp + cl / 2, cyp + ct * 0.2);
-          g.quadraticCurveTo(cxp, cyp + ct * 0.9, cxp - cl / 2, cyp + ct * 0.3);
+          var nb = 3 + ((cxp * 7.3) % 4 | 0);
+          for (var b2 = 0; b2 < nb; b2++) {
+            var bx = cxp + (r() - 0.5) * cl, by = cyp + (r() - 0.6) * ct * 1.2, bw = cl * r.range(0.08, 0.22), bh = Math.max(0.5, ct * r.range(0.25, 0.6));
+            g.moveTo(bx + bw, by); g.ellipse ? g.ellipse(bx, by, bw, bh, 0, 0, TAU) : g.arc(bx, by, bw, 0, TAU);
+          }
         }
-        g.fillStyle = K.rgba(foam, 0.35 + 0.45 * sc); g.fill();
+        g.fillStyle = K.rgba(foam, 0.16 + 0.26 * sc); g.fill();
+        // 浪峰最亮的一道细线
+        g.beginPath();
+        for (k = 0; k < caps.length; k += 4) {
+          var ex = caps[k], ey = caps[k + 1], el = caps[k + 2] * 0.45, et = caps[k + 3];
+          g.moveTo(ex - el, ey + et * 0.2); g.quadraticCurveTo(ex, ey - et * 0.9, ex + el, ey + et * 0.1);
+        }
+        g.strokeStyle = K.rgba(foam, 0.3 + 0.4 * sc); g.lineWidth = Math.max(0.6, th * 0.45); g.stroke();
         if (q.model >= 1 && sc > 0.15) {
-          // 浪沫拖尾
+          // 浪沫拖尾（断续的细纹）
           g.beginPath();
           for (k = 0; k < caps.length; k += 4) {
             var fx = caps[k], fy = caps[k + 1], fl = caps[k + 2], ft = caps[k + 3];
@@ -298,7 +306,7 @@
               g.moveTo(fx + ox - fl * 0.3, fy + oy); g.lineTo(fx + ox + fl * 0.3, fy + oy + r.range(-1, 1));
             }
           }
-          g.strokeStyle = K.rgba(foam, 0.18 + 0.2 * sc); g.lineWidth = Math.max(0.6, th * 0.35); g.stroke();
+          g.strokeStyle = K.rgba(foam, 0.12 + 0.16 * sc); g.lineWidth = Math.max(0.6, th * 0.3); g.stroke();
         }
       }
       // 云隙反光的闪烁
@@ -538,7 +546,7 @@
         var wv = wetf(u, v);
         if (wv > 0) {
           R *= 1 - wv * 0.4; G *= 1 - wv * 0.38; B *= 1 - wv * 0.32;
-          if (spec) { var hz = nx * lx * 0.5 + ny * (ly * 0.5 - 0.5) + nz * (lz * 0.5 + 0.5); if (hz > 0.94) { var sp = Math.pow((hz - 0.94) / 0.06, 2) * wv * a * cr * sstep(0.55, 0.75, n) * 90; R += sp; G += sp; B += sp * 1.06; } }
+          if (spec) { var hz = nx * lx * 0.5 + ny * (ly * 0.5 - 0.5) + nz * (lz * 0.5 + 0.5); if (hz > 0.9) { var gm = vn(px * 0.12, py * 0.12); if (gm > 0.72) { var sp = (hz - 0.9) * 10 * (gm - 0.72) * 3.5 * wv * a * cr * 110; R += sp; G += sp; B += sp * 1.06; } } }
         }
       }
       out[0] = R; out[1] = G; out[2] = B;
@@ -1369,7 +1377,7 @@
     for (var x = -10; x <= 1210; x += 12) pts.push(x, lowCliffTop(x));
     pts.push(1210, 700);
     g.save(); K.poly(g, pts); g.clip();
-    rockCells(g, q, -10, 360, 1220, 345, { seed: 73, cw: 120, ch: 80, dark: '#1a1920', mid: '#46444f', lite: '#9c99a8', L: [-0.6, -0.6, 0.6], amb: 0.32, crack: 0.07, tilt: 0.3,
+    rockCells(g, q, -10, 360, 1220, 345, { seed: 73, cw: 170, ch: 56, sw: 50, sh: 30, dark: '#1a1920', mid: '#46444f', lite: '#9c99a8', L: [-0.6, -0.6, 0.6], amb: 0.32, crack: 0.07, tilt: 0.3,
       wet: function (u, vv) { return sat((vv - 0.72) * 2.5); }, moss: function (u, vv) { return sat(0.35 - vv) * 1.6; } });
     if (q.tex > 0) { K.poly(g, pts); texFill(g, q, 'rock', ROCK, 256, 0, 0, 0.35, null, null, null, 'overlay'); }
     haze(g, -10, 360, 1220, 345, SKY.hor, 0.16, 0.02);
@@ -1590,11 +1598,11 @@
     g.strokeStyle = 'rgba(232,236,242,0.75)'; g.lineWidth = 3; g.stroke();
     if (q.model >= 1) {
       g.beginPath();
-      for (i = 0; i < K.byModel(q, 0, 90, 180); i++) {
-        var lx = r() * W, ly = lace(lx) + r.range(4, 46), lr = r.range(4, 14);
+      for (i = 0; i < K.byModel(q, 0, 40, 70); i++) {
+        var lx = r() * W, ly = lace(lx) + r.range(4, 40), lr = r.range(6, 22);
         g.moveTo(lx - lr, ly); g.quadraticCurveTo(lx, ly - lr * 0.35, lx + lr, ly); g.quadraticCurveTo(lx, ly + lr * 0.3, lx - lr, ly);
       }
-      g.strokeStyle = 'rgba(226,230,238,0.35)'; g.lineWidth = 1.4; g.stroke();
+      g.strokeStyle = 'rgba(226,230,238,0.22)'; g.lineWidth = 1.2; g.stroke();
     }
     // 水线处湿沙的高光
     if (q.light >= 1) { g.beginPath(); g.moveTo(0, lace(0) - 5); for (x = 0; x <= W; x += 10) g.lineTo(x, lace(x) - 5); strokeP(g, 'rgba(200,204,220,0.25)', 4); }

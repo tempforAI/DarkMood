@@ -1321,7 +1321,7 @@
     for (var s = 0; s < ns; s++) {
       var sy = it + (s + 1) * sh, shelfTop = sy - 12;
       // 书
-      var maxH = sh - 30;
+      var maxH = sh - 22;
       if (q.model > 0) bookRow(g, q, ix0 + 4, shelfTop, ix1 - ix0 - 8, maxH, rnd);
       else { g.fillStyle = K.lin(g, ix0, 0, ix1, 0, ['#3a1a1a', '#2a2a22', '#3a2a1a']); g.fillRect(ix0 + 4, shelfTop - maxH * 0.85, ix1 - ix0 - 8, maxH * 0.85); }
       // 书顶上方的阴影（上一层隔板的遮挡）
@@ -1361,7 +1361,7 @@
     ceilRegion(g, R); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
     // 墙：灰泥 + 护墙板
     wallRegion(g, R);
-    K.matFill(g, q, '#6a6056', 'plaster', { c1: '#5e544a', c2: '#7a6e62', seed: 21, stain: 0.5 }, 256, 0, 0);
+    K.matFill(g, q, '#6e6052', 'plaster', { c1: '#62564a', c2: '#806e5e', seed: 21, stain: 0.7 }, 256, 0, 0);
     wallPath(g, R, 0, W, 112, 146, 24); oakFill(g, q, '#3a2414', true, 0, 0, ['#1e0e06', 0.25]);
     wallPath(g, R, 0, W, 140, 146, 24); g.fillStyle = 'rgba(255,225,180,0.2)'; g.fill();
     wallPath(g, R, 0, W, 146, 166, 24); g.fillStyle = K.lin(g, 0, 146, 0, 166, ['rgba(0,0,0,0.5)', 'rgba(0,0,0,0)']); g.fill();
@@ -1384,12 +1384,48 @@
       g.restore();
     }
     if (q.model > 0) {
-      floorPoly(g, R, [-140, 1.05, 420, 1.05, 470, 1.5, -190, 1.5]); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
-      floorPoly(g, R, [-130, 1.06, 410, 1.06, 460, 1.49, -180, 1.49]);
-      K.matFill(g, q, '#26382e', 'carpet', { c1: '#1e2e26', c2: '#2e4436', c3: 'rgba(201,162,90,0.3)', seed: 71 }, 128, 0, 0);
-      floorPoly(g, R, [-110, 1.08, 390, 1.08, 436, 1.46, -156, 1.46]); g.strokeStyle = 'rgba(201,162,90,0.45)'; g.lineWidth = 3; g.stroke();
-      floorPoly(g, R, [-130, 1.06, 410, 1.06, 460, 1.49, -180, 1.49]); g.fillStyle = 'rgba(0,0,0,0.2)'; g.fill();
+      floorPoly(g, R, [-100, 1.05, 370, 1.05, 380, 1.42, -110, 1.42]); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fill();
+      floorPoly(g, R, [-92, 1.06, 362, 1.06, 372, 1.41, -102, 1.41]);
+      K.matFill(g, q, '#4a1e22', 'carpet', { c1: '#3e161a', c2: '#5a2228', c3: 'rgba(201,162,90,0.3)', seed: 71 }, 128, 0, 0);
+      floorPoly(g, R, [-70, 1.085, 340, 1.085, 348, 1.38, -78, 1.38]); g.strokeStyle = 'rgba(30,44,66,0.9)'; g.lineWidth = 9; g.stroke();
+      floorPoly(g, R, [-62, 1.095, 332, 1.095, 340, 1.37, -70, 1.37]); g.strokeStyle = 'rgba(201,162,90,0.5)'; g.lineWidth = 2.5; g.stroke();
+      floorPoly(g, R, [-92, 1.06, 362, 1.06, 372, 1.41, -102, 1.41]); g.fillStyle = K.lin(g, 0, 800, 0, 1000, ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.05)']); g.fill();
     }
+
+    // ---- 墙上的旧海图（宵鸦岛）+ 两盏壁烛 ----
+    (function wallChart() {
+      var mx = 872, my = 214, mw = 440, mh = 268;
+      if (q.light > 0) K.contact(g, mx + mw / 2 + 10, my + mh + 20, mw * 0.55, 12, 0.35);
+      g.fillStyle = K.lin(g, mx - 18, my - 18, mx + mw + 18, my + mh + 18, ['#5a3a20', '#2a160a']); g.fillRect(mx - 18, my - 18, mw + 36, mh + 36);
+      g.strokeStyle = 'rgba(201,162,90,0.6)'; g.lineWidth = 2; g.strokeRect(mx - 8, my - 8, mw + 16, mh + 16);
+      g.beginPath(); g.rect(mx, my, mw, mh);
+      K.matFill(g, q, '#c8b48a', 'paper', { c1: '#b49c70', c2: '#d8c49a', seed: 19 }, 256, mx, my);
+      g.fillStyle = K.rad(g, mx + mw / 2, my + mh / 2, mh * 0.3, mw * 0.65, ['rgba(80,50,20,0)', 'rgba(80,50,20,0.45)']); g.fillRect(mx, my, mw, mh);
+      // 海的线条
+      if (q.model > 0) { g.strokeStyle = 'rgba(60,70,90,0.18)'; g.lineWidth = 1.5; for (var hl = 0; hl < 10; hl++) { g.beginPath(); g.moveTo(mx + 10, my + 20 + hl * 25); g.lineTo(mx + mw - 10, my + 24 + hl * 25); g.stroke(); } }
+      // 岛
+      K.path(g, 'M60 120 C52 80 80 40 130 30 C190 18 250 28 300 50 C350 40 380 70 372 110 C368 150 330 190 270 204 C200 220 120 214 80 180 C64 160 62 140 60 120 Z', mx + 20, my + 10, 1);
+      g.fillStyle = 'rgba(120,110,70,0.55)'; g.fill(); g.strokeStyle = 'rgba(70,50,30,0.85)'; g.lineWidth = 2.5; g.stroke();
+      if (q.model > 0) {
+        g.strokeStyle = 'rgba(70,50,30,0.5)'; g.lineWidth = 1.5;
+        g.beginPath(); g.arc(mx + 150, my + 110, 34, 0, TAU); g.stroke(); g.beginPath(); g.arc(mx + 150, my + 110, 20, 0, TAU); g.stroke();
+        g.fillStyle = 'rgba(120,20,20,0.8)'; g.fillRect(mx + 268, my + 56, 8, 8); g.fillRect(mx + 210, my + 120, 12, 8);
+        g.strokeStyle = 'rgba(120,20,20,0.6)'; g.setLineDash ? g.setLineDash([6, 5]) : 0; g.beginPath(); g.moveTo(mx + 150, my + 100); g.lineTo(mx + 272, my + 60); g.stroke(); if (g.setLineDash) g.setLineDash([]);
+        // 罗盘
+        var rx = mx + mw - 60, ry = my + mh - 60;
+        g.strokeStyle = 'rgba(70,50,30,0.8)'; g.lineWidth = 1.5; g.beginPath(); g.arc(rx, ry, 30, 0, TAU); g.stroke();
+        g.fillStyle = 'rgba(110,30,20,0.8)'; K.poly(g, [rx, ry - 40, rx + 7, ry, rx, ry + 40, rx - 7, ry]); g.fill();
+        g.fillStyle = 'rgba(70,50,30,0.8)'; K.poly(g, [rx - 40, ry, rx, ry - 6, rx + 40, ry, rx, ry + 6]); g.fill();
+      }
+    })();
+    function sconce(sx, sy) {
+      g.fillStyle = brassGrad(g, sx - 16, 0, sx + 16, 0, true); K.rr(g, sx - 10, sy, 20, 46, 4); g.fill();
+      g.strokeStyle = brassGrad(g, sx - 30, 0, sx + 30, 0); g.lineWidth = 5; g.beginPath(); g.moveTo(sx, sy + 34); g.quadraticCurveTo(sx, sy + 64, sx + 24, sy + 50); g.stroke();
+      g.fillStyle = brassGrad(g, sx + 10, 0, sx + 38, 0); K.ellipse(g, sx + 24, sy + 46, 14, 4); g.fill();
+      g.fillStyle = K.lin(g, sx + 19, 0, sx + 29, 0, ['#fff4e0', '#d8ccb4']); g.fillRect(sx + 19, sy + 10, 10, 34);
+      flameShape(g, sx + 24, sy + 8, 22, 1);
+    }
+    sconce(812, 280); sconce(1352, 280);
 
     // ---- 书架（锚点 64-728, 144-768）----
     bookcase(g, q, R, 70, 392, 150, rnd);
@@ -1603,6 +1639,7 @@
     lmLight(L, 1548, 360, 700, '#c0cce8', 0.75, 0.9);          // 窗
     lmLight(L, 912, 620, 460, '#ffd8a0', 0.75, 0.5);           // 台灯
     lmLight(L, 1797, 560, 300, '#a8b4d8', 0.25, 1.2);          // 门玻璃
+    lmLight(L, 836, 300, 300, '#ffc888', 0.5, 1); lmLight(L, 1376, 300, 300, '#ffc888', 0.5, 1); // 壁烛
     if (q.light > 0) {
       lmLight(L, 1450, 860, 520, '#b0bce0', 0.4, 0.35);
       lmLight(L, 400, 460, 600, '#d8c8b0', 0.2, 0.8);           // 书架上的反射光
@@ -1619,6 +1656,7 @@
     if (q.light > 0) {
       K.glow(g, 912, 552, 140, '#ffd090', 0.3);
       K.glow(g, 1548, 350, 280, '#b0c0e0', 0.15);
+      K.glow(g, 836, 280, 90, '#ffb860', 0.4); K.glow(g, 1376, 280, 90, '#ffb860', 0.4);
     }
     if (q.light >= 2) {
       softShaft(g, [1456, 260, 1640, 260, 1520, 960, 1160, 960], '#c0d0f0', 0.12, 1550, 300, 1340, 960, 6);
@@ -1631,7 +1669,9 @@
     draw: drawLibrary,
     lights: [
       { x: 1548, y: 350, r: 280, color: '#b8c8e8', i: 0.4, flicker: 0, kind: 'window' },
-      { x: 912, y: 540, r: 170, color: '#ffd090', i: 0.55, flicker: 0.05, kind: 'lamp' }
+      { x: 912, y: 540, r: 170, color: '#ffd090', i: 0.55, flicker: 0.05, kind: 'lamp' },
+      { x: 836, y: 282, r: 90, color: '#ffb860', i: 0.5, flicker: 0.4, kind: 'candle' },
+      { x: 1376, y: 282, r: 90, color: '#ffb860', i: 0.5, flicker: 0.4, kind: 'candle' }
     ],
     key: { x: 0.55, color: '#d8e0f4', amb: '#2a2a36', rim: 0.55 },
     outdoor: false
