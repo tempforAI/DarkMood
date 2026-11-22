@@ -28,6 +28,11 @@
     I.resume = { type: 'explore' };
     UI.showDialog(false); UI.caption('');
     var info = placeInfo(def, f.place);
+    if (!R.bgReady(info.bg, info.variant || undefined)) {
+      UI.loading(true); Core.clear(UI.layers.explore);
+      Core.frame().then(Core.frame).then(function () { Core.art.bg(info.bg, info.variant || undefined); UI.loading(false); X.open(); });
+      return;
+    }
     var s = St.s.scene;
     R.setTrial(false); s.trial = false;
     R.setBg(info.bg, info.variant); s.bg = info.bg; s.variant = info.variant;
@@ -37,6 +42,8 @@
     var people = (def.people && def.people[f.place]) || [];
     R.setSprites(people.map(function (p) { return { id: p.char, x: p.x || 240 }; }));
     build(f, def, info, people);
+    // 预生成本次探索其他场所的背景
+    R.prefetch(def.places.map(function (pl) { var pi = placeInfo(def, pl); return ['bg', pi.bg, pi.variant || undefined]; }));
     I.autosave({ type: 'explore' });
   };
 
@@ -128,7 +135,7 @@
     var ov = el('div', '', L); ov.id = 'mapov';
     ov.addEventListener('click', function (e) { e.stopPropagation(); });
     var mc = Core.canvasFrom(Core.art.map()); ov.appendChild(mc);
-    el('div', 'title', ov, '宵鸦岛');
+    el('div', 'title', ov, DM.GAME.mapTitle || '');
     var close = el('button', 'btn small close', ov, '关闭');
     close.addEventListener('click', function (e) { e.stopPropagation(); ov.remove(); });
     // 按区域分组
@@ -195,7 +202,7 @@
     var grid = el('div', 'pick-grid', p);
     F.available().forEach(function (a) {
       var card = el('div', 'pick-card', grid);
-      card.appendChild(Core.canvasFrom(Core.art.portrait(a.char, 'smile')));
+      card.appendChild(Core.canvasFrom(Core.art.thumb(a.char, 'smile')));
       el('div', 'nm', card, Core.charName(a.char));
       var hearts = el('div', 'hearts', card, '♥'.repeat(St.s.bonds[a.char] || 0) + '♡'.repeat(Math.max(0, 3 - (St.s.bonds[a.char] || 0))));
       hearts.style.fontSize = '13px';

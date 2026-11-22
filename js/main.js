@@ -4,10 +4,20 @@
   var DM = window.DM, Core = DM.Core, St = DM.State;
 
   function boot() {
+    // 先按画风加载美术模块（高清 / 经典像素）并恢复存档文件夹，再初始化
+    var saves = DM.Storage ? DM.Storage.init() : Promise.resolve();
+    Promise.all([Core.loadArt(St.settings.style), saves]).then(start, start);
+  }
+
+  function start() {
+    if (St.settings.style !== 'pixel' && !DM.HDArt) { St.settings.style = 'pixel'; }
     Core.fit();
     window.addEventListener('resize', Core.fit);
+    window.addEventListener('orientationchange', function () { setTimeout(Core.fit, 250); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', Core.fit);
     DM.Render.init(document.getElementById('screen'));
     DM.UI.init();
+    Core.fit();
     DM.Audio.setVolume('bgm', St.settings.bgm);
     DM.Audio.setVolume('se', St.settings.se);
 
@@ -15,8 +25,8 @@
     var last = 0, running = true;
     function loop(now) {
       if (!running) return;
-      DM.Render.tick(now);
       DM.UI.tick(now);
+      DM.Render.tick(now, DM.UI.idle ? DM.UI.idle() : false);
       if (St.s && last) St.s.playMs += Math.min(250, now - last);
       last = now;
       requestAnimationFrame(loop);
@@ -27,7 +37,6 @@
     });
     requestAnimationFrame(loop);
 
-    // 离开页面前自动存档
     window.addEventListener('pagehide', function () { if (St.s && DM.Interp.resume) DM.Interp.autosave(); });
 
     // 调试入口：?ch=ch2 直接从某章开始；?label=xxx 跳到标签
@@ -38,6 +47,10 @@
       });
       return;
     }
+    // 另一台电脑写入了较新的存档：如果正在标题画面，刷新「继续游戏」
+    if (DM.Storage) DM.Storage.onPulled = function () {
+      if (!St.s && !DM.UI.layers.title.classList.contains('hidden')) DM.Menus.toTitle();
+    };
     DM.Menus.toTitle();
   }
 

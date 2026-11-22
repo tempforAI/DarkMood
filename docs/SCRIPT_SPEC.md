@@ -62,10 +62,10 @@ DM.registerChapter({
 | `@bg 场所id [变体] ` | 切换背景（id 见 `js/data/locations.js`），会清空立绘。变体如 `burnt` `past` `tracks`。 |
 | `@show 角色id[表情] [L\|C\|R]` | 显示立绘，例：`@show shio[smile] L` |
 | `@hide [角色id]` | 隐藏某人；不带参数隐藏全部 |
-| `@bgm 曲目` | 曲目：`title daily calm island mystery investigate tension horror sad trial debate truth judge finale ending stop` |
-| `@se 音效` | 音效：`select ok ng door knock bell thunder scream crash glass footsteps splash fire wave getitem gavel heartbeat shout slash clock phone` |
-| `@weather rain\|fog\|embers\|none` | 持续天气粒子 |
-| `@filter night\|dark\|sepia\|red\|none` | 画面滤镜（`@bg` 不会清除滤镜） |
+| `@bgm 曲目` | 曲目：`title daily calm island mystery investigate tension horror sad trial debate truth judge finale ending snow village lament stop` |
+| `@se 音效` | 音效：`select ok ng door knock bell thunder scream crash glass footsteps splash fire wave getitem gavel heartbeat shout slash clock phone wind chime snowstep creak` |
+| `@weather rain\|fog\|embers\|snow\|blizzard\|none` | 持续天气粒子（雨、雪、雾只在室外背景显示；embers 处处显示） |
+| `@filter night\|dark\|sepia\|red\|cold\|dusk\|none` | 画面滤镜（`@bg` 不会清除滤镜）。cold=冷色雪夜，dusk=黄昏 |
 | `@flashback on\|off` | 回忆模式（棕褐色 + 暗角） |
 | `@shake` | 画面震动 |
 | `@flash [white\|red\|black]` | 闪屏 |
@@ -80,7 +80,7 @@ DM.registerChapter({
 | `@choice` | 选项，后续每行 `- 选项文字 -> 标签` |
 | `@set 旗标 [值]` | 设置旗标（默认 true） |
 | `@inc 计数器 [n]` | 计数器 +n |
-| `@if 条件 -> 标签` | 条件跳转。条件：`flag` / `!flag` / `has:证据id` / `!has:证据id` / `计数器>=数字` |
+| `@if 条件 -> 标签` | 条件跳转。条件：`flag` / `!flag` / `has:证据id` / `!has:证据id` / `计数器>=数字` / `bond:角色id>=数字`（羁绊）/ `ending:结局id`（曾达成过该结局，跨周目） |
 | `@get 证据id` | 获得证据（弹窗提示），同时写入「侦探手账」 |
 | `@update 证据id 新描述` | 更新证据描述（例如调查后得到新信息） |
 | `@note 角色id 文本` | 在角色档案里追加一条备注 |
@@ -91,6 +91,8 @@ DM.registerChapter({
 | `@game 游戏id` | 进入审判小游戏（§5），成功后继续下一行；**不存在失败**，答错只给提示 |
 | `@trial on\|off` | 进入/离开审判模式（审判厅背景 + 证言台演出） |
 | `@bond 角色id` | 羁绊 +1（自由时间事件末尾使用） |
+| `@checkpoint` | 分歧点：自动保存一个「分歧点存档」。坏结局之后，玩家可以选择「回到分歧点」从这里重来。放在会导向坏结局的 `@choice` 之前 |
+| `@ending 结局id` | 播放结局（id 在 `js/data/endings.js` 注册）。坏结局：结局卡 →「回到分歧点 / 回到标题」；好结局：结局卡 → 片尾。之后的指令不再执行 |
 | `@chapterend` | 本章结束，存档并加载 `next` 章节 |
 | `@end` | 游戏结束，进入片尾 |
 
@@ -108,7 +110,7 @@ evidence: {
 ```
 
 `icon` 可选值：
-`knife key note letter rope string feather bottle pill photo book diary clock bell cloth paint shoe footprint tape recorder ring hairpin candle fire map blueprint plate glass cup violin card lamp window door cage sand boat cable wax sequin tooth doll testimony body generic`
+`knife key note letter rope string feather bottle pill photo book diary clock bell cloth paint shoe footprint tape recorder ring hairpin candle fire map blueprint plate glass cup violin card lamp window door cage sand boat cable wax sequin tooth doll testimony body generic mask moth snow ice charcoal lantern geta shovel radio kimono ticket mill bridge pendant medicine glove`
 
 `testimony` 用于「证词」类证据（某人的证言也是证据）。
 
@@ -292,3 +294,18 @@ judge: 那么，审判开始。
 * 审判节奏：错误推论 → 被证据推翻 → 新疑点 → 再推翻……层层反转，最后锁定真凶。
 * 角色口吻请严格遵循 `docs/STORY_BIBLE.md` 的角色表。
 * 不要出现任何现实中已有作品的角色名、设定名、口号。
+
+
+## 9. 分支与结局
+
+* 结局在 `js/data/endings.js` 注册：
+  ```js
+  DM.ENDINGS = {
+    be_silence: { no: 1, type: 'BE', title: '沉默之笼', desc: '结局一览中显示的一句话（达成后）', hint: '未达成时的提示（不剧透）' },
+    he_dawn:    { no: 8, type: 'HE', trueEnd: true, title: '……', desc: '……', hint: '……' }
+  };
+  ```
+* 坏结局的写法：在分歧选项前 `@checkpoint`，错误选项跳到 `chX_be_xxx` 标签，演出坏结局剧情后 `@ending be_xxx`。
+  坏结局剧情要完整、有分量（30～80 行）：交代错误选择的后果、角色的命运、律的独白，最后一句点题。
+* 好结局：在终章末尾按条件分流（`@if has:… / bond:… / flag`），各自演出后 `@ending he_xxx`。
+* 小游戏没有失败；坏结局只来自玩家在关键时刻的**主动选择**，或缺少某件**可选证据**。选择要有诱惑力（看起来也说得通），不能一眼就是错的。

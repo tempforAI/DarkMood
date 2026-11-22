@@ -13,17 +13,19 @@ var DM = globalThis.DM = {};
 require(path.join(ROOT, 'js/data/characters.js'));
 require(path.join(ROOT, 'js/data/locations.js'));
 require(path.join(ROOT, 'js/engine/parser.js'));
+if (fs.existsSync(path.join(ROOT, 'js/data/endings.js'))) require(path.join(ROOT, 'js/data/endings.js'));
+DM.ENDINGS = DM.ENDINGS || {};
 
 var chapters = {};
 var freetime = null;
 DM.registerChapter = function (c) { chapters[c.id] = c; };
 DM.registerFreetime = function (f) { freetime = f; };
 
-var BGM = 'title daily calm island mystery investigate tension horror sad trial debate truth judge finale ending stop'.split(' ');
-var SE = 'select ok ng door knock bell thunder scream crash glass footsteps splash fire wave getitem gavel heartbeat shout slash clock phone'.split(' ');
-var ICONS = 'knife key note letter rope string feather bottle pill photo book diary clock bell cloth paint shoe footprint tape recorder ring hairpin candle fire map blueprint plate glass cup violin card lamp window door cage sand boat cable wax sequin tooth doll testimony body generic'.split(' ');
-var WEATHER = ['rain', 'fog', 'embers', 'none'];
-var FILTERS = ['night', 'dark', 'sepia', 'red', 'none'];
+var BGM = 'title daily calm island mystery investigate tension horror sad trial debate truth judge finale ending snow village lament stop'.split(' ');
+var SE = 'select ok ng door knock bell thunder scream crash glass footsteps splash fire wave getitem gavel heartbeat shout slash clock phone wind chime snowstep creak'.split(' ');
+var ICONS = 'knife key note letter rope string feather bottle pill photo book diary clock bell cloth paint shoe footprint tape recorder ring hairpin candle fire map blueprint plate glass cup violin card lamp window door cage sand boat cable wax sequin tooth doll testimony body generic mask moth snow ice charcoal lantern geta shovel radio kimono ticket mill bridge pendant medicine glove'.split(' ');
+var WEATHER = ['rain', 'fog', 'embers', 'snow', 'blizzard', 'none'];
+var FILTERS = ['night', 'dark', 'sepia', 'red', 'cold', 'dusk', 'none'];
 var GAME_TYPES = ['debate', 'rebuttal', 'present', 'pick', 'keyword', 'logic', 'reconstruct', 'vote'];
 
 var files = process.argv.slice(2);
@@ -83,6 +85,8 @@ function validateOps(file, parsed, ctx) {
         if (o.cond) {
           var c = o.cond.replace(/^!/, '');
           if (/^has:/.test(c)) { if (!ctx.hasEvidence(c.slice(4))) E(file, at + '@if has: 未知证据 ' + c.slice(4)); }
+          else if (/^bond:/.test(c)) { var bm = /^bond:([a-z_0-9]+)>=(\d+)$/.exec(c); if (!bm || !DM.CHARS[bm[1]]) E(file, at + '@if bond 条件格式应为 bond:角色>=数字 ' + o.cond); }
+          else if (/^ending:/.test(c)) { if (!DM.ENDINGS[c.slice(7)]) E(file, at + '@if ending: 未知结局 ' + c.slice(7)); }
           else if (!/^[a-zA-Z0-9_]+(>=\d+)?$/.test(c)) E(file, at + '@if 条件格式错误 ' + o.cond);
         }
         break;
@@ -101,6 +105,7 @@ function validateOps(file, parsed, ctx) {
       case 'title': if (!/\|/.test(o.text || '')) W(file, at + '@title 建议格式 第X章|标题'); break;
       case 'shout': if (!o.text) E(file, at + '@shout 缺少文本'); break;
       case 'set': case 'inc': if (!a[0]) E(file, at + '@' + o.cmd + ' 缺少名称'); break;
+      case 'ending': if (!DM.ENDINGS[a[0]]) E(file, at + '@ending 未知结局（请在 js/data/endings.js 注册）' + a[0]); break;
     }
   });
   return referenced;
@@ -211,7 +216,7 @@ function checkReturns(file, parsed, runLabels) {
     for (var k = idx; k < parsed.ops.length; k++) {
       var o = parsed.ops[k];
       if (o.op === 'cmd' && (o.cmd === 'return' || o.cmd === 'goto' || o.cmd === 'choice')) return;
-      if (o.op === 'cmd' && (o.cmd === 'chapterend' || o.cmd === 'end')) { W(file, '标签 ' + lab + ' 作为调查点却走到了章节结束'); return; }
+      if (o.op === 'cmd' && (o.cmd === 'chapterend' || o.cmd === 'end' || o.cmd === 'ending')) { W(file, '标签 ' + lab + ' 作为调查点却走到了章节结束'); return; }
     }
     E(file, '标签 ' + lab + ' 之后没有 @return');
   });
@@ -297,7 +302,7 @@ files.forEach(function (f) {
       // 顺序落入的标签也算可达：检查前一条指令是否为终结指令
       var idx = parsed.labels[l];
       var prev = parsed.ops[idx - 1];
-      var fallsIn = prev && !(prev.op === 'cmd' && ['goto', 'return', 'chapterend', 'end', 'choice'].indexOf(prev.cmd) >= 0);
+      var fallsIn = prev && !(prev.op === 'cmd' && ['goto', 'return', 'chapterend', 'end', 'choice', 'ending'].indexOf(prev.cmd) >= 0);
       if (!referenced[l] && !fallsIn) W(file, '标签 ' + l + ' 没有被引用，可能无法到达');
     });
     var chars = 0;
