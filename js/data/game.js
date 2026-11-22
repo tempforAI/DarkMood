@@ -4,6 +4,7 @@
   DM.GAME = {
     id: 'darkmood1',
     storage: 'darkmood_',              // localStorage 键前缀（保持与旧版存档兼容）
+    saveFolder: 'DarkMood1_宵鸦岛审判',  // 存档文件夹里本作使用的子文件夹名
     title: 'DARK MOOD',
     subtitle: '宵鸦岛审判',
     version: 'v2.0',
